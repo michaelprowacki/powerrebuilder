@@ -31,13 +31,13 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from collections.abc import Callable
-from src.contracts.types import ParseStatsDict
-from src.common.coordinators.base import BaseCoordinator
+from typing import Any
 
+from src.common.coordinators.base import BaseCoordinator
+from src.contracts.types import ParseStatsDict
 from src.model.ast.serialization import serialize_ast
 from src.model.types.errors import ParseErrorCollector
 
@@ -75,7 +75,7 @@ class ParseCoordinator(BaseCoordinator):
             validate_ast: Whether to validate generated ASTs
         """
         super().__init__(input_dir, output_dir, "parse")
-        
+
         self.enable_recovery = enable_recovery
         self.validate_ast = validate_ast
 
@@ -85,7 +85,9 @@ class ParseCoordinator(BaseCoordinator):
         self.preprocessor = PowerBuilderPreprocessor()
         self.error_collector = ParseErrorCollector()
 
-    def process(self, progress_callback: Callable[[int, int, str], None] | None = None) -> dict[str, Any]:
+    def process(
+        self, progress_callback: Callable[[int, int, str], None] | None = None
+    ) -> dict[str, Any]:
         """Parse all source files in the input directory.
 
         Args:
@@ -97,20 +99,19 @@ class ParseCoordinator(BaseCoordinator):
         # Collect source files
         source_extensions = [".sru", ".srw", ".srm", ".srs", ".srd", ".sra"]
         source_files = self.discover_files([f"*{ext}" for ext in source_extensions])
-        
+
         logger.info("Found %d source files to parse", len(source_files))
 
         # Process files using base class helper
         self.process_files_with_callback(
-            source_files,
-            self._parse_file,
-            progress_callback,
-            "Parsing"
+            source_files, self._parse_file, progress_callback, "Parsing"
         )
 
         return self.get_statistics()
 
-    def parse(self, progress_callback: Callable[[int, int, str], None] | None = None) -> ParseStatsDict:
+    def parse(
+        self, progress_callback: Callable[[int, int, str], None] | None = None
+    ) -> ParseStatsDict:
         """Parse all source files (backward compatibility method).
 
         Args:
@@ -192,7 +193,9 @@ class ParseCoordinator(BaseCoordinator):
         # Note: grammar loading is handled internally by EnhancedPowerBuilderParser
 
         # Create concrete parser implementation
-        return EnhancedPowerBuilderParser(base_path=self.input_dir, enable_error_recovery=self.enable_recovery)
+        return EnhancedPowerBuilderParser(
+            base_path=self.input_dir, enable_error_recovery=self.enable_recovery
+        )
 
     def _get_object_type(self, extension: str) -> str:
         """Get object type from file extension.
@@ -213,8 +216,7 @@ class ParseCoordinator(BaseCoordinator):
         }
         return ext_to_type.get(extension, "unknown")
 
-
-    def _validate_ast(self, ast: Any) -> List[str]:
+    def _validate_ast(self, ast: Any) -> list[str]:
         """Validate AST structure.
 
         Args:
@@ -252,8 +254,8 @@ class ParseCoordinator(BaseCoordinator):
 
 # Utility function for compatibility
 def parse_file(
-    file_path: Union[Path, str], output_dir: Optional[Union[Path, str]] = None
-) -> Dict[str, Any]:
+    file_path: Path | str, output_dir: Path | str | None = None
+) -> dict[str, Any]:
     """Parse a single PowerBuilder source file.
 
     Args:

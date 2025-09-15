@@ -7,7 +7,7 @@ This document describes the comprehensive parallel processing architecture desig
 The enhanced parallel processing system addresses the critical limitations of the original sequential approach:
 
 - **Fixed 30-minute timeouts** → **Dynamic adaptive timeouts** based on file complexity
-- **Sequential file processing** → **Parallel processing** with up to 16x speedup  
+- **Sequential file processing** → **Parallel processing** with up to 16x speedup
 - **No progress resumption** → **Checkpoint-based resumption** for interrupted operations
 - **Memory pressure issues** → **Memory-aware scheduling** with worker throttling
 - **Poor load balancing** → **Work-stealing algorithms** for optimal task distribution
@@ -15,7 +15,7 @@ The enhanced parallel processing system addresses the critical limitations of th
 The implementation provides multiple levels of parallel processing:
 
 - **Enhanced Parallel Coordinator** - Comprehensive parallel processing with all optimizations
-- **Basic Parallel Coordinator** - Standard parallel processing for backward compatibility  
+- **Basic Parallel Coordinator** - Standard parallel processing for backward compatibility
 - **Section-level parallelization** for P-code decoding
 - **File-level parallelization** for processing multiple files
 - **Adaptive parallelism** that optimizes configuration based on workload characteristics
@@ -173,7 +173,7 @@ print(f"Throughput: {result['performance']['throughput_mb_per_sec']} MB/s")
 ```python
 from src.decompile.parallel_config import DecompilationConfig, get_config
 
-# Auto-configure based on system capabilities  
+# Auto-configure based on system capabilities
 config = DecompilationConfig.auto_configure()
 
 # Or load from configuration file
@@ -182,7 +182,7 @@ config = get_config()
 # Apply to enhanced coordinator
 coordinator = EnhancedParallelDecompileCoordinator(
     input_dir="input",
-    output_dir="output", 
+    output_dir="output",
     max_workers=config.parallelism.max_workers,
     memory_config=config.memory,
 )
@@ -396,7 +396,7 @@ def test_parallel_processing():
     coordinator = ParallelDecompileCoordinator(
         use_adaptive_parallelism=True,
     )
-    
+
     # Test with different workloads
     for file_count in [1, 10, 50, 100]:
         result = coordinator.decompile()

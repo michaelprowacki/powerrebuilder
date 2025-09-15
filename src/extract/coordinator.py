@@ -5,10 +5,8 @@ for better maintainability and testability.
 """
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
-
-from src.contracts.types import ExtractionStatsDict
 
 from src.contracts.interfaces import (
     IBinaryFileParser,
@@ -18,6 +16,7 @@ from src.contracts.interfaces import (
     IRecoveryEngine,
     IResourceExtractor,
 )
+from src.contracts.types import ExtractionStatsDict
 from src.core.coordination_base import EnhancedCoordinator
 from src.extract.components.orchestrator import ExtractionOrchestrator
 
@@ -106,20 +105,46 @@ class ExtractCoordinator(EnhancedCoordinator):
             if self.statistics:
                 self.statistics.record_error("extraction", str(e))
                 return self.statistics.get_statistics()
-            else:
-                # Fallback: return minimal error stats structure
-                from collections import defaultdict
-                
-                return {
-                    "files": {"total": 1, "successful": 0, "failed": 1, "in_progress": None},
-                    "entries": {"total": 0, "successful": 0, "failed": 0},
-                    "entry_types": defaultdict(lambda: {"total": 0, "successful": 0, "failed": 0}),
-                    "sizes": {"total_bytes": 0, "extracted_bytes": 0, "largest_entry": 0, "largest_entry_name": "", "smallest_entry": 0, "smallest_entry_name": ""},
-                    "timing": {"start_time": None, "end_time": None, "total_duration": 0.0, "file_durations": {}},
-                    "errors": {"total": 1, "by_type": defaultdict(int), "entries": []},
-                    "recovery": {"attempts": 0, "successful": 0, "total_recovered": 0, "by_strategy": defaultdict(lambda: {"attempts": 0, "successful": 0, "recovered": 0}), "history": []},
-                    "file_details": {},
-                }
+            # Fallback: return minimal error stats structure
+            from collections import defaultdict
+
+            return {
+                "files": {
+                    "total": 1,
+                    "successful": 0,
+                    "failed": 1,
+                    "in_progress": None,
+                },
+                "entries": {"total": 0, "successful": 0, "failed": 0},
+                "entry_types": defaultdict(
+                    lambda: {"total": 0, "successful": 0, "failed": 0}
+                ),
+                "sizes": {
+                    "total_bytes": 0,
+                    "extracted_bytes": 0,
+                    "largest_entry": 0,
+                    "largest_entry_name": "",
+                    "smallest_entry": 0,
+                    "smallest_entry_name": "",
+                },
+                "timing": {
+                    "start_time": None,
+                    "end_time": None,
+                    "total_duration": 0.0,
+                    "file_durations": {},
+                },
+                "errors": {"total": 1, "by_type": defaultdict(int), "entries": []},
+                "recovery": {
+                    "attempts": 0,
+                    "successful": 0,
+                    "total_recovered": 0,
+                    "by_strategy": defaultdict(
+                        lambda: {"attempts": 0, "successful": 0, "recovered": 0}
+                    ),
+                    "history": [],
+                },
+                "file_details": {},
+            }
 
     def validate_inputs(self) -> bool:
         """Validate input requirements for the stage.
@@ -142,9 +167,9 @@ class ExtractCoordinator(EnhancedCoordinator):
         return True
 
     async def run(
-        self, 
-        progress_callback: Optional[Callable[[str, float], None]] = None,
-        **kwargs: Union[str, Path, bool]
+        self,
+        progress_callback: Callable[[str, float], None] | None = None,
+        **kwargs: str | Path | bool,
     ) -> ExtractionStatsDict:
         """Run the extraction process.
 
@@ -182,7 +207,9 @@ class ExtractCoordinator(EnhancedCoordinator):
 
         # Statistics are already tracked in the orchestrator
 
-    def extract(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> ExtractionStatsDict:
+    def extract(
+        self, progress_callback: Callable[[int, int, str], None] | None = None
+    ) -> ExtractionStatsDict:
         """Synchronous extraction method for pipeline compatibility.
 
         Args:

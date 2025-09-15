@@ -53,8 +53,6 @@ STRING: /"[^"]*"/
 
 @pytest.fixture
 def pb_parser():
-
-
     """Create a parser for PowerBuilder grammar."""
     return Lark(PB_GRAMMAR, parser="earley")
 
@@ -63,10 +61,6 @@ class TestPowerBuilderDirect:
     """Tests for PowerBuilder grammar with directly embedded grammar."""
 
     def test_variable_declaration(self, pb_parser):
-
-
-
-
         """Test variable declarations."""
         code = "x: integer;"
         tree = pb_parser.parse(code)
@@ -81,10 +75,6 @@ class TestPowerBuilderDirect:
         assert tree is not None
 
     def test_assignment(self, pb_parser):
-
-
-
-
         """Test assignment statements."""
         code = "x = 10;"
         tree = pb_parser.parse(code)
@@ -99,10 +89,6 @@ class TestPowerBuilderDirect:
         assert tree is not None
 
     def test_if_statement(self, pb_parser):
-
-
-
-
         """Test if statements."""
         code = """
         if x > 5 then
@@ -123,10 +109,6 @@ class TestPowerBuilderDirect:
         assert tree is not None
 
     def test_for_loop(self, pb_parser):
-
-
-
-
         """Test for loops."""
         code = """
         for i = 1 to 10
@@ -145,10 +127,6 @@ class TestPowerBuilderDirect:
         assert tree is not None
 
     def test_function_declaration(self, pb_parser):
-
-
-
-
         """Test function declarations."""
         code = """
         function integer calculate_sum(a: integer, b: integer)

@@ -110,7 +110,7 @@ from src.parse.parsers.transaction import TransactionParser
    ```bash
    # Run the automated fixer
    python scripts/maintenance/fix_test_coverage.py --fix-imports
-   
+
    # Verify fixes
    python scripts/maintenance/fix_test_coverage.py --analyze
    ```

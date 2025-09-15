@@ -36,7 +36,7 @@ header() {
 # Check prerequisites
 check_prerequisites() {
     header "Checking Prerequisites"
-    
+
     # Check for Git
     if command -v git &> /dev/null; then
         log_success "Git is installed: $(git --version)"
@@ -44,7 +44,7 @@ check_prerequisites() {
         log_error "Git is not installed"
         exit 1
     fi
-    
+
     # Check for Python
     if command -v python3 &> /dev/null; then
         log_success "Python is installed: $(python3 --version)"
@@ -52,7 +52,7 @@ check_prerequisites() {
         log_error "Python 3 is not installed"
         exit 1
     fi
-    
+
     # Check for uv
     if command -v uv &> /dev/null; then
         log_success "uv is installed: $(uv --version)"
@@ -61,14 +61,14 @@ check_prerequisites() {
         curl -LsSf https://astral.sh/uv/install.sh | sh
         source $HOME/.cargo/env
     fi
-    
+
     # Check for Docker (optional)
     if command -v docker &> /dev/null; then
         log_success "Docker is installed: $(docker --version)"
     else
         log_warning "Docker is not installed (optional for CI/CD)"
     fi
-    
+
     # Check for GitHub CLI (optional)
     if command -v gh &> /dev/null; then
         log_success "GitHub CLI is installed: $(gh --version | head -n 1)"
@@ -80,22 +80,22 @@ check_prerequisites() {
 # Setup local environment
 setup_local_environment() {
     header "Setting Up Local Environment"
-    
+
     # Install Python dependencies
     log_info "Installing Python dependencies..."
     uv sync --all-extras
     log_success "Dependencies installed"
-    
+
     # Install pre-commit hooks
     log_info "Installing pre-commit hooks..."
     uv run pre-commit install
     log_success "Pre-commit hooks installed"
-    
+
     # Create necessary directories
     log_info "Creating necessary directories..."
     mkdir -p data output pb_files logs
     log_success "Directories created"
-    
+
     # Copy example files
     if [ ! -f .env ]; then
         log_info "Creating .env file from example..."
@@ -108,7 +108,7 @@ DB_PASSWORD=changeme
 EOF
         log_success ".env file created"
     fi
-    
+
     if [ ! -f docker-compose.override.yml ] && [ -f docker-compose.override.yml.example ]; then
         log_info "Creating docker-compose.override.yml..."
         cp docker-compose.override.yml.example docker-compose.override.yml
@@ -119,31 +119,31 @@ EOF
 # Setup GitHub repository
 setup_github_repo() {
     header "GitHub Repository Setup"
-    
+
     if ! command -v gh &> /dev/null; then
         log_warning "GitHub CLI not installed. Please configure manually."
         show_manual_github_setup
         return
     fi
-    
+
     # Check if authenticated
     if ! gh auth status &> /dev/null; then
         log_warning "Not authenticated with GitHub. Please run: gh auth login"
         return
     fi
-    
+
     log_info "Checking repository settings..."
-    
+
     # Get repository info
     REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "")
-    
+
     if [ -z "$REPO" ]; then
         log_warning "Not in a GitHub repository. Please push to GitHub first."
         return
     fi
-    
+
     log_success "Repository: $REPO"
-    
+
     # Configure secrets (if possible)
     log_info "Configuring GitHub Secrets..."
     echo ""
@@ -196,49 +196,49 @@ show_manual_github_setup() {
 # Setup Docker
 setup_docker() {
     header "Docker Setup"
-    
+
     if ! command -v docker &> /dev/null; then
         log_warning "Docker not installed. Skipping Docker setup."
         return
     fi
-    
+
     log_info "Building Docker images..."
-    
+
     # Build development image
     if docker build -t powerrebuilder:dev --target development .; then
         log_success "Development image built"
     else
         log_error "Failed to build development image"
     fi
-    
+
     # Build production image
     if docker build -t powerrebuilder:latest --target production .; then
         log_success "Production image built"
     else
         log_error "Failed to build production image"
     fi
-    
+
     log_info "Docker images ready. Use 'docker-compose up' to start services."
 }
 
 # Run initial tests
 run_initial_tests() {
     header "Running Initial Tests"
-    
+
     log_info "Running linting checks..."
     if uv run ruff check src/ tests/ --fix; then
         log_success "Linting passed"
     else
         log_warning "Some linting issues were fixed"
     fi
-    
+
     log_info "Running type checks..."
     if uv run mypy src/ --ignore-missing-imports; then
         log_success "Type checking passed"
     else
         log_warning "Type checking has issues"
     fi
-    
+
     log_info "Running tests..."
     if uv run pytest tests/ -v --tb=short -m "not slow"; then
         log_success "Tests passed"
@@ -250,7 +250,7 @@ run_initial_tests() {
 # Generate status report
 generate_status_report() {
     header "CI/CD Setup Status Report"
-    
+
     echo "Setup completed! Here's your status:"
     echo ""
     echo "✅ Completed:"
@@ -292,14 +292,14 @@ main() {
     echo "🚀 PowerRebuilder CI/CD Setup Script"
     echo "===================================="
     echo ""
-    
+
     check_prerequisites
     setup_local_environment
     setup_github_repo
     setup_docker
     run_initial_tests
     generate_status_report
-    
+
     echo ""
     log_success "CI/CD setup completed successfully!"
     echo ""

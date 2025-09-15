@@ -6,7 +6,7 @@ This document describes the infrastructure components that have been enabled in 
 
 The infrastructure provides:
 - **Dependency Injection** - Loose coupling and testability
-- **Event Bus** - Decoupled communication between components  
+- **Event Bus** - Decoupled communication between components
 - **Caching** - Performance optimization for repeated operations
 - **Progress Tracking** - User-friendly progress reporting
 
@@ -216,7 +216,7 @@ with progress.pipeline_context(total_steps=5) as pipeline:
     pipeline.start_step("Extracting files", 1)
     # ... do work ...
     pipeline.complete_step(1)
-    
+
     # Stage 2
     pipeline.start_step("Decompiling", 2)
     # ... do work ...
@@ -231,7 +231,7 @@ with progress.file_extraction_context(total_files=100) as task_id:
     for i, file in enumerate(files):
         # Process file
         size = process_file(file)
-        
+
         # Update progress with transfer speed
         progress.update_file_progress(
             completed=i+1,

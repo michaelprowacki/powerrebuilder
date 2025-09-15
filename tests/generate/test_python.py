@@ -20,24 +20,12 @@ from src.model.ast.io import FileMode
 
 
 def test_optimization_level():
-
-
-
-
-
-
     """Test optimization level enumeration."""
     assert OptimizationLevel.NONE.value < OptimizationLevel.BASIC.value
     assert OptimizationLevel.BASIC.value < OptimizationLevel.AGGRESSIVE.value
 
 
 def test_source_mapping():
-
-
-
-
-
-
     """Test source mapping."""
     mapping = SourceMapping(
         original_file="test.pb",
@@ -54,12 +42,6 @@ def test_source_mapping():
 
 
 def test_codegen_state():
-
-
-
-
-
-
     """Test code generation state."""
     state = CodegenState()
 
@@ -83,12 +65,6 @@ def test_codegen_state():
 
 
 def test_type_conversion():
-
-
-
-
-
-
     """Test type conversion to Python."""
     generator = CodeGenerator()
 
@@ -122,12 +98,6 @@ def test_type_conversion():
 
 
 def test_function_generation():
-
-
-
-
-
-
     """Test function generation."""
     generator = CodeGenerator()
 
@@ -155,12 +125,6 @@ def test_function_generation():
 
 
 def test_array_operation_generation():
-
-
-
-
-
-
     """Test array operation generation."""
     generator = CodeGenerator()
 
@@ -188,6 +152,7 @@ def test_array_operation_generation():
 
     # Test RESIZE operation
     from model.ast import IntegerLiteral
+
     resize_op = ArrayOperation(
         array=Identifier(name="arr"),
         operation="RESIZE",
@@ -197,12 +162,6 @@ def test_array_operation_generation():
 
 
 def test_file_operation_generation():
-
-
-
-
-
-
     """Test file operation generation."""
     generator = CodeGenerator()
 
@@ -239,12 +198,6 @@ def test_file_operation_generation():
 
 
 def test_code_optimization():
-
-
-
-
-
-
     """Test code optimization."""
     generator = CodeGenerator()
     generator.state.optimization_level = OptimizationLevel.AGGRESSIVE
@@ -275,12 +228,6 @@ def test_code_optimization():
 
 
 def test_module_generation():
-
-
-
-
-
-
     """Test complete module generation."""
     # Skip this test for now as it requires extensive generator support
     return

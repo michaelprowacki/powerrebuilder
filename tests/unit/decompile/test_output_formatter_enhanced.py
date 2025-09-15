@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test enhancements to output formatter."""
 
-
 from src.decompile.core.output import OutputFormatter
 from src.decompile.types import BlockType, ControlBlock
 
@@ -10,10 +9,6 @@ class TestRepeatUntilFormatting:
     """Test REPEAT UNTIL block formatting."""
 
     def test_format_repeat_until_block(self):
-
-
-
-
         """Test formatting of repeat-until blocks."""
         # Create a repeat-until block
         repeat_block = ControlBlock(
@@ -45,10 +40,6 @@ class TestRepeatUntilFormatting:
         assert lines == expected
 
     def test_format_empty_repeat_until(self):
-
-
-
-
         """Test formatting of empty repeat-until blocks."""
         repeat_block = ControlBlock(
             type=BlockType.REPEAT_UNTIL,
@@ -72,10 +63,6 @@ class TestChooseCaseFormatting:
     """Test CHOOSE CASE block formatting."""
 
     def test_format_choose_case_block(self):
-
-
-
-
         """Test formatting of choose-case blocks."""
         # Create a choose-case block
         choose_block = ControlBlock(
@@ -133,10 +120,6 @@ class TestComplexControlFlow:
     """Test formatting of complex control flow structures."""
 
     def test_nested_loops(self):
-
-
-
-
         """Test formatting of nested loop structures."""
         # Create outer repeat-until with inner for loop
         outer_repeat = ControlBlock(

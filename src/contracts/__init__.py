@@ -4,7 +4,7 @@ This module provides lazy loading for interfaces and protocols from the consolid
 interfaces.py file to reduce import overhead.
 """
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 # Lazy loading support
 _interface_cache = {}

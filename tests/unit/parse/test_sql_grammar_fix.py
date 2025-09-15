@@ -9,10 +9,6 @@ from lark.exceptions import GrammarError
 
 
 def test_grammar(grammar_file: str, name: str):
-
-
-
-
     """Test loading a grammar file."""
     print(f"\nTesting {name}...")
 
@@ -39,11 +35,8 @@ def test_grammar(grammar_file: str, name: str):
         print(f"✗ {name} failed to load: {type(e).__name__}: {e}")
         return False
 
+
 def main():
-
-
-
-
     """Test both grammars."""
     grammar_dir = Path("parse/grammar")
 
@@ -53,16 +46,16 @@ def main():
     # Test fixed grammar
     fixed_ok = test_grammar(grammar_dir / "sql_fixed.lark", "Fixed SQL grammar")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if fixed_ok and not original_ok:
         print("✓ SUCCESS: Fixed grammar resolves the conflicts!")
         return 0
-    elif fixed_ok and original_ok:
+    if fixed_ok and original_ok:
         print("⚠ Both grammars work - original may have been fixed already")
         return 0
-    else:
-        print("✗ FAILED: Fixed grammar still has issues")
-        return 1
+    print("✗ FAILED: Fixed grammar still has issues")
+    return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

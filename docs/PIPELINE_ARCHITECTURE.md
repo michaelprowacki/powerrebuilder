@@ -68,7 +68,7 @@ PowerBuilder PBL/PBD files contain compiled P-code (primarily `.fun` files). The
 **This is a SEQUENTIAL pipeline!** The stages run in this order:
 
 1. **Extract** → Produces `.fun` (P-code) files
-2. **Decompile** → Converts `.fun` to `.sru` (source) files  
+2. **Decompile** → Converts `.fun` to `.sru` (source) files
 3. **Parse** → Processes `.sru` files to create AST
 4. **Model** → Builds semantic models from AST
 5. **Generate** → Creates modern code from models
@@ -87,7 +87,7 @@ PowerBuilder PBL/PBD files contain compiled P-code (primarily `.fun` files). The
 |------|-------------|------------|
 | .fun | Compiled P-code | Decompile |
 
-### Decompile Output  
+### Decompile Output
 | File | Description | Next Stage |
 |------|-------------|------------|
 | .sru | PowerBuilder source | Parse |
@@ -130,19 +130,19 @@ Parse requires decompiled source code as input.
 def run_pipeline(input_dir, output_dir):
     # Stage 1: Extract P-code files
     extracted_files = extract_stage(input_dir)
-    
+
     # Stage 2: Decompile P-code to source
     source_files = decompile_stage(extracted_files)
-    
+
     # Stage 3: Parse source to AST
     ast_files = parse_stage(source_files)
-    
+
     # Stage 4: Build semantic models
     models = model_stage(ast_files)
-    
+
     # Stage 5: Generate modern code
     generated_code = generate_stage(models)
-    
+
     return generated_code
 ```
 
@@ -207,7 +207,7 @@ The PowerRebuilder pipeline is a **sequential, five-stage process**:
 
 1. **Extract** - Gets P-code from PBL/PBD
 2. **Decompile** - Converts P-code to source
-3. **Parse** - Converts source to AST  
+3. **Parse** - Converts source to AST
 4. **Model** - Builds semantic models
 5. **Generate** - Creates modern code
 

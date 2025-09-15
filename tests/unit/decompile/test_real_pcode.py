@@ -8,20 +8,12 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.decompile.pcode.detector import PCodeDetector
 from src.decompile.opcodes import OPCODE_TABLE
+from src.decompile.pcode.detector import PCodeDetector
 from src.extract.pbd.library import Library
 
 
 def test_real_pcode() -> None:
-
-
-
-
-
-
-
-
     """Test with real P-code from PBD file."""
     pbd_file = "tests/fixtures/pbd_files/dcm_email.pbd"
 
@@ -72,14 +64,6 @@ def test_real_pcode() -> None:
 
 
 def analyze_pcode(pcode_data) -> None:
-
-
-
-
-
-
-
-
     """Analyze P-code with corrected opcodes."""
     opcodes = OPCODE_TABLE
 
@@ -112,8 +96,7 @@ def analyze_pcode(pcode_data) -> None:
     for _, opcode, _ in instructions:
         freq[opcode] = freq.get(opcode, 0) + 1
 
-    for opcode, _count in sorted(freq.items(), key=lambda x:
-        -x[1])[:10]:
+    for opcode, _count in sorted(freq.items(), key=lambda x: -x[1])[:10]:
         mnemonic = (
             opcodes[opcode].get("mnemonic", f"UNKNOWN_{opcode:02X}")
             if opcode in opcodes
@@ -122,14 +105,6 @@ def analyze_pcode(pcode_data) -> None:
 
 
 def main() -> None:
-
-
-
-
-
-
-
-
     """Main function."""
     test_real_pcode()
 

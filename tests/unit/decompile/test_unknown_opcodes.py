@@ -12,10 +12,6 @@ class TestUnknownOpcodes:
     """Test cases for unknown opcode handling."""
 
     def test_get_unknown_opcode_info_known(self):
-
-
-
-
         """Test getting info for known unknown opcodes."""
         # Test a few known unknown opcodes
         test_cases = [
@@ -35,10 +31,6 @@ class TestUnknownOpcodes:
             assert description == expected_desc
 
     def test_get_unknown_opcode_info_unknown(self):
-
-
-
-
         """Test getting info for truly unknown opcodes."""
         # Test some opcodes that are not in the unknown list
         unknown_opcodes = [0x00, 0x01, 0xFF, 0x50, 0x60]
@@ -48,24 +40,29 @@ class TestUnknownOpcodes:
             assert result is None
 
     def test_is_known_unknown_true(self):
-
-
-
-
         """Test identifying known unknown opcodes."""
         known_unknowns = [
-            0x19, 0x1A, 0x1B, 0x1E, 0x8A, 0x8B, 0x90,
-            0xC4, 0xC5, 0xC6, 0xC7, 0xDC, 0xEA, 0xEB, 0xED,
+            0x19,
+            0x1A,
+            0x1B,
+            0x1E,
+            0x8A,
+            0x8B,
+            0x90,
+            0xC4,
+            0xC5,
+            0xC6,
+            0xC7,
+            0xDC,
+            0xEA,
+            0xEB,
+            0xED,
         ]
 
         for opcode in known_unknowns:
             assert is_known_unknown(opcode) is True
 
     def test_is_known_unknown_false(self):
-
-
-
-
         """Test identifying truly unknown opcodes."""
         truly_unknown = [0x00, 0x01, 0xFF, 0x50, 0x60]
 
@@ -73,10 +70,6 @@ class TestUnknownOpcodes:
             assert is_known_unknown(opcode) is False
 
     def test_unknown_opcodes_structure(self):
-
-
-
-
         """Test the structure of UNKNOWN_OPCODES dictionary."""
         assert isinstance(UNKNOWN_OPCODES, dict)
 
@@ -90,10 +83,6 @@ class TestUnknownOpcodes:
             assert name.startswith("UNK_")
 
     def test_unknown_opcode_definitions_structure(self):
-
-
-
-
         """Test the structure of UNKNOWN_OPCODE_DEFINITIONS dictionary."""
         assert isinstance(UNKNOWN_OPCODE_DEFINITIONS, dict)
 
@@ -119,10 +108,6 @@ class TestUnknownOpcodes:
             assert isinstance(description, str)
 
     def test_operand_counts(self):
-
-
-
-
         """Test that operand counts match documented values."""
         expected_operand_counts = {
             0x19: 0,
@@ -149,10 +134,6 @@ class TestUnknownOpcodes:
             assert operand_count == expected_count
 
     def test_edge_cases(self):
-
-
-
-
         """Test edge cases for opcode values."""
         # Test boundary values
         assert is_known_unknown(0x00) is False  # Minimum byte value
@@ -164,10 +145,6 @@ class TestUnknownOpcodes:
         assert get_unknown_opcode_info(None) is None
 
     def test_consistency(self):
-
-
-
-
         """Test consistency between dictionaries."""
         # All opcodes in UNKNOWN_OPCODES should have definitions
         for opcode in UNKNOWN_OPCODES:

@@ -15,20 +15,12 @@ class TestGrammarManager:
     """Test suite for GrammarManager."""
 
     def test_init_default_directory(self):
-
-
-
-
         """Test initialization with default grammar directory."""
         manager = GrammarManager()
         assert manager.grammar_dir.name == "grammar"
         assert manager.grammar_dir.exists()
 
     def test_init_custom_directory(self, tmp_path):
-
-
-
-
         """Test initialization with custom grammar directory."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -37,10 +29,6 @@ class TestGrammarManager:
         assert manager.grammar_dir == grammar_dir
 
     def test_init_missing_directory(self, tmp_path):
-
-
-
-
         """Test initialization with non-existent directory."""
         grammar_dir = tmp_path / "missing"
 
@@ -48,10 +36,6 @@ class TestGrammarManager:
             GrammarManager(grammar_dir)
 
     def test_load_grammar_caching(self, tmp_path):
-
-
-
-
         """Test that grammars are cached after loading."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -70,10 +54,6 @@ class TestGrammarManager:
         assert parser1 is parser2
 
     def test_load_grammar_different_start_rules(self, tmp_path):
-
-
-
-
         """Test loading same grammar with different start rules."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -96,10 +76,6 @@ class TestGrammarManager:
         assert parser1 is not parser2
 
     def test_load_grammar_not_found(self, tmp_path):
-
-
-
-
         """Test loading non-existent grammar."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -110,10 +86,6 @@ class TestGrammarManager:
             manager.load_grammar("missing")
 
     def test_load_grammar_syntax_error(self, tmp_path):
-
-
-
-
         """Test loading grammar with syntax errors."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -128,10 +100,6 @@ class TestGrammarManager:
             manager.load_grammar("invalid")
 
     def test_register_grammar(self):
-
-
-
-
         """Test registering grammar directly."""
         manager = GrammarManager()
 
@@ -143,10 +111,6 @@ class TestGrammarManager:
         assert isinstance(parser, Lark)
 
     def test_register_grammar_clears_cache(self, tmp_path):
-
-
-
-
         """Test that registering grammar clears its cache."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -168,10 +132,6 @@ class TestGrammarManager:
         assert parser1 is not parser2
 
     def test_get_parser_window_type(self):
-
-
-
-
         """Test getting parser for window file type."""
         manager = GrammarManager()
 
@@ -186,10 +146,6 @@ class TestGrammarManager:
             assert parser is mock_parser
 
     def test_get_parser_datawindow_type(self):
-
-
-
-
         """Test getting parser for datawindow file type."""
         manager = GrammarManager()
 
@@ -203,10 +159,6 @@ class TestGrammarManager:
             assert parser is mock_parser
 
     def test_get_parser_sql_type(self):
-
-
-
-
         """Test getting parser for SQL file type."""
         manager = GrammarManager()
 
@@ -217,15 +169,13 @@ class TestGrammarManager:
             parser = manager.get_parser(FileType.QUERY)
 
             mock_load.assert_called_once_with(
-                "sql", start="sql_statements", lexer="basic",
+                "sql",
+                start="sql_statements",
+                lexer="basic",
             )
             assert parser is mock_parser
 
     def test_get_parser_string_extension(self):
-
-
-
-
         """Test getting parser with string extension."""
         manager = GrammarManager()
 
@@ -239,10 +189,6 @@ class TestGrammarManager:
             assert parser is mock_parser
 
     def test_get_parser_unsupported_type(self):
-
-
-
-
         """Test getting parser for unsupported file type."""
         manager = GrammarManager()
 
@@ -250,10 +196,6 @@ class TestGrammarManager:
             manager.get_parser("unknown")
 
     def test_clear_cache(self, tmp_path):
-
-
-
-
         """Test clearing all caches."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -279,10 +221,6 @@ class TestGrammarManager:
         assert len(manager._dependencies) == 0
 
     def test_extract_imports(self):
-
-
-
-
         """Test extracting imports from grammar content."""
         manager = GrammarManager()
 
@@ -299,10 +237,6 @@ class TestGrammarManager:
         assert imports == {"common", "sql"}
 
     def test_check_circular_dependencies(self):
-
-
-
-
         """Test circular dependency detection."""
         manager = GrammarManager()
 
@@ -323,10 +257,6 @@ class TestGrammarManager:
         assert set(cycle[:-1]) == {"a", "b", "c"}  # Last element repeats first
 
     def test_get_grammar_info(self, tmp_path):
-
-
-
-
         """Test getting grammar information."""
         grammar_dir = tmp_path / "grammars"
         grammar_dir.mkdir()
@@ -349,10 +279,6 @@ class TestGrammarManager:
         assert info["test"]["file"].endswith("test.lark")
 
     def test_get_default_manager_singleton(self):
-
-
-
-
         """Test that get_default_manager returns singleton."""
         manager1 = get_default_manager()
         manager2 = get_default_manager()

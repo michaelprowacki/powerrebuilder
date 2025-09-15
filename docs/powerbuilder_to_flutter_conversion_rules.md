@@ -66,7 +66,7 @@ class CustomerListScreen extends StatefulWidget {
   // Window parameters → constructor parameters
   final String? filterType;
   final int? customerId;
-  
+
   // Window instance variables → State properties
   @override
   _CustomerListScreenState createState() => _CustomerListScreenState();
@@ -165,17 +165,17 @@ DataWindows are the most complex PowerBuilder objects. They map to custom Flutte
 class DataWindowWidget extends StatefulWidget {
   // Data source
   final Future<List<T>> Function()? retrieveData;
-  
+
   // CRUD operations
   final Future<void> Function(T)? onInsert;
   final Future<void> Function(T)? onUpdate;
   final Future<void> Function(T)? onDelete;
-  
+
   // Features
   final bool allowSort;
   final bool allowFilter;
   final bool allowExport;
-  
+
   // Column definitions
   final List<DataWindowColumn> columns;
 }
@@ -249,7 +249,7 @@ abstract class CustomerRepository {
 
 class SqlCustomerRepository implements CustomerRepository {
   final Database database;
-  
+
   // SQL operations using database connection
 }
 ```
@@ -345,16 +345,16 @@ class AppDesignSystem {
   // Colors
   static const primaryColor = Color(0xFF2196F3);
   static const secondaryColor = Color(0xFF03DAC6);
-  
+
   // Typography
   static const headingStyle = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
   );
-  
+
   // Spacing
   static const defaultPadding = EdgeInsets.all(16.0);
-  
+
   // Themes
   static final lightTheme = ThemeData(...);
   static final darkTheme = ThemeData(...);
@@ -412,25 +412,25 @@ lib/
 ```dart
 class ${Name}Screen extends StatefulWidget {
   // Parameters from PowerBuilder window
-  
+
   @override
   _${Name}ScreenState createState() => _${Name}ScreenState();
 }
 
 class _${Name}ScreenState extends State<${Name}Screen> {
   // Instance variables from PowerBuilder
-  
+
   @override
   void initState() {
     super.initState();
     // Open event logic
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Window controls layout
   }
-  
+
   @override
   void dispose() {
     // Close event logic
@@ -456,7 +456,7 @@ class ${Name} with _$${Name} {
   const factory ${Name}({
     // Properties from PowerBuilder structure
   }) = _${Name};
-  
+
   factory ${Name}.fromJson(Map<String, dynamic> json) =>
       _$${Name}FromJson(json);
 }
@@ -504,7 +504,7 @@ event open;
     // Initialize datawindow
     dw_customers.SetTransObject(SQLCA)
     dw_customers.Retrieve()
-    
+
     // Set focus to search field
     sle_search.SetFocus()
 end event
@@ -513,7 +513,7 @@ end event
 event ue_search;
     string ls_search
     ls_search = sle_search.text
-    
+
     if Len(ls_search) > 0 then
         dw_customers.SetFilter("customer_name like '%" + ls_search + "%'")
         dw_customers.Filter()
@@ -534,7 +534,7 @@ end event
 event cb_edit::clicked;
     long ll_row
     long ll_customer_id
-    
+
     ll_row = dw_customers.GetRow()
     if ll_row > 0 then
         ll_customer_id = dw_customers.GetItemNumber(ll_row, "customer_id")
@@ -548,7 +548,7 @@ end event
 event cb_delete::clicked;
     long ll_row
     integer li_response
-    
+
     ll_row = dw_customers.GetRow()
     if ll_row > 0 then
         li_response = MessageBox("Confirm", "Delete this customer?", Question!, YesNo!)
@@ -621,7 +621,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
     // Window Open Event equivalent
     _repository = context.read<CustomerRepository>();
     _loadCustomers();
-    
+
     // Set focus to search field
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.requestFocus();
@@ -641,7 +641,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
   // Load customers (Retrieve equivalent)
   Future<void> _loadCustomers() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final customers = await _repository.findAll();
       setState(() {
@@ -658,13 +658,13 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
   // Search functionality (ue_search event equivalent)
   void _onSearchChanged() {
     final searchText = _searchController.text.toLowerCase();
-    
+
     setState(() {
       if (searchText.isEmpty) {
         _filteredCustomers = _customers;
       } else {
         _filteredCustomers = _customers
-            .where((customer) => 
+            .where((customer) =>
                 customer.customerName.toLowerCase().contains(searchText))
             .toList();
       }
@@ -784,7 +784,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
               ],
             ),
           ),
-          
+
           // Action buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -816,9 +816,9 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // DataWindow equivalent
           Expanded(
             child: _isLoading
@@ -861,7 +861,7 @@ class CustomerDataWindowWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CustomerDataWindowWidgetState createState() => 
+  _CustomerDataWindowWidgetState createState() =>
       _CustomerDataWindowWidgetState();
 }
 
@@ -1018,7 +1018,7 @@ class Customer with _$Customer {
     required DateTime createdDate,
   }) = _Customer;
 
-  factory Customer.fromJson(Map<String, dynamic> json) => 
+  factory Customer.fromJson(Map<String, dynamic> json) =>
       _$CustomerFromJson(json);
 }
 ```
@@ -1047,7 +1047,7 @@ class SqlCustomerRepository implements CustomerRepository {
       'customers',
       orderBy: 'customer_name',
     );
-    
+
     return result.map((row) => Customer.fromJson(row)).toList();
   }
 
@@ -1059,7 +1059,7 @@ class SqlCustomerRepository implements CustomerRepository {
       whereArgs: [id],
       limit: 1,
     );
-    
+
     if (result.isEmpty) return null;
     return Customer.fromJson(result.first);
   }
@@ -1070,7 +1070,7 @@ class SqlCustomerRepository implements CustomerRepository {
       'customers',
       customer.toJson()..remove('customer_id'),
     );
-    
+
     return customer.copyWith(customerId: id);
   }
 
@@ -1082,7 +1082,7 @@ class SqlCustomerRepository implements CustomerRepository {
       where: 'customer_id = ?',
       whereArgs: [customer.customerId],
     );
-    
+
     return customer;
   }
 

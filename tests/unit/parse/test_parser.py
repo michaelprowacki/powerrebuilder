@@ -3,17 +3,16 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 # Add the root directory to sys.path to import model package
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from lark import Tree
+
 from src.model.ast import TryCatchStatement
-from src.model.entities.library import Library, Export, Import
-from src.parse.library import LibraryManager
 from src.model.ast.powerbuilder import PBDataWindowType as DataWindow
-from src.parse.coordinator import parse_file, parse_string
+from src.model.entities.library import Export, Import, Library
+from src.parse.coordinator import parse_string
+from src.parse.library import LibraryManager
 
 # Test data
 DATAWINDOW_TEST = """
@@ -60,12 +59,6 @@ library customer_lib system
 
 
 def test_parse_datawindow():
-
-
-
-
-
-
     """Test parsing DataWindow syntax."""
     # Note: This test may fail if the DataWindow grammar has issues
     # pytest.skip("DataWindow grammar needs to be fixed")
@@ -78,73 +71,68 @@ def test_parse_datawindow():
 
 
 def test_parse_transaction():
-
-
-
-
-
-
     """Test parsing transaction blocks."""
     ast = parse_string(TRANSACTION_TEST, extension="srq")
-    
+
     # The parser returns a Tree object, not model objects directly
-    from lark import Tree
     assert isinstance(ast, Tree)
     assert ast.data == "start"
-    
+
     # Navigate to the transaction block
     # start -> powerbuilder_file -> transaction_block
     pb_file = None
     for child in ast.children:
-        if isinstance(child, dict) and child.get('type') == 'file':
+        if isinstance(child, dict) and child.get("type") == "file":
             # The transformer has partially processed this
-            elements = child.get('elements', [])
+            elements = child.get("elements", [])
             for elem in elements:
-                if isinstance(elem, Tree) and elem.data == 'transaction_block':
+                if isinstance(elem, Tree) and elem.data == "transaction_block":
                     # Found the transaction block
                     assert len(elem.children) >= 2
                     assert elem.children[1].value == "sqlca"  # Transaction name
-                    
+
                     # Count transaction statements
-                    statements = [c for c in elem.children if isinstance(c, Tree) and c.data == 'transaction_statement']
+                    statements = [
+                        c
+                        for c in elem.children
+                        if isinstance(c, Tree) and c.data == "transaction_statement"
+                    ]
                     assert len(statements) == 2
-                    
+
                     # Check second statement is commit
                     commit_stmt = statements[1]
-                    assert commit_stmt.children[0].data == 'commit_statement'
+                    assert commit_stmt.children[0].data == "commit_statement"
                     return
-        elif isinstance(child, Tree) and child.data == 'powerbuilder_file':
+        elif isinstance(child, Tree) and child.data == "powerbuilder_file":
             pb_file = child
             break
-    
+
     if pb_file:
         # Look for transaction_block in powerbuilder_file
         for child in pb_file.children:
-            if isinstance(child, Tree) and child.data == 'transaction_block':
+            if isinstance(child, Tree) and child.data == "transaction_block":
                 # Found the transaction block
                 assert len(child.children) >= 2
                 assert child.children[1].value == "sqlca"  # Transaction name
-                
+
                 # Count transaction statements
-                statements = [c for c in child.children if isinstance(c, Tree) and c.data == 'transaction_statement']
+                statements = [
+                    c
+                    for c in child.children
+                    if isinstance(c, Tree) and c.data == "transaction_statement"
+                ]
                 assert len(statements) == 2
-                
+
                 # Check second statement is commit
                 commit_stmt = statements[1]
-                assert commit_stmt.children[0].data == 'commit_statement'
+                assert commit_stmt.children[0].data == "commit_statement"
                 return
-    
+
     # If we get here, we didn't find the expected structure
     assert False, f"Could not find transaction_block in AST: {ast.pretty()}"
 
 
 def test_parse_exception():
-
-
-
-
-
-
     """Test parsing exception handling."""
     ast = parse_string(EXCEPTION_TEST, extension="sru")
     assert isinstance(ast, TryCatchStatement)
@@ -156,12 +144,6 @@ def test_parse_exception():
 
 
 def test_parse_library():
-
-
-
-
-
-
     """Test parsing library definitions."""
     ast = parse_string(LIBRARY_TEST, extension="sru")
     assert isinstance(ast, Library)
@@ -174,25 +156,23 @@ def test_parse_library():
 
 
 def test_library_manager():
-
-
     """Test library dependency management."""
     manager = LibraryManager()
 
     # Add some test libraries
     lib1 = Library(name="lib1", path="lib1.pbl")
     lib1.imports.append(Import(from_library="lib2", object_name="window1"))
-    
+
     lib2 = Library(name="lib2", path="lib2.pbl")
     lib2.imports.append(Import(from_library="lib3", object_name="basewin"))
-    
+
     lib3 = Library(name="lib3", path="lib3.pbl", is_system=True)
-    
+
     # Test basic library creation
     assert lib1.name == "lib1"
     assert len(lib1.imports) == 1
     assert lib1.imports[0].from_library == "lib2"
-    
+
     # Test library exports
     lib1.exports.append(Export(object_name="w_customer_list"))
     assert len(lib1.exports) == 1

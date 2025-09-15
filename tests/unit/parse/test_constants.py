@@ -22,10 +22,6 @@ class TestPowerBuilderConstants:
     """Test PowerBuilder constant definitions."""
 
     def test_keywords_defined(self):
-
-
-
-
         """Test that keywords are properly defined."""
         assert len(PB_KEYWORDS) > 0
 
@@ -40,10 +36,6 @@ class TestPowerBuilderConstants:
         assert "return" in PB_KEYWORDS
 
     def test_basic_types_defined(self):
-
-
-
-
         """Test that basic types are properly defined."""
         assert len(PB_BASIC_TYPES) > 0
 
@@ -58,10 +50,6 @@ class TestPowerBuilderConstants:
         assert "char" in PB_BASIC_TYPES
 
     def test_system_types_defined(self):
-
-
-
-
         """Test that system types are properly defined."""
         assert len(PB_SYSTEM_TYPES) > 0
 
@@ -73,10 +61,6 @@ class TestPowerBuilderConstants:
         assert "datastore" in PB_SYSTEM_TYPES
 
     def test_control_types_defined(self):
-
-
-
-
         """Test that control types are properly defined."""
         assert len(PB_CONTROL_TYPES) > 0
 
@@ -89,10 +73,6 @@ class TestPowerBuilderConstants:
         assert "listview" in PB_CONTROL_TYPES
 
     def test_event_types_defined(self):
-
-
-
-
         """Test that event types are properly defined."""
         assert len(PB_EVENT_TYPES) > 0
 
@@ -105,10 +85,6 @@ class TestPowerBuilderConstants:
         assert "losefocus" in PB_EVENT_TYPES
 
     def test_sql_keywords_defined(self):
-
-
-
-
         """Test that SQL keywords are properly defined."""
         assert len(SQL_KEYWORDS) > 0
 
@@ -121,10 +97,6 @@ class TestPowerBuilderConstants:
         assert "from" in SQL_KEYWORDS
 
     def test_file_extensions_defined(self):
-
-
-
-
         """Test that file extensions are properly defined."""
         assert len(FILE_EXTENSIONS) > 0
 
@@ -143,10 +115,6 @@ class TestPowerBuilderConstants:
         assert FILE_EXTENSIONS["srd"] == FileType.DATAWINDOW
 
     def test_grammar_paths_exist(self):
-
-
-
-
         """Test that grammar file paths are defined."""
         # Check that paths are defined
         assert POWERBUILDER_GRAMMAR is not None
@@ -161,10 +129,6 @@ class TestPowerBuilderConstants:
         assert str(SQL_GRAMMAR).endswith(".lark")
 
     def test_filetype_enum(self):
-
-
-
-
         """Test FileType enum."""
         # Check enum values exist
         assert FileType.WINDOW
@@ -184,10 +148,6 @@ class TestPowerBuilderConstants:
         assert len(values) == len(set(values))
 
     def test_type_aliases(self):
-
-
-
-
         """Test that type aliases are included."""
         # Integer aliases
         assert "int" in PB_BASIC_TYPES

@@ -14,10 +14,6 @@ class TestComputedField:
     """Test cases for ComputedField dataclass."""
 
     def test_computed_field_creation(self):
-
-
-
-
         """Test creating a computed field."""
         field = ComputedField(
             name="total_amount",
@@ -35,10 +31,6 @@ class TestComputedField:
         assert field.is_aggregate is False
 
     def test_aggregate_computed_field(self):
-
-
-
-
         """Test creating an aggregate computed field."""
         field = ComputedField(
             name="average_salary",
@@ -54,10 +46,6 @@ class TestComputedField:
         assert field.aggregate_function == "avg"
 
     def test_computed_field_to_dict(self):
-
-
-
-
         """Test ComputedField to_dict conversion."""
         field = ComputedField(
             name="full_name",
@@ -79,10 +67,6 @@ class TestValidationRule:
     """Test cases for ValidationRule dataclass."""
 
     def test_validation_rule_creation(self):
-
-
-
-
         """Test creating a validation rule."""
         rule = ValidationRule(
             column_name="age",
@@ -98,10 +82,6 @@ class TestValidationRule:
         assert rule.rule_value == 18
 
     def test_validation_rule_to_dict(self):
-
-
-
-
         """Test ValidationRule to_dict conversion."""
         rule = ValidationRule(
             column_name="email",
@@ -123,28 +103,16 @@ class TestComputedFieldProcessor:
     """Test cases for ComputedFieldProcessor."""
 
     def setup_method(self):
-
-
-
-
         """Set up test instances."""
         self.processor = ComputedFieldProcessor()
 
     def test_initialization(self):
-
-
-
-
         """Test processor initialization."""
         assert self.processor is not None
         assert len(self.processor.aggregate_functions) > 0
         assert len(self.processor.type_patterns) > 0
 
     def test_extract_dependencies(self):
-
-
-
-
         """Test dependency extraction from expressions."""
         columns = [
             {"name": "quantity", "data_type": "int"},
@@ -157,7 +125,9 @@ class TestComputedFieldProcessor:
         assert set(deps) == {"quantity", "unit_price"}
 
         # Expression with function
-        deps = self.processor._extract_dependencies("round(unit_price * (1 - discount))", columns)
+        deps = self.processor._extract_dependencies(
+            "round(unit_price * (1 - discount))", columns
+        )
         assert set(deps) == {"unit_price", "discount"}
 
         # No dependencies
@@ -165,10 +135,6 @@ class TestComputedFieldProcessor:
         assert deps == []
 
     def test_check_aggregate(self):
-
-
-
-
         """Test aggregate function detection."""
         # Aggregate functions
         is_agg, func = self.processor._check_aggregate("sum(amount)")
@@ -189,10 +155,6 @@ class TestComputedFieldProcessor:
         assert func is None
 
     def test_infer_type(self):
-
-
-
-
         """Test type inference for expressions."""
         # Numeric operations
         assert self.processor._infer_type("a + b") == "double"
@@ -217,10 +179,6 @@ class TestComputedFieldProcessor:
         assert self.processor._infer_type("123.45") == "double"
 
     def test_process_computed_field(self):
-
-
-
-
         """Test processing a complete computed field."""
         columns = [
             {"name": "quantity", "data_type": "int"},
@@ -239,10 +197,6 @@ class TestComputedFieldProcessor:
         assert field.is_aggregate is False
 
     def test_process_aggregate_field(self):
-
-
-
-
         """Test processing an aggregate computed field."""
         columns = [{"name": "amount", "data_type": "double"}]
 
@@ -257,10 +211,6 @@ class TestComputedFieldProcessor:
         assert field.inferred_type == "double"
 
     def test_generate_flutter_method(self):
-
-
-
-
         """Test Flutter method generation for computed field."""
         field = ComputedField(
             name="full_price",
@@ -278,10 +228,6 @@ class TestComputedFieldProcessor:
         assert any("basePrice + tax" in line for line in lines)
 
     def test_generate_python_method(self):
-
-
-
-
         """Test Python method generation for computed field."""
         field = ComputedField(
             name="discount_amount",
@@ -299,20 +245,12 @@ class TestComputedFieldProcessor:
         assert any("price * discountRate" in line for line in lines)
 
     def test_pascal_case_conversion(self):
-
-
-
-
         """Test PascalCase conversion."""
         assert self.processor._to_pascal_case("my_field") == "MyField"
         assert self.processor._to_pascal_case("simple") == "Simple"
         assert self.processor._to_pascal_case("long_field_name") == "LongFieldName"
 
     def test_python_type_conversion(self):
-
-
-
-
         """Test Dart to Python type conversion."""
         assert self.processor._python_type("int") == "int"
         assert self.processor._python_type("double") == "float"
@@ -326,27 +264,15 @@ class TestValidationRuleProcessor:
     """Test cases for ValidationRuleProcessor."""
 
     def setup_method(self):
-
-
-
-
         """Set up test instances."""
         self.processor = ValidationRuleProcessor()
 
     def test_initialization(self):
-
-
-
-
         """Test processor initialization."""
         assert self.processor is not None
         assert len(self.processor.rule_patterns) > 0
 
     def test_process_required_rule(self):
-
-
-
-
         """Test processing required field validation."""
         rule = self.processor.process_validation_rule("name", "required")
 
@@ -356,10 +282,6 @@ class TestValidationRuleProcessor:
         assert "is required" in rule.error_message
 
     def test_process_min_max_rules(self):
-
-
-
-
         """Test processing min/max validation rules."""
         # Min rule
         rule = self.processor.process_validation_rule("age", "min 18")
@@ -377,10 +299,6 @@ class TestValidationRuleProcessor:
         assert rule.rule_value == (10.0, 1000.0)
 
     def test_process_length_rule(self):
-
-
-
-
         """Test processing length validation rules."""
         rule = self.processor.process_validation_rule("code", "len = 10")
 
@@ -388,32 +306,24 @@ class TestValidationRuleProcessor:
         assert rule.rule_value == 10
 
     def test_process_pattern_rule(self):
-
-
-
-
         """Test processing pattern validation rules."""
-        rule = self.processor.process_validation_rule("email", "match('[a-z]+@[a-z]+\\.[a-z]+')")
+        rule = self.processor.process_validation_rule(
+            "email", "match('[a-z]+@[a-z]+\\.[a-z]+')"
+        )
 
         assert rule.rule_type == "pattern"
         assert "@" in rule.rule_value
 
     def test_process_custom_rule(self):
-
-
-
-
         """Test processing custom validation rules."""
-        rule = self.processor.process_validation_rule("custom_field", "some_complex_validation()")
+        rule = self.processor.process_validation_rule(
+            "custom_field", "some_complex_validation()"
+        )
 
         assert rule.rule_type == "custom"
         assert rule.rule_value == "some_complex_validation()"
 
     def test_generate_dart_required_validator(self):
-
-
-
-
         """Test Dart required field validator generation."""
         rule = ValidationRule(
             column_name="username",
@@ -424,17 +334,15 @@ class TestValidationRuleProcessor:
             python_validator="",
         )
 
-        validator = self.processor._generate_dart_validator("username", "required", True)
+        validator = self.processor._generate_dart_validator(
+            "username", "required", True
+        )
 
         assert "validateUsername" in validator
         assert "isEmpty" in validator
         assert "return 'username is required'" in validator
 
     def test_generate_dart_numeric_validators(self):
-
-
-
-
         """Test Dart numeric validator generation."""
         # Min validator
         validator = self.processor._generate_dart_validator("age", "min", 18)
@@ -453,13 +361,11 @@ class TestValidationRuleProcessor:
         assert "> 100" in validator
 
     def test_generate_dart_pattern_validator(self):
-
-
-
-
         """Test Dart pattern validator generation."""
         validator = self.processor._generate_dart_validator(
-            "email", "pattern", r"^[\w\.-]+@[\w\.-]+\.\w+$",
+            "email",
+            "pattern",
+            r"^[\w\.-]+@[\w\.-]+\.\w+$",
         )
 
         assert "validateEmail" in validator
@@ -467,10 +373,6 @@ class TestValidationRuleProcessor:
         assert "hasMatch" in validator
 
     def test_generate_python_validators(self):
-
-
-
-
         """Test Python validator generation."""
         # Required validator
         validator = self.processor._generate_python_validator("name", "required", True)
@@ -483,15 +385,13 @@ class TestValidationRuleProcessor:
         assert "< 18" in validator
 
         # Pattern validator
-        validator = self.processor._generate_python_validator("code", "pattern", r"\d{5}")
+        validator = self.processor._generate_python_validator(
+            "code", "pattern", r"\d{5}"
+        )
         assert "import re" in validator
         assert "pattern.match" in validator
 
     def test_generate_form_validators_flutter(self):
-
-
-
-
         """Test Flutter form validators generation."""
         rules = [
             ValidationRule("name", "required", True, "Name required", "", ""),
@@ -505,14 +405,12 @@ class TestValidationRuleProcessor:
         assert "field_validators" in validators
 
         form_validators = validators["form_validators"]
-        assert any("FormBuilderValidators.required()" in line for line in form_validators)
+        assert any(
+            "FormBuilderValidators.required()" in line for line in form_validators
+        )
         assert any("FormBuilderValidators.min(18)" in line for line in form_validators)
 
     def test_generate_form_validators_python(self):
-
-
-
-
         """Test Python form validators generation."""
         rules = [
             ValidationRule("username", "required", True, "Required", "", ""),
@@ -529,10 +427,6 @@ class TestValidationRuleProcessor:
         assert any("validate_all" in line for line in form_validators)
 
     def test_empty_validation_expression(self):
-
-
-
-
         """Test handling empty validation expressions."""
         rule = self.processor.process_validation_rule("field", "")
         assert rule is None
@@ -541,10 +435,6 @@ class TestValidationRuleProcessor:
         assert rule is None
 
     def test_complex_validation_patterns(self):
-
-
-
-
         """Test complex validation pattern matching."""
         # Date validation
         rule = self.processor.process_validation_rule("start_date", "date >= today")
@@ -560,21 +450,19 @@ class TestValidationRuleProcessor:
         assert rule.rule_value == "ABC%"
 
     def test_generate_custom_validators(self):
-
-
-
-
         """Test custom validator generation."""
         # Dart custom validator
         dart_validator = self.processor._generate_dart_custom_validator(
-            "custom_field", "validateCustomLogic()",
+            "custom_field",
+            "validateCustomLogic()",
         )
         assert "validateCustomFieldCustom" in dart_validator
         assert "TODO: Implement custom validation logic" in dart_validator
 
         # Python custom validator
         python_validator = self.processor._generate_python_custom_validator(
-            "custom_field", "validateCustomLogic()",
+            "custom_field",
+            "validateCustomLogic()",
         )
         assert "def validate_custom_field_custom" in python_validator
         assert "TODO: Implement custom validation logic" in python_validator

@@ -57,26 +57,26 @@ get_body() {
 for issue_file in github_issues/issue_*.md; do
     if [ -f "$issue_file" ]; then
         echo "Processing $issue_file..."
-        
+
         # Extract components
         title=$(get_title "$issue_file")
         labels=$(get_labels "$issue_file")
         body=$(get_body "$issue_file")
-        
+
         # Add claude-code label to all issues
         if [ -n "$labels" ]; then
             labels="${labels},claude-code"
         else
             labels="claude-code"
         fi
-        
+
         # Create the issue
         echo "Creating issue: $title"
         gh issue create \
             --title "$title" \
             --body "$body" \
             --label "$labels" || echo "Failed to create issue from $issue_file"
-        
+
         # Small delay to avoid rate limiting
         sleep 1
     fi

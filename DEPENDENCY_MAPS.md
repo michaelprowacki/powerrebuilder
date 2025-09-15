@@ -10,7 +10,7 @@
 - **Generated**: By subagent during codebase analysis
 
 #### Comprehensive Import Map
-- **File**: [`COMPREHENSIVE_IMPORT_MAP.md`](COMPREHENSIVE_IMPORT_MAP.md)  
+- **File**: [`COMPREHENSIVE_IMPORT_MAP.md`](COMPREHENSIVE_IMPORT_MAP.md)
 - **Content**: Executive summary with module health status
 - **Key Finding**: 134 broken imports identified (now mostly fixed)
 
@@ -109,7 +109,7 @@ The codebase is configured for Python 3.13 (`requires-python = ">=3.13"` in pypr
 
 #### Features to Adopt
 - PEP 692: TypedDict for **kwargs
-- PEP 698: Override decorator 
+- PEP 698: Override decorator
 - PEP 701: Improved f-strings
 - Better error messages
 - Performance improvements

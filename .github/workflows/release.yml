@@ -28,38 +28,38 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       changelog: ${{ steps.changelog.outputs.changelog }}
       should_release: ${{ steps.check.outputs.should_release }}
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Install dependencies
         run: |
           uv sync --frozen
           uv tool install commitizen
           uv tool install conventional-changelog-cli
-      
+
       - name: Check for releasable changes
         id: check
         run: |
           # Get last tag
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
-          
+
           # Check for conventional commits since last tag
           COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|perf|BREAKING CHANGE):" || true)
-          
+
           if [ -z "$COMMITS" ] && [ -z "${{ inputs.version }}" ]; then
             echo "No releasable changes found"
             echo "should_release=false" >> $GITHUB_OUTPUT
@@ -67,7 +67,7 @@ jobs:
             echo "Releasable changes found or manual version specified"
             echo "should_release=true" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Determine version
         id: version
         if: steps.check.outputs.should_release == 'true'
@@ -78,35 +78,35 @@ jobs:
           else
             # Use commitizen to determine next version
             VERSION=$(uv run cz bump --dry-run | grep -oP 'bump: version \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
-            
+
             if [ -z "$VERSION" ]; then
               # Fallback: increment patch version
               LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
               VERSION=$(echo $LAST_TAG | sed 's/v//' | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
             fi
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version will be: $VERSION"
-      
+
       - name: Generate changelog
         id: changelog
         if: steps.check.outputs.should_release == 'true'
         run: |
           # Generate changelog for this release
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           if [ -z "$LAST_TAG" ]; then
             RANGE="HEAD"
           else
             RANGE="$LAST_TAG..HEAD"
           fi
-          
+
           # Create changelog content
           {
             echo "## What's Changed"
             echo ""
-            
+
             # Features
             FEATURES=$(git log $RANGE --pretty=format:"* %s (%h)" --grep="^feat:" || true)
             if [ -n "$FEATURES" ]; then
@@ -114,7 +114,7 @@ jobs:
               echo "$FEATURES"
               echo ""
             fi
-            
+
             # Bug fixes
             FIXES=$(git log $RANGE --pretty=format:"* %s (%h)" --grep="^fix:" || true)
             if [ -n "$FIXES" ]; then
@@ -122,7 +122,7 @@ jobs:
               echo "$FIXES"
               echo ""
             fi
-            
+
             # Performance improvements
             PERF=$(git log $RANGE --pretty=format:"* %s (%h)" --grep="^perf:" || true)
             if [ -n "$PERF" ]; then
@@ -130,7 +130,7 @@ jobs:
               echo "$PERF"
               echo ""
             fi
-            
+
             # Breaking changes
             BREAKING=$(git log $RANGE --pretty=format:"* %s (%h)" --grep="BREAKING CHANGE" || true)
             if [ -n "$BREAKING" ]; then
@@ -138,10 +138,10 @@ jobs:
               echo "$BREAKING"
               echo ""
             fi
-            
+
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...v${{ steps.version.outputs.version }}"
           } > RELEASE_NOTES.md
-          
+
           # Output for use in release
           CHANGELOG=$(cat RELEASE_NOTES.md)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
@@ -153,30 +153,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-release
     if: needs.prepare-release.outputs.should_release == 'true'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run tests
         run: |
           uv run pytest tests/ -v --tb=short
-      
+
       - name: Build package
         run: |
           uv build
-      
+
       - name: Check package
         run: |
           uv tool install twine
@@ -187,44 +187,44 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare-release, test-release]
     if: needs.prepare-release.outputs.should_release == 'true'
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Update version in pyproject.toml
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-          
+
           # Commit version change
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml
           git diff --staged --quiet || git commit -m "chore(release): bump version to $VERSION"
-      
+
       - name: Create and push tag
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin main
           git push origin "v$VERSION"
-      
+
       - name: Build distribution packages
         run: |
           uv build
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -246,24 +246,24 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/powerrebuilder/
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: v${{ needs.prepare-release.outputs.version }}
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Build distribution packages
         run: uv build
-      
+
       - name: Publish to Test PyPI
         if: inputs.prerelease == true
         run: |
@@ -272,7 +272,7 @@ jobs:
             --username __token__ \
             --password ${{ secrets.TEST_PYPI_API_TOKEN }}
         continue-on-error: true
-      
+
       - name: Publish to PyPI
         if: inputs.prerelease != true
         run: |
@@ -285,29 +285,29 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare-release, create-release]
     if: needs.prepare-release.outputs.should_release == 'true'
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: v${{ needs.prepare-release.outputs.version }}
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Log in to Docker Hub
         if: secrets.DOCKER_USERNAME != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -327,28 +327,28 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare-release, create-release]
     if: needs.prepare-release.outputs.should_release == 'true'
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: v${{ needs.prepare-release.outputs.version }}
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Build documentation
         run: |
           uv run mkdocs build
-      
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

@@ -13,12 +13,6 @@ from src.parse import parse_file
 
 
 def test_parse():
-
-
-
-
-
-
     """Test parsing on an extracted window file."""
     try:
         file_path = "output/test_extraction/dcm_sms-pbd/w_patient_sms_maint.win"
@@ -41,8 +35,6 @@ from lark import Lark, Tree
 
 @pytest.fixture
 def lark_parser():
-
-
     """Create a simple Lark parser for basic statements."""
     # Define a minimal grammar for testing
     grammar = """
@@ -69,12 +61,6 @@ def lark_parser():
 
 
 def test_simple_parser(lark_parser):
-
-
-
-
-
-
     """Test that the basic parser works."""
     # Simple variable declaration
     tree = lark_parser.parse("x: integer;")
@@ -95,12 +81,6 @@ def test_simple_parser(lark_parser):
 
 
 def test_simple_grammar_combinations(lark_parser):
-
-
-
-
-
-
     """Test simple combinations of grammar rules."""
     code = """
     x: integer;

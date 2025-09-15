@@ -5,45 +5,45 @@
 performance:
   # Performance profile: fast, balanced, memory_efficient, enterprise
   profile: balanced
-  
+
   # Streaming configuration
   streaming:
     # Enable streaming for large files
     enabled: true
-    
+
     # Chunk size for streaming operations
     chunk_size: 1048576          # 1MB
-    
+
     # Buffer size for I/O operations
     buffer_size: 65536           # 64KB
-    
+
     # Number of chunks to prefetch
     prefetch_count: 2
-    
+
     # Enable lazy loading
     lazy_loading: true
-    
+
     # Memory-mapped file threshold
     mmap_threshold: 10485760     # Use mmap for files > 10MB
-    
+
   # Parallel processing configuration
   parallel:
     # Enable parallel processing
     enabled: true
-    
+
     # Maximum number of worker processes/threads
     max_workers: 8               # Or use 0 for auto (CPU count)
-    
+
     # Worker type: thread, process
     worker_type: process
-    
+
     # Maximum memory per worker
     max_memory_per_worker: 536870912  # 512MB
-    
+
     # Work distribution
     load_balancing: dynamic      # static, dynamic, work_stealing
     batch_size: 10              # Files per batch
-    
+
     # Per-stage configuration
     stages:
       extract:
@@ -62,12 +62,12 @@ performance:
         workers: 4
         batch_size: 10
         priority: low
-    
+
   # Memory management
   memory:
     # Memory limits
     max_heap_size: 2147483648    # 2GB
-    
+
     # Garbage collection
     gc:
       enabled: true
@@ -75,21 +75,21 @@ performance:
       generation_0_threshold: 700
       generation_1_threshold: 10
       generation_2_threshold: 10
-      
+
     # Buffer pool configuration
     buffer_pool:
       enabled: true
       size: 104857600           # 100MB total pool size
       buffer_size: 65536        # 64KB per buffer
       max_buffers: 1000
-      
+
     # Cache configuration
     cache:
       enabled: true
       type: "lru"               # lru, lfu, ttl
       max_size: 268435456       # 256MB
       ttl: 300                  # 5 minutes
-      
+
       # Per-component caches
       components:
         parser:
@@ -101,7 +101,7 @@ performance:
         templates:
           size: 33554432        # 32MB
           ttl: 3600
-    
+
   # I/O optimization
   io:
     # Disk I/O settings
@@ -110,38 +110,38 @@ performance:
       write_buffer: 131072      # 128KB
       direct_io: false          # Bypass OS cache
       async_io: true            # Non-blocking I/O
-      
+
       # I/O throttling
       throttling:
         enabled: false
         read_mbps: 100          # MB/s
         write_mbps: 50          # MB/s
-        
+
     # File handling
     files:
       max_open_files: 1024
       close_on_exec: true
-      
+
     # Network I/O (if applicable)
     network:
       socket_buffer: 65536      # 64KB
       tcp_nodelay: true
       keepalive: true
       connection_pool_size: 10
-      
+
   # CPU optimization
   cpu:
     # CPU affinity
     affinity:
       enabled: false
       cores: []                 # List of CPU cores to use
-      
+
     # Priority
     priority: normal            # low, normal, high, realtime
-    
+
     # CPU governor (Linux)
     governor: performance       # performance, powersave, ondemand
-    
+
   # Algorithm optimizations
   algorithms:
     # Parsing optimizations
@@ -149,25 +149,25 @@ performance:
       incremental: true         # Incremental parsing
       error_recovery: true      # Continue on errors
       lookahead: 2             # Parser lookahead
-      
+
     # AST optimizations
     ast:
       deduplication: true      # Deduplicate identical nodes
       compression: true        # Compress AST in memory
-      
+
     # Code generation
     generation:
       template_caching: true   # Cache compiled templates
       batch_rendering: true    # Batch template operations
-      
+
   # Monitoring and profiling
   monitoring:
     # Enable performance monitoring
     enabled: true
-    
+
     # Metrics collection interval
     interval: 1                # seconds
-    
+
     # Metrics to collect
     metrics:
       - cpu_usage
@@ -176,26 +176,26 @@ performance:
       - cache_hit_rate
       - throughput
       - latency
-      
+
     # Export metrics
     export:
       enabled: true
       format: prometheus       # prometheus, json, csv
       endpoint: "localhost:9090"
-      
+
     # Performance logging
     logging:
       enabled: true
       level: INFO
       include_timings: true
       slow_operation_threshold: 1000  # ms
-      
+
     # Profiling
     profiling:
       enabled: false
       type: cpu               # cpu, memory, io
       output: "profile.pstat"
-      
+
 # Performance profiles
 profiles:
   # Fast mode - prioritize speed
@@ -208,7 +208,7 @@ profiles:
     memory:
       cache:
         max_size: 1073741824  # 1GB cache
-        
+
   # Memory efficient mode
   memory_efficient:
     streaming:
@@ -221,7 +221,7 @@ profiles:
       max_heap_size: 536870912  # 512MB
       cache:
         max_size: 67108864    # 64MB cache
-        
+
   # Enterprise mode - large scale
   enterprise:
     streaming:
@@ -237,7 +237,7 @@ profiles:
         redis:
           host: "localhost"
           port: 6379
-          
+
 # Environment-specific settings
 environments:
   development:
@@ -246,14 +246,14 @@ environments:
       monitoring:
         profiling:
           enabled: true
-          
+
   production:
     performance:
       profile: enterprise
       monitoring:
         export:
           enabled: true
-          
+
   testing:
     performance:
       profile: fast

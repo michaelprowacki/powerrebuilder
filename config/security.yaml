@@ -5,10 +5,10 @@
 security:
   # Enable all security features
   enabled: true
-  
+
   # Security mode: strict, moderate, permissive
   mode: strict
-  
+
   # Path traversal protection
   path_validation:
     enabled: true
@@ -29,33 +29,33 @@ security:
     max_depth: 10
     # Follow symlinks
     follow_symlinks: false
-    
+
   # Resource limits
   resource_limits:
     # File size limits
     max_file_size: 104857600      # 100MB
     max_total_size: 10737418240   # 10GB
-    
+
     # File count limits
     max_files: 10000
     max_open_files: 100
-    
+
     # Memory limits
     max_memory: 2147483648        # 2GB
     max_memory_per_operation: 536870912  # 512MB
-    
+
     # CPU limits
     max_cpu_seconds: 300          # 5 minutes per operation
     cpu_quota: 0.8                # 80% of available CPU
-    
+
     # Time limits
     operation_timeout: 600        # 10 minutes
     total_timeout: 3600          # 1 hour
-    
+
   # Input validation
   input_validation:
     enabled: true
-    
+
     # Allowed file extensions
     allowed_extensions:
       - .pbl
@@ -67,42 +67,42 @@ security:
       - .srm
       - .srs
       - .sra
-      
+
     # Filename restrictions
     max_filename_length: 255
     allowed_characters: "a-zA-Z0-9._-"
-    
+
     # Content validation
     validate_file_signatures: true
     max_line_length: 10000
     encoding: "utf-8"
-    
+
   # Decompression protection
   decompression:
     # Maximum compression ratio
     max_ratio: 100
-    
+
     # Maximum nesting depth
     max_nested_depth: 5
-    
+
     # Maximum extracted size
     max_extracted_size: 1073741824  # 1GB
-    
+
     # Banned archive formats
     banned_formats:
       - .zip
       - .rar
       - .7z
       - .tar.gz
-    
+
   # SQL injection prevention
   sql_security:
     # Enable SQL sanitization
     enabled: true
-    
+
     # Parameterized queries
     force_parameterized: true
-    
+
     # Blocked SQL keywords in user input
     blocked_keywords:
       - "DROP"
@@ -111,15 +111,15 @@ security:
       - "ALTER"
       - "EXEC"
       - "EXECUTE"
-    
+
   # Template injection prevention
   template_security:
     # Enable template sanitization
     enabled: true
-    
+
     # Escape template expressions
     auto_escape: true
-    
+
     # Blocked template patterns
     blocked_patterns:
       - "{{"
@@ -128,48 +128,48 @@ security:
       - "%}"
       - "${"
       - "#{"
-    
+
   # Network security (if applicable)
   network:
     # Disable network access
     disable_network: true
-    
+
     # If network enabled, whitelist hosts
     allowed_hosts: []
-    
+
     # Proxy settings
     use_proxy: false
-    
+
   # Process isolation
   isolation:
     # Run in sandbox
     sandbox: true
-    
+
     # Drop privileges
     drop_privileges: true
     run_as_user: "nobody"
-    
+
     # Filesystem isolation
     chroot: false
-    
+
   # Audit logging
   audit:
     # Enable audit logging
     enabled: true
-    
+
     # Log file location
     log_file: "${LOG_DIR}/security_audit.log"
-    
+
     # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
     log_level: "WARNING"
-    
+
     # Include stack traces
     include_stacktrace: false
-    
+
     # Log rotation
     max_size: 104857600  # 100MB
     backup_count: 10
-    
+
     # Events to log
     log_events:
       - path_traversal_attempt
@@ -179,25 +179,25 @@ security:
       - permission_denied
       - suspicious_pattern
       - circuit_breaker_open
-    
+
     # Remote logging
     remote_logging:
       enabled: false
       endpoint: "https://logging.example.com/api/logs"
       api_key: "${LOGGING_API_KEY}"
-    
+
   # Alerting
   alerts:
     # Enable security alerts
     enabled: true
-    
+
     # Alert thresholds
     thresholds:
       path_traversal_attempts: 10      # per hour
       resource_exhaustion: 5           # per hour
       invalid_inputs: 100              # per hour
       authentication_failures: 10      # per hour
-      
+
     # Alert destinations
     destinations:
       - type: "email"
@@ -207,18 +207,18 @@ security:
         url: "https://alerts.example.com/webhook"
       - type: "log"
         file: "${LOG_DIR}/security_alerts.log"
-    
+
   # Security headers (for web interface if applicable)
   headers:
     # Content Security Policy
     content_security_policy: "default-src 'self'"
-    
+
     # Other security headers
     x_frame_options: "DENY"
     x_content_type_options: "nosniff"
     x_xss_protection: "1; mode=block"
     strict_transport_security: "max-age=31536000; includeSubDomains"
-    
+
 # Environment-specific overrides
 environments:
   development:
@@ -229,7 +229,7 @@ environments:
         include_stacktrace: true
       resource_limits:
         max_file_size: 1073741824  # 1GB for testing
-        
+
   production:
     security:
       mode: strict
@@ -238,7 +238,7 @@ environments:
         chroot: true
       alerts:
         enabled: true
-        
+
   testing:
     security:
       mode: permissive

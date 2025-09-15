@@ -41,8 +41,6 @@ STRING: /"[^"]*"/
 
 @pytest.fixture
 def simple_parser():
-
-
     """Create a simple parser for PowerBuilder grammar."""
     return Lark(SIMPLE_GRAMMAR, parser="earley")
 
@@ -51,10 +49,6 @@ class TestSimplePB:
     """Test simple PowerBuilder grammar."""
 
     def test_var_declaration(self, simple_parser):
-
-
-
-
         """Test variable declarations."""
         code = "x: integer;"
         tree = simple_parser.parse(code)
@@ -65,10 +59,6 @@ class TestSimplePB:
         assert tree is not None
 
     def test_assignment(self, simple_parser):
-
-
-
-
         """Test assignment statements."""
         code = "x = 10;"
         tree = simple_parser.parse(code)
@@ -83,10 +73,6 @@ class TestSimplePB:
         assert tree is not None
 
     def test_if_statement(self, simple_parser):
-
-
-
-
         """Test if statements."""
         code = """
         if x > 5 then
@@ -107,10 +93,6 @@ class TestSimplePB:
         assert tree is not None
 
     def test_for_loop(self, simple_parser):
-
-
-
-
         """Test for loops."""
         code = """
         for i = 1 to 10
@@ -129,10 +111,6 @@ class TestSimplePB:
         assert tree is not None
 
     def test_combined(self, simple_parser):
-
-
-
-
         """Test combined statements."""
         code = """
         x: integer;

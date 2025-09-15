@@ -12,12 +12,6 @@ from src.model.ast import (
 
 
 def test_file_mode_values():
-
-
-
-
-
-
     """Test file mode enumeration values."""
     assert FileMode.READ.value == "r"
     assert FileMode.WRITE.value == "w"
@@ -31,12 +25,6 @@ def test_file_mode_values():
 
 
 def test_file_operation_validation():
-
-
-
-
-
-
     """Test base file operation validation."""
     # Valid operation
     op = FileOperation(file_path="test.txt")
@@ -48,12 +36,6 @@ def test_file_operation_validation():
 
 
 def test_open_file_validation():
-
-
-
-
-
-
     """Test open file operation validation."""
     # Valid open operation
     op = OpenFile(file_path="test.txt", mode=FileMode.READ)
@@ -69,12 +51,6 @@ def test_open_file_validation():
 
 
 def test_read_file_validation():
-
-
-
-
-
-
     """Test read file operation validation."""
     # Valid read operation
     op = ReadFile(file_path="test.txt")
@@ -94,12 +70,6 @@ def test_read_file_validation():
 
 
 def test_write_file_validation():
-
-
-
-
-
-
     """Test write file operation validation."""
     # Valid write operation
     op = WriteFile(file_path="test.txt", content="Hello")
@@ -115,12 +85,6 @@ def test_write_file_validation():
 
 
 def test_file_manager():
-
-
-
-
-
-
     """Test file manager functionality."""
     manager = FileManager(open_files={})
 
@@ -141,12 +105,6 @@ def test_file_manager():
 
 
 def test_file_manager_operation_validation():
-
-
-
-
-
-
     """Test file manager operation validation."""
     manager = FileManager(open_files={})
 
@@ -175,12 +133,6 @@ def test_file_manager_operation_validation():
 
 
 def test_file_mode_compatibility():
-
-
-
-
-
-
     """Test file mode compatibility for operations."""
     manager = FileManager(open_files={})
 

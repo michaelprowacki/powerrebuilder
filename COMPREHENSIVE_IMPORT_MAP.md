@@ -8,7 +8,7 @@ This document provides a complete analysis of the PowerRebuilder codebase's impo
 
 - **289 Python files** analyzed across all modules
 - **134 broken imports** found (46% of all imports issues)
-- **2 circular dependency cycles** detected  
+- **2 circular dependency cycles** detected
 - **Major architectural issues** in the model module preventing system functionality
 
 ## Critical Issues Requiring Immediate Attention
@@ -42,12 +42,12 @@ class PBNode:
     kind: NodeKind
     name: str
     line: Optional[int] = None
-    
+
     def accept_visitor(self, visitor):
         """Accept visitor pattern."""
         pass
 
-@dataclass  
+@dataclass
 class SourceAnchor:
     """Source code location information."""
     file: str
@@ -59,7 +59,7 @@ class SourceAnchor:
 
 **Missing Files Referenced in Git Status**:
 - `src/model/ast/literals.py`
-- `src/model/ast/node_kind.py` 
+- `src/model/ast/node_kind.py`
 - `src/model/ast/nodes/expressions.py`
 - `src/model/ast/nodes/literals.py`
 - `src/model/ast/nodes/variables.py`
@@ -82,7 +82,7 @@ class SourceAnchor:
 
 ### EXTRACT Module (50 files)
 **Status**: ✅ Generally healthy
-**Top Dependencies**: 
+**Top Dependencies**:
 - Internal: `src` (195 imports)
 - External: `typing` (60), `logging` (38), `pathlib` (33)
 
@@ -92,12 +92,12 @@ class SourceAnchor:
 from src.extract.coordinator import ExtractCoordinator
 from src.extract.components.orchestrator import ExtractionOrchestrator
 
-# PBD file handling  
+# PBD file handling
 from src.extract.pbd.library import Library
 from src.extract.pbd.structures import extract_nods, extract_pbl_header
 ```
 
-### DECOMPILE Module (54 files)  
+### DECOMPILE Module (54 files)
 **Status**: ⚠️ Some broken imports but functional
 **Top Dependencies**:
 - Internal: `src` (138 imports)
@@ -108,7 +108,7 @@ from src.extract.pbd.structures import extract_nods, extract_pbl_header
 - Impact: Some advanced decompilation features may fail
 
 ### PARSE Module (31 files)
-**Status**: ⚠️ Moderate issues  
+**Status**: ⚠️ Moderate issues
 **Top Dependencies**:
 - Internal: `src` (133 imports)
 - External: `lark` (34), `typing` (31), `logging` (18)
@@ -117,20 +117,20 @@ from src.extract.pbd.structures import extract_nods, extract_pbl_header
 - Missing: `grammar.loader`, `parser.base`, `preprocessor.imports`
 - Impact: Parser coordination and grammar loading affected
 
-### MODEL Module (59 files) 
+### MODEL Module (59 files)
 **Status**: 🚨 CRITICAL - CASCADE FAILURES
 **Top Dependencies**:
-- Internal: `src` (107 imports) 
+- Internal: `src` (107 imports)
 - External: `typing` (70), `dataclasses` (45)
 
 **Critical Issues**:
 - **25 files** cannot import due to missing `src.model.types.base`
-- **4 files** missing `src.model.interfaces` 
+- **4 files** missing `src.model.interfaces`
 - Entire module ecosystem broken
 
 ### GENERATE Module (53 files)
 **Status**: ⚠️ Affected by model issues
-**Top Dependencies**: 
+**Top Dependencies**:
 - Internal: `src` (96 imports)
 - External: `typing` (45), `logging` (36)
 
@@ -144,7 +144,7 @@ src.extract.pbd.structures → src.extract.pbd.recovery → src.extract.pbd.stru
 ```
 **Impact**: Low - isolated to extraction recovery logic
 
-### Cycle 2: Generate Coordinator/Service  
+### Cycle 2: Generate Coordinator/Service
 ```
 src.generate.coordinator → src.generate.coordinators.service → src.generate.coordinator
 ```
@@ -157,10 +157,10 @@ src.generate.coordinator → src.generate.coordinators.service → src.generate.
 ```
 EXTRACT ──→ COMMON, CONTRACTS, CORE
     ↓
-DECOMPILE ──→ CONTRACTS, CORE, EXTRACT, MODEL, PARSE  
+DECOMPILE ──→ CONTRACTS, CORE, EXTRACT, MODEL, PARSE
     ↓
 PARSE ──→ COMMON, CONTRACTS, CORE, EXTRACT, MODEL
-    ↓  
+    ↓
 MODEL ──→ CORE, DECOMPILE
     ↓
 GENERATE ──→ CONTRACTS, CORE, MODEL, PARSE
@@ -171,7 +171,7 @@ GENERATE ──→ CONTRACTS, CORE, MODEL, PARSE
 The system follows a **sequential pipeline architecture**:
 
 1. **EXTRACT** → Extracts P-code from PBL/PBD files
-2. **DECOMPILE** → Converts P-code to PowerBuilder source  
+2. **DECOMPILE** → Converts P-code to PowerBuilder source
 3. **PARSE** → Creates AST from source code
 4. **MODEL** → Builds semantic models from AST
 5. **GENERATE** → Produces modern code from models
@@ -182,7 +182,7 @@ The system follows a **sequential pipeline architecture**:
 
 ### 🚨 Critical (System Breaking)
 - `src.model.types.base` - **25 files affected**
-- `src.model.interfaces` - **4 files affected** 
+- `src.model.interfaces` - **4 files affected**
 - `src.model.ast.*` family - **20+ files affected**
 
 ### ⚠️ High (Feature Breaking)
@@ -190,7 +190,7 @@ The system follows a **sequential pipeline architecture**:
 - `grammar.loader` - Parser grammar loading affected
 - Various specialized parsers and processors
 
-### ⚡ Medium (Functionality Degraded)  
+### ⚡ Medium (Functionality Degraded)
 - Missing utility modules
 - Optional enhancement features
 - Advanced analysis capabilities
@@ -212,7 +212,7 @@ The system follows a **sequential pipeline architecture**:
    - `src/model/ast/nodes/literals.py`
    - `src/model/ast/nodes/variables.py`
 
-### Phase 2: Complete Model Infrastructure  
+### Phase 2: Complete Model Infrastructure
 1. Create `src/model/base/pb_entity.py`
 2. Create `src/model/coordinator.py`
 3. Create `src/model/factory.py`
@@ -220,7 +220,7 @@ The system follows a **sequential pipeline architecture**:
 
 ### Phase 3: Fix Module-Specific Issues
 1. Resolve decompile extractor imports
-2. Fix parse coordinator issues  
+2. Fix parse coordinator issues
 3. Address generate coordination problems
 
 ### Phase 4: Resolve Circular Dependencies
@@ -246,7 +246,7 @@ The system follows a **sequential pipeline architecture**:
 2. **Sequential pipeline design** - Natural data flow from extract → generate
 3. **Comprehensive feature coverage** - Rich decompilation and generation capabilities
 
-### Weak Points  
+### Weak Points
 1. **Fragile dependency management** - Missing core files break entire system
 2. **Tight coupling** - Model module affects everything downstream
 3. **Incomplete module isolation** - Circular dependencies indicate design issues

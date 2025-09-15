@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test enhancements to control flow analysis."""
 
-
 from src.decompile.analysis.control import ControlFlowAnalyzer
 from src.decompile.pcode.decoder import PCodeInstruction
 from src.decompile.types import BlockType
@@ -11,10 +10,6 @@ class TestChooseCaseDetection:
     """Test CHOOSE CASE pattern detection."""
 
     def test_simple_choose_case(self):
-
-
-
-
         """Test detection of simple choose case structure."""
         # Simulate P-code for:
         # CHOOSE CASE x
@@ -29,33 +24,29 @@ class TestChooseCaseDetection:
         instructions = [
             # Push x for comparison
             PCodeInstruction(0x00, 0x01, "PUSHVAR", [0], [0], 1),  # push x
-            PCodeInstruction(0x01, 0x02, "DUP", [], [], 1),      # duplicate for comparison
-
+            PCodeInstruction(0x01, 0x02, "DUP", [], [], 1),  # duplicate for comparison
             # Case 1: compare with 1
             PCodeInstruction(0x02, 0x03, "PUSHCONST", [1], [1], 1),  # push 1
-            PCodeInstruction(0x03, 0x04, "EQ", [], [], 1),          # compare
-            PCodeInstruction(0x04, 0x05, "JUMPFALSE", [0x0A], [0x0A], 2),  # jump if not equal
-
+            PCodeInstruction(0x03, 0x04, "EQ", [], [], 1),  # compare
+            PCodeInstruction(
+                0x04, 0x05, "JUMPFALSE", [0x0A], [0x0A], 2
+            ),  # jump if not equal
             # Case 1 body
             PCodeInstruction(0x06, 0x06, "PUSHCONST", [10], [10], 1),
             PCodeInstruction(0x07, 0x07, "POPVAR", [1], [1], 1),  # y = 10
             PCodeInstruction(0x08, 0x08, "JUMP", [0x20], [0x20], 2),  # jump to end
-
             # Case 2: compare with 2
             PCodeInstruction(0x0A, 0x0A, "DUP", [], [], 1),
             PCodeInstruction(0x0B, 0x0B, "PUSHCONST", [2], [2], 1),
             PCodeInstruction(0x0C, 0x0C, "EQ", [], [], 1),
             PCodeInstruction(0x0D, 0x0D, "JUMPFALSE", [0x14], [0x14], 2),
-
             # Case 2 body
             PCodeInstruction(0x0F, 0x0F, "PUSHCONST", [20], [20], 1),
             PCodeInstruction(0x10, 0x10, "POPVAR", [1], [1], 1),  # y = 20
             PCodeInstruction(0x11, 0x11, "JUMP", [0x20], [0x20], 2),  # jump to end
-
             # Default case
             PCodeInstruction(0x14, 0x14, "PUSHCONST", [0], [0], 1),
             PCodeInstruction(0x15, 0x15, "POPVAR", [1], [1], 1),  # y = 0
-
             # End of choose
             PCodeInstruction(0x20, 0x20, "NOP", [], [], 1),
         ]
@@ -82,15 +73,11 @@ class TestConditionExtraction:
     """Test improved condition extraction."""
 
     def test_comparison_condition(self):
-
-
-
-
         """Test extraction of comparison conditions."""
         instructions = [
-            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),    # x
-            PCodeInstruction(0x01, 0x01, "PUSHCONST", [10], [10], 1), # 10
-            PCodeInstruction(0x02, 0x02, "GT", [], [], 1),           # x > 10
+            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),  # x
+            PCodeInstruction(0x01, 0x01, "PUSHCONST", [10], [10], 1),  # 10
+            PCodeInstruction(0x02, 0x02, "GT", [], [], 1),  # x > 10
             PCodeInstruction(0x03, 0x03, "JUMPFALSE", [0x10], [0x10], 2),
         ]
 
@@ -104,13 +91,9 @@ class TestConditionExtraction:
         assert "var_0" in condition or "10" in condition
 
     def test_boolean_condition(self):
-
-
-
-
         """Test extraction of simple boolean conditions."""
         instructions = [
-            PCodeInstruction(0x00, 0x00, "PUSHVAR", [5], [5], 1),    # flag
+            PCodeInstruction(0x00, 0x00, "PUSHVAR", [5], [5], 1),  # flag
             PCodeInstruction(0x01, 0x01, "JUMPTRUE", [0x10], [0x10], 2),
         ]
 
@@ -122,14 +105,10 @@ class TestConditionExtraction:
         assert "var_5" in condition or "true" in condition
 
     def test_not_condition(self):
-
-
-
-
         """Test extraction of NOT conditions."""
         instructions = [
-            PCodeInstruction(0x00, 0x00, "PUSHVAR", [3], [3], 1),    # x
-            PCodeInstruction(0x01, 0x01, "NOT", [], [], 1),          # NOT x
+            PCodeInstruction(0x00, 0x00, "PUSHVAR", [3], [3], 1),  # x
+            PCodeInstruction(0x01, 0x01, "NOT", [], [], 1),  # NOT x
             PCodeInstruction(0x02, 0x02, "JUMPFALSE", [0x10], [0x10], 2),
         ]
 
@@ -146,10 +125,6 @@ class TestAssignmentExtraction:
     """Test improved assignment extraction."""
 
     def test_simple_assignment(self):
-
-
-
-
         """Test extraction of simple assignments."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHCONST", [42], [42], 1),
@@ -166,16 +141,12 @@ class TestAssignmentExtraction:
         assert "=" in assignment
 
     def test_arithmetic_assignment(self):
-
-
-
-
         """Test extraction of arithmetic assignments."""
         instructions = [
-            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),    # x
+            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),  # x
             PCodeInstruction(0x01, 0x01, "PUSHCONST", [5], [5], 1),  # 5
-            PCodeInstruction(0x02, 0x02, "ADD", [], [], 1),          # x + 5
-            PCodeInstruction(0x03, 0x03, "POPVAR", [1], [1], 1),     # y = x + 5
+            PCodeInstruction(0x02, 0x02, "ADD", [], [], 1),  # x + 5
+            PCodeInstruction(0x03, 0x03, "POPVAR", [1], [1], 1),  # y = x + 5
         ]
 
         analyzer = ControlFlowAnalyzer()
@@ -188,10 +159,6 @@ class TestAssignmentExtraction:
         assert "var_0" in assignment or "5" in assignment
 
     def test_function_call_assignment(self):
-
-
-
-
         """Test extraction of function call assignments."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "CALL", ["GetValue"], ["GetValue"], 1),
@@ -212,10 +179,6 @@ class TestRepeatUntilDetection:
     """Test REPEAT UNTIL pattern detection."""
 
     def test_repeat_until_loop(self):
-
-
-
-
         """Test detection of repeat-until loops."""
         # Simulate:
         # REPEAT
@@ -224,17 +187,17 @@ class TestRepeatUntilDetection:
 
         instructions = [
             # Loop body
-            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),    # x
+            PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),  # x
             PCodeInstruction(0x01, 0x01, "PUSHCONST", [1], [1], 1),  # 1
-            PCodeInstruction(0x02, 0x02, "ADD", [], [], 1),          # x + 1
-            PCodeInstruction(0x03, 0x03, "POPVAR", [0], [0], 1),     # x = x + 1
-
+            PCodeInstruction(0x02, 0x02, "ADD", [], [], 1),  # x + 1
+            PCodeInstruction(0x03, 0x03, "POPVAR", [0], [0], 1),  # x = x + 1
             # Condition check
-            PCodeInstruction(0x04, 0x04, "PUSHVAR", [0], [0], 1),    # x
-            PCodeInstruction(0x05, 0x05, "PUSHCONST", [10], [10], 1), # 10
-            PCodeInstruction(0x06, 0x06, "GT", [], [], 1),           # x > 10
-            PCodeInstruction(0x07, 0x07, "JUMPFALSE", [0x00], [0x00], 2),  # jump back if false
-
+            PCodeInstruction(0x04, 0x04, "PUSHVAR", [0], [0], 1),  # x
+            PCodeInstruction(0x05, 0x05, "PUSHCONST", [10], [10], 1),  # 10
+            PCodeInstruction(0x06, 0x06, "GT", [], [], 1),  # x > 10
+            PCodeInstruction(
+                0x07, 0x07, "JUMPFALSE", [0x00], [0x00], 2
+            ),  # jump back if false
             # After loop
             PCodeInstruction(0x09, 0x09, "NOP", [], [], 1),
         ]

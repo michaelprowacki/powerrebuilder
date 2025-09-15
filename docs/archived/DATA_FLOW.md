@@ -11,16 +11,16 @@ graph TB
     PBL[PBL/PBD Files] --> Extract[Extract Stage]
     Extract --> Source[Source Files]
     Extract --> PCode[P-Code Files]
-    
+
     Source --> Parse[Parse Stage]
     PCode --> Decompile[Decompile Stage]
-    
+
     Parse --> AST[AST JSON]
     Decompile --> HighLevel[High-Level Code]
-    
+
     AST --> Model[Model Stage]
     HighLevel --> Model
-    
+
     Model --> Generate[Generate Stage]
     Generate --> Flutter[Flutter App]
     Generate --> Python[Python Backend]
@@ -236,7 +236,7 @@ class CustomerManagementScreen extends StatefulWidget {
       ),
     );
   }
-  
+
   void _saveCustomer() {
     customerDataWindow.update();
   }
@@ -248,13 +248,13 @@ class CustomerManagementScreen extends StatefulWidget {
 // PowerBuilder
 function decimal calculate_discount(decimal amount, integer customer_type)
     decimal discount = 0
-    
+
     if customer_type = 1 then
         discount = amount * 0.1
     elseif customer_type = 2 then
         discount = amount * 0.15
     end if
-    
+
     return discount
 end function
 ```
@@ -264,12 +264,12 @@ end function
 class DiscountService:
     def calculate_discount(self, amount: Decimal, customer_type: int) -> Decimal:
         discount = Decimal('0')
-        
+
         if customer_type == 1:
             discount = amount * Decimal('0.1')
         elif customer_type == 2:
             discount = amount * Decimal('0.15')
-            
+
         return discount
 ```
 

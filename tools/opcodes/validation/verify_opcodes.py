@@ -12,13 +12,6 @@ sys.path.insert(0, str(project_root))
 
 
 def load_our_opcodes() -> None:
-
-
-
-
-
-
-
     """Load our opcode definitions."""
     opcode_file = project_root / "extract" / "pbd_core" / "opcodes.yaml"
     with open(opcode_file) as f:
@@ -26,14 +19,6 @@ def load_our_opcodes() -> None:
 
 
 def check_basic_opcodes() -> None:
-
-
-
-
-
-
-
-
     """Check if we have the essential opcodes defined."""
     opcodes = load_our_opcodes()
 
@@ -131,14 +116,6 @@ def check_basic_opcodes() -> None:
 
 
 def check_reference_opcodes() -> None:
-
-
-
-
-
-
-
-
     """Check opcodes from reference implementations."""
     # From pbdviewer - these are confirmed opcodes
     pbdviewer_opcodes = {
@@ -175,21 +152,12 @@ def check_reference_opcodes() -> None:
 
 
 def show_sample_opcodes() -> None:
-
-
-
-
-
-
-
-
     """Show a sample of our defined opcodes."""
     opcodes = load_our_opcodes()
 
     # Show first 20 opcodes
     count = 0
-    for opcode_val, op_info in sorted(opcodes.items())[:
-        20]:
+    for opcode_val, op_info in sorted(opcodes.items())[:20]:
         if isinstance(op_info, dict) and isinstance(opcode_val, int):
             op_info.get("mnemonic", "UNNAMED")
             op_info.get("description", "No description")

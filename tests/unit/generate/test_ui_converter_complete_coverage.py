@@ -11,16 +11,10 @@ class TestCompleteUIControlCoverage:
 
     @pytest.fixture
     def ui_converter(self):
-
-
         """Create UIConverter instance."""
         return UIConverter()
 
     def test_scrollbar_controls(self, ui_converter):
-
-
-
-
         """Test vertical and horizontal scrollbar conversion."""
         # Test vertical scrollbar
         result = ui_converter.convert_control(
@@ -52,10 +46,6 @@ class TestCompleteUIControlCoverage:
         assert result["flutter_properties"]["_currentValue"] == 25
 
     def test_combobox_control(self, ui_converter):
-
-
-
-
         """Test ComboBox (editable dropdown) conversion."""
         result = ui_converter.convert_control(
             "combobox",
@@ -70,15 +60,15 @@ class TestCompleteUIControlCoverage:
 
         assert result["widget"] == "Autocomplete"
         assert result["flutter_properties"]["_selectedText"] == "United States"
-        assert result["flutter_properties"]["_suggestions"] == ["USA", "Canada", "Mexico"]
+        assert result["flutter_properties"]["_suggestions"] == [
+            "USA",
+            "Canada",
+            "Mexico",
+        ]
         assert result["flutter_properties"]["_allowEdit"] is True
         assert result["flutter_properties"]["_isSorted"] is True
 
     def test_richtextedit_control(self, ui_converter):
-
-
-
-
         """Test RichTextEdit control conversion."""
         result = ui_converter.convert_control(
             "richtextedit",
@@ -98,10 +88,6 @@ class TestCompleteUIControlCoverage:
         assert result["flutter_properties"]["_showToolbar"] is True
 
     def test_mdiclient_control(self, ui_converter):
-
-
-
-
         """Test MDI Client control conversion."""
         result = ui_converter.convert_control(
             "mdiclient",
@@ -117,10 +103,6 @@ class TestCompleteUIControlCoverage:
         assert result["config"]["placeholder"] == "Text('MDI Client Area')"
 
     def test_widget_code_generation_new_controls(self, ui_converter):
-
-
-
-
         """Test widget code generation for new controls."""
         # Test scrollbar
         scrollbar_control = {
@@ -167,10 +149,6 @@ class TestCompleteUIControlCoverage:
         assert "Windows" in code
 
     def test_imports_for_new_controls(self, ui_converter):
-
-
-
-
         """Test that proper imports are generated for new controls."""
         controls = [
             {"type": "combobox", "widget": "Autocomplete"},
@@ -192,10 +170,6 @@ class TestCompleteUIControlCoverage:
         assert any("flutter/material.dart" in imp for imp in imports)
 
     def test_all_pb_control_types_mapped(self, ui_converter):
-
-
-
-
         """Test that all PowerBuilder control types from constants are mapped."""
         from src.parse.constants import PB_CONTROL_TYPES
 
@@ -217,10 +191,6 @@ class TestCompleteUIControlCoverage:
         assert len(unmapped_controls) == 0, f"Unmapped controls: {unmapped_controls}"
 
     def test_unknown_control_handling(self, ui_converter):
-
-
-
-
         """Test handling of unknown control types."""
         result = ui_converter.convert_control(
             "unknowncontrol",

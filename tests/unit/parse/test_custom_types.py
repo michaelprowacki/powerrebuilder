@@ -3,7 +3,7 @@
 import pytest
 from lark import Lark
 
-from src.model.ast.nodes.base import (VariableDeclaration)
+from src.model.ast.nodes.base import VariableDeclaration
 from src.model.ast.nodes.declarations import CustomType, TypeCategory
 from src.parse.parser.specialized.types import EnumeratedType, StructureType, TypeParser
 
@@ -13,8 +13,6 @@ class TestCustomTypes:
 
     @pytest.fixture
     def grammar(self):
-
-
         """Load test grammar with type extensions."""
         grammar_text = r"""
         ?start: type_declaration
@@ -46,7 +44,7 @@ class TestCustomTypes:
         // Tokens
         GLOBAL: "global"i
         TYPE: "type"i
-        ENUMERATED: "enumerated"i  
+        ENUMERATED: "enumerated"i
         FROM: "from"i
         END: "end"i
         PUBLIC: "public"i
@@ -70,20 +68,15 @@ class TestCustomTypes:
 
     @pytest.fixture
     def transformer(self):
-
-
         """Create transformer instance with test-specific methods."""
         from lark import Transformer
 
         class TestTransformer(Transformer):
             def __init__(self):
-
                 super().__init__()
                 self.type_parser = TypeParser()
 
             def type_declaration(self, items):
-
-
                 # Debug: print items to understand structure
                 # print(f"\ntype_declaration items: {[repr(item) for item in items]}")
                 # print(f"\nFinal body_content: {body_content}")
@@ -99,7 +92,9 @@ class TestCustomTypes:
                 i = 0
                 while i < len(items):
                     item = items[i]
-                    if item == "global" or (hasattr(item, "value") and str(item.value).lower() == "global"):
+                    if item == "global" or (
+                        hasattr(item, "value") and str(item.value).lower() == "global"
+                    ):
                         is_global = True
                     elif hasattr(item, "data") and str(item.data) == "global_modifier":
                         # It's a Tree object for global_modifier
@@ -111,13 +106,22 @@ class TestCustomTypes:
                             i += 1  # Skip the identifier we just processed
                     elif str(item).lower() == "enumerated":
                         is_enumerated = True
-                    elif hasattr(item, "data") and str(item.data) == "enumerated_modifier":
+                    elif (
+                        hasattr(item, "data")
+                        and str(item.data) == "enumerated_modifier"
+                    ):
                         # It's a Tree object for enumerated_modifier
                         is_enumerated = True
                     elif isinstance(item, dict):
                         if item.get("type") == "from_clause":
                             parent_type = item.get("parent")
-                        elif item.get("type") in ["enum_body", "structure_body", "enum_values", "member_list", "empty"]:
+                        elif item.get("type") in [
+                            "enum_body",
+                            "structure_body",
+                            "enum_values",
+                            "member_list",
+                            "empty",
+                        ]:
                             body_content = item
                     elif hasattr(item, "data") and str(item.data) == "type_body":
                         # It's a Tree object for type_body, extract its content
@@ -130,7 +134,10 @@ class TestCustomTypes:
                 # print(f"\nFinal body_content before creating type: {body_content}")
 
                 # Create appropriate type object
-                if is_enumerated or body_content.get("type") in ["enum_values", "enum_body"]:
+                if is_enumerated or body_content.get("type") in [
+                    "enum_values",
+                    "enum_body",
+                ]:
                     values = body_content.get("values", {})
                     type_obj = EnumeratedType(name, values, parent_type)
                 elif body_content.get("type") in ["member_list", "structure_body"]:
@@ -149,42 +156,41 @@ class TestCustomTypes:
                 return type_obj
 
             def from_clause(self, items):
-
-
                 # items: [FROM, type_ref]
                 if len(items) >= 2:
                     return {"type": "from_clause", "parent": items[1]}
                 return {"type": "from_clause", "parent": None}
 
             def type_ref(self, items):
-
-
                 return ".".join(str(item) for item in items if str(item) != ".")
 
             def empty(self, items):
-
-
                 return {"type": "empty"}
 
             def enum_body(self, items):
-
-
                 # items should contain enum_values directly
-                if items and isinstance(items[0], dict) and items[0].get("type") == "enum_values":
+                if (
+                    items
+                    and isinstance(items[0], dict)
+                    and items[0].get("type") == "enum_values"
+                ):
                     return {"type": "enum_body", "values": items[0].get("values", {})}
                 return {"type": "enum_body", "values": {}}
 
             def structure_body(self, items):
-
-
                 # items should contain member_list directly
-                if items and isinstance(items[0], dict) and items[0].get("type") == "member_list":
-                    return {"type": "structure_body", "fields": items[0].get("fields", [])}
+                if (
+                    items
+                    and isinstance(items[0], dict)
+                    and items[0].get("type") == "member_list"
+                ):
+                    return {
+                        "type": "structure_body",
+                        "fields": items[0].get("fields", []),
+                    }
                 return {"type": "structure_body", "fields": []}
 
             def enum_values(self, items):
-
-
                 # print(f"\nenum_values items: {items}")
                 values = {}
                 next_value = 0
@@ -207,14 +213,16 @@ class TestCustomTypes:
                 return {"type": "enum_values", "values": values}
 
             def enum_value(self, items):
-
-
                 # items: IDENTIFIER [EQUALS INT]
                 name = None
                 value = None
 
                 for item in items:
-                    if hasattr(item, "type") and item.type == "IDENTIFIER" and name is None:
+                    if (
+                        hasattr(item, "type")
+                        and item.type == "IDENTIFIER"
+                        and name is None
+                    ):
                         name = str(item)
                     elif hasattr(item, "type") and item.type == "INT":
                         value = int(item)
@@ -226,8 +234,6 @@ class TestCustomTypes:
                 return {"type": "enum_value", "name": name, "value": value}
 
             def member_list(self, items):
-
-
                 fields = []
                 for item in items:
                     if isinstance(item, VariableDeclaration):
@@ -235,8 +241,6 @@ class TestCustomTypes:
                 return {"type": "member_list", "fields": fields}
 
             def member(self, items):
-
-
                 visibility = "public"
                 type_name = None
                 name = None
@@ -257,44 +261,32 @@ class TestCustomTypes:
                         i += 1  # Skip the value we just processed
                     i += 1
 
-                decl = VariableDeclaration(name=name, type=type_name, visibility=visibility)
+                decl = VariableDeclaration(
+                    name=name, type=type_name, visibility=visibility
+                )
                 if initial_value is not None:
                     decl.initial_value = initial_value
                 return decl
 
             def IDENTIFIER(self, token):
-
-
                 return str(token)
 
             def INT(self, token):
-
-
                 return int(token)
 
             def GLOBAL(self, token):
-
-
                 return "global"
 
             def ENUMERATED(self, token):
-
-
                 return "enumerated"
 
             def global_modifier(self, items):
-
-
                 return "global"
 
             def enumerated_modifier(self, items):
-
-
                 return "enumerated"
 
             def type_name(self, items):
-
-
                 # Extract the actual type name from the items
                 if items:
                     item = items[0]
@@ -306,17 +298,11 @@ class TestCustomTypes:
                 return "any"
 
             def TYPE_KEYWORD(self, token):
-
-
                 return str(token)
 
         return TestTransformer()
 
     def test_simple_custom_type(self, grammar, transformer):
-
-
-
-
         """Test simple custom type declaration."""
         code = """
 type my_type from powerobject
@@ -331,10 +317,6 @@ end type
         assert not result.is_global
 
     def test_global_custom_type(self, grammar, transformer):
-
-
-
-
         """Test global custom type."""
         code = """
 global type my_global_type from datawindow
@@ -349,10 +331,6 @@ global type my_global_type from datawindow
         assert result.is_global
 
     def test_enumerated_type(self, grammar, transformer):
-
-
-
-
         """Test enumerated type with values."""
         code = """
 type colors enumerated
@@ -374,10 +352,6 @@ type colors enumerated
         assert not result.is_valid_value("yellow")
 
     def test_enumerated_type_auto_values(self, grammar, transformer):
-
-
-
-
         """Test enumerated type with automatic values."""
         code = """
 type status enumerated
@@ -400,10 +374,6 @@ type status enumerated
         }
 
     def test_structure_type(self, grammar, transformer):
-
-
-
-
         """Test structure type with fields."""
         code = """
 type person_info from structure
@@ -437,10 +407,6 @@ type person_info from structure
         assert not result.has_field("middle_name")
 
     def test_structure_with_initial_values(self, grammar, transformer):
-
-
-
-
         """Test structure with field initial values."""
         code = """
 type config from structure
@@ -463,10 +429,6 @@ type config from structure
         # Note: Initial values would need expression evaluation
 
     def test_qualified_parent_type(self, grammar, transformer):
-
-
-
-
         """Test custom type with qualified parent."""
         code = """
 type my_window from pfc.w_master
@@ -480,10 +442,6 @@ type my_window from pfc.w_master
         assert result.parent_type == "pfc.w_master"
 
     def test_type_registry(self, transformer):
-
-
-
-
         """Test type registration and lookup."""
         # Create some types
         enum_type = EnumeratedType("status", {"active": 1, "inactive": 0})

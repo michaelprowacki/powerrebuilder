@@ -23,7 +23,6 @@ The CLI supports both individual pipeline steps and end-to-end processing.
 Command-line interface is provided through Click.
 """
 
-import asyncio
 import json
 import logging
 import subprocess
@@ -36,39 +35,37 @@ import click
 
 # Core infrastructure and coordination imports
 from src.core.unified_core import (
-    UniversalCoordinator,
     PipelineStage,
-    create_extract_coordinator,
+    UniversalCoordinator,
     create_decompile_coordinator,
-    create_parse_coordinator,
+    create_extract_coordinator,
     create_model_coordinator,
-    create_generate_coordinator,
-    OutputHandler,
-    ProgressReporter,
 )
 from src.core.unified_infrastructure import (
+    check_and_prepare_output_directory,
     get_logger,
     setup_logging,
-    check_and_prepare_output_directory,
 )
 from src.extract.unified_extract import (
     Library,
 )
-# Note: binary_to_readable_format and extract_database_schema functions 
+
+# Note: binary_to_readable_format and extract_database_schema functions
 # may need to be implemented or imported from other modules
+
 
 def binary_to_readable_format(input_path: Path, output_path: Path) -> bool:
     """Convert PowerBuilder binary files to readable text format.
-    
+
     This function handles various PowerBuilder binary file formats:
     - PBL/PBD files: Extracts and displays structure
     - P-code files: Shows bytecode in readable format
     - Other binary files: Displays as hex dump with text interpretation
-    
+
     Args:
         input_path: Path to input binary file
         output_path: Path to output text file
-        
+
     Returns:
         True if conversion was successful, False otherwise
     """
@@ -77,84 +74,91 @@ def binary_to_readable_format(input_path: Path, output_path: Path) -> bool:
         if not input_path.exists() or not input_path.is_file():
             logger.error("Input file does not exist or is not a file: %s", input_path)
             return False
-            
+
         # Get file size for processing strategy
         file_size = input_path.stat().st_size
         if file_size == 0:
             logger.warning("Input file is empty: %s", input_path)
             output_path.write_text("Empty file\n", encoding="utf-8")
             return True
-            
+
         # Determine file type and processing strategy
         file_ext = input_path.suffix.lower()
-        
-        with open(input_path, 'rb') as input_file:
+
+        with open(input_path, "rb") as input_file:
             # Read header to determine file type
             header = input_file.read(min(1024, file_size))
             input_file.seek(0)
-            
-            with open(output_path, 'w', encoding='utf-8') as output_file:
-                output_file.write(f"PowerBuilder Binary File Analysis\n")
-                output_file.write(f"=" * 50 + "\n\n")
+
+            with open(output_path, "w", encoding="utf-8") as output_file:
+                output_file.write("PowerBuilder Binary File Analysis\n")
+                output_file.write("=" * 50 + "\n\n")
                 output_file.write(f"File: {input_path}\n")
                 output_file.write(f"Size: {file_size:,} bytes\n")
                 output_file.write(f"Extension: {file_ext}\n\n")
-                
+
                 # Check for PowerBuilder signatures
-                if file_ext in ['.pbl', '.pbd'] or any(header.startswith(sig) for sig in [b'PBL', b'PBD', b'HDR*']):
+                if file_ext in [".pbl", ".pbd"] or any(
+                    header.startswith(sig) for sig in [b"PBL", b"PBD", b"HDR*"]
+                ):
                     _convert_powerbuilder_library(input_file, output_file, file_size)
-                elif file_ext in ['.fun', '.win', '.udo', '.men']:
-                    _convert_pcode_file(input_file, output_file, file_size) 
+                elif file_ext in [".fun", ".win", ".udo", ".men"]:
+                    _convert_pcode_file(input_file, output_file, file_size)
                 else:
                     _convert_generic_binary(input_file, output_file, file_size)
-                    
-        logger.info("Successfully converted %s to readable format: %s", input_path, output_path)
+
+        logger.info(
+            "Successfully converted %s to readable format: %s", input_path, output_path
+        )
         return True
-        
+
     except Exception as e:
         logger.exception("Failed to convert binary file to readable format: %s", e)
         return False
 
 
-def _convert_powerbuilder_library(input_file: BinaryIO, output_file: Any, file_size: int) -> None:
+def _convert_powerbuilder_library(
+    input_file: BinaryIO, output_file: Any, file_size: int
+) -> None:
     """Convert PowerBuilder library file to readable format."""
     output_file.write("PowerBuilder Library File (PBL/PBD)\n")
     output_file.write("-" * 40 + "\n\n")
-    
+
     try:
         # Read and analyze header
         header_data = input_file.read(min(512, file_size))
-        
+
         output_file.write("Header Analysis:\n")
         if len(header_data) >= 4:
             signature = header_data[:4]
             output_file.write(f"  Signature: {signature}\n")
-            
+
             # Try to decode as text
             try:
-                sig_text = signature.decode('ascii', errors='ignore')
+                sig_text = signature.decode("ascii", errors="ignore")
                 output_file.write(f"  Signature (text): '{sig_text}'\n")
             except:
                 pass
-                
-        output_file.write(f"  Header (first 64 bytes):\n")
+
+        output_file.write("  Header (first 64 bytes):\n")
         _write_hex_dump(output_file, header_data[:64])
-        
+
         # Try to use Library class if available
         try:
             from src.extract.unified_extract import Library
+
             input_file.seek(0)
             temp_path = Path(input_file.name)
-            
+
             with Library(temp_path) as lib:
                 info = lib.get_info()
-                output_file.write(f"\nLibrary Information:\n")
+                output_file.write("\nLibrary Information:\n")
                 for key, value in info.items():
                     output_file.write(f"  {key}: {value}\n")
-                    
+
         except Exception as e:
             output_file.write(f"\nCould not analyze library structure: {e}\n")
-            
+
     except Exception as e:
         output_file.write(f"Error analyzing PowerBuilder library: {e}\n")
 
@@ -163,49 +167,53 @@ def _convert_pcode_file(input_file: BinaryIO, output_file: Any, file_size: int) 
     """Convert P-code file to readable format."""
     output_file.write("PowerBuilder P-code File\n")
     output_file.write("-" * 30 + "\n\n")
-    
+
     try:
         # Read entire file for P-code analysis
         data = input_file.read(file_size)
-        
+
         output_file.write("P-code Structure Analysis:\n")
         output_file.write(f"  Total size: {len(data)} bytes\n")
-        
+
         # Look for common P-code patterns
         if len(data) >= 4:
             output_file.write(f"  First 4 bytes: {data[:4].hex()}\n")
-            
+
         # Show hex dump of first 256 bytes
-        output_file.write(f"\nFirst 256 bytes (hex dump):\n")
+        output_file.write("\nFirst 256 bytes (hex dump):\n")
         _write_hex_dump(output_file, data[:256])
-        
+
         # Try to find text strings
-        output_file.write(f"\nText strings found:\n")
+        output_file.write("\nText strings found:\n")
         _extract_text_strings(output_file, data)
-        
+
     except Exception as e:
         output_file.write(f"Error analyzing P-code file: {e}\n")
 
 
-def _convert_generic_binary(input_file: BinaryIO, output_file: Any, file_size: int) -> None:
+def _convert_generic_binary(
+    input_file: BinaryIO, output_file: Any, file_size: int
+) -> None:
     """Convert generic binary file to readable format."""
     output_file.write("Generic Binary File\n")
     output_file.write("-" * 20 + "\n\n")
-    
+
     try:
         # Read in chunks for large files
         chunk_size = min(4096, file_size)
         data = input_file.read(chunk_size)
-        
+
         output_file.write(f"Hex dump (first {len(data)} bytes):\n")
         _write_hex_dump(output_file, data)
-        
-        output_file.write(f"\nText strings found:\n") 
+
+        output_file.write("\nText strings found:\n")
         _extract_text_strings(output_file, data)
-        
+
         if file_size > chunk_size:
-            output_file.write(f"\n... file continues for {file_size - chunk_size} more bytes\n")
-            
+            output_file.write(
+                f"\n... file continues for {file_size - chunk_size} more bytes\n"
+            )
+
     except Exception as e:
         output_file.write(f"Error analyzing binary file: {e}\n")
 
@@ -213,71 +221,78 @@ def _convert_generic_binary(input_file: BinaryIO, output_file: Any, file_size: i
 def _write_hex_dump(output_file: Any, data: bytes, bytes_per_line: int = 16) -> None:
     """Write hex dump with ASCII interpretation."""
     for i in range(0, len(data), bytes_per_line):
-        chunk = data[i:i + bytes_per_line]
-        hex_part = ' '.join(f'{b:02x}' for b in chunk)
-        ascii_part = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in chunk)
-        
+        chunk = data[i : i + bytes_per_line]
+        hex_part = " ".join(f"{b:02x}" for b in chunk)
+        ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
+
         output_file.write(f"  {i:08x}: {hex_part:<48} |{ascii_part}|\n")
 
 
 def _extract_text_strings(output_file: Any, data: bytes, min_length: int = 4) -> None:
     """Extract readable text strings from binary data."""
     import re
-    
+
     # Find ASCII strings
-    ascii_strings = re.findall(rb'[\x20-\x7e]{' + str(min_length).encode() + rb',}', data)
-    
+    ascii_strings = re.findall(
+        rb"[\x20-\x7e]{" + str(min_length).encode() + rb",}", data
+    )
+
     # Find Unicode strings (UTF-16 LE)
-    unicode_strings = re.findall(rb'(?:[\x20-\x7e]\x00){' + str(min_length).encode() + rb',}', data)
-    
+    unicode_strings = re.findall(
+        rb"(?:[\x20-\x7e]\x00){" + str(min_length).encode() + rb",}", data
+    )
+
     if ascii_strings:
         output_file.write("  ASCII strings:\n")
         for i, string in enumerate(ascii_strings[:20]):  # Limit to first 20
             try:
-                decoded = string.decode('ascii', errors='ignore')
-                output_file.write(f"    {i+1}: '{decoded}'\n")
+                decoded = string.decode("ascii", errors="ignore")
+                output_file.write(f"    {i + 1}: '{decoded}'\n")
             except:
                 pass
-                
+
     if unicode_strings:
         output_file.write("  Unicode strings:\n")
         for i, string in enumerate(unicode_strings[:20]):  # Limit to first 20
             try:
-                decoded = string.decode('utf-16-le', errors='ignore')
-                output_file.write(f"    {i+1}: '{decoded}'\n")
+                decoded = string.decode("utf-16-le", errors="ignore")
+                output_file.write(f"    {i + 1}: '{decoded}'\n")
             except:
                 pass
-                
+
     if not ascii_strings and not unicode_strings:
         output_file.write("  No readable text strings found\n")
 
-def extract_database_schema(project_dir: str, output_dir: str, output_format: str = "markdown") -> None:
+
+def extract_database_schema(
+    project_dir: str, output_dir: str, output_format: str = "markdown"
+) -> None:
     """Extract and document database schema from PowerBuilder source files.
-    
+
     This function analyzes PowerBuilder source files to extract database-related information:
     - DataWindow definitions and their associated tables/columns
     - SQL statements embedded in functions and events
     - Table relationships inferred from foreign key patterns
     - Database operations (SELECT, INSERT, UPDATE, DELETE)
     - Business logic functions that interact with data
-    
+
     Args:
         project_dir: Directory containing PowerBuilder source files
         output_dir: Directory to write schema documentation
         output_format: Output format ('markdown', 'html', 'json')
     """
     try:
-        from pathlib import Path
-        import json
-        import re
         from datetime import datetime
-        
+        from pathlib import Path
+
         project_path = Path(project_dir)
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
-        
-        logger.info("Extracting database schema from PowerBuilder project: %s", project_path)
-        
+
+        logger.info(
+            "Extracting database schema from PowerBuilder project: %s", project_path
+        )
+
         # Initialize schema data structure
         schema_data = {
             "extraction_date": datetime.now().isoformat(),
@@ -292,18 +307,25 @@ def extract_database_schema(project_dir: str, output_dir: str, output_format: st
                 "tables_found": 0,
                 "datawindows_found": 0,
                 "sql_statements_found": 0,
-                "functions_found": 0
-            }
+                "functions_found": 0,
+            },
         }
-        
+
         # Find all PowerBuilder source files
         pb_files = []
-        for pattern in ['**/*.sru', '**/*.srw', '**/*.srf', '**/*.srm', '**/*.srd', '**/*.sra']:
+        for pattern in [
+            "**/*.sru",
+            "**/*.srw",
+            "**/*.srf",
+            "**/*.srm",
+            "**/*.srd",
+            "**/*.sra",
+        ]:
             pb_files.extend(project_path.glob(pattern))
-            
+
         if not pb_files:
             logger.warning("No PowerBuilder source files found in %s", project_path)
-            
+
         # Process each file
         for file_path in pb_files:
             try:
@@ -311,23 +333,27 @@ def extract_database_schema(project_dir: str, output_dir: str, output_format: st
                 schema_data["statistics"]["files_processed"] += 1
             except Exception as e:
                 logger.warning("Error processing file %s: %s", file_path, e)
-                
+
         # Update final statistics
         schema_data["statistics"]["tables_found"] = len(schema_data["tables"])
         schema_data["statistics"]["datawindows_found"] = len(schema_data["datawindows"])
-        schema_data["statistics"]["sql_statements_found"] = len(schema_data["sql_statements"])
+        schema_data["statistics"]["sql_statements_found"] = len(
+            schema_data["sql_statements"]
+        )
         schema_data["statistics"]["functions_found"] = len(schema_data["functions"])
-        
+
         # Generate output files
         _generate_schema_documentation(schema_data, output_path, output_format)
-        
+
         logger.info("Database schema extraction completed successfully")
-        logger.info("Processed %d files, found %d tables, %d DataWindows, %d SQL statements", 
-                   schema_data["statistics"]["files_processed"],
-                   schema_data["statistics"]["tables_found"], 
-                   schema_data["statistics"]["datawindows_found"],
-                   schema_data["statistics"]["sql_statements_found"])
-                   
+        logger.info(
+            "Processed %d files, found %d tables, %d DataWindows, %d SQL statements",
+            schema_data["statistics"]["files_processed"],
+            schema_data["statistics"]["tables_found"],
+            schema_data["statistics"]["datawindows_found"],
+            schema_data["statistics"]["sql_statements_found"],
+        )
+
     except Exception as e:
         logger.exception("Failed to extract database schema: %s", e)
         raise
@@ -336,56 +362,59 @@ def extract_database_schema(project_dir: str, output_dir: str, output_format: st
 def _analyze_powerbuilder_file(file_path: Path, schema_data: dict[str, Any]) -> None:
     """Analyze a single PowerBuilder source file for database schema information."""
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
-            
+
         file_type = file_path.suffix.lower()
-        
+
         # Extract DataWindow definitions
-        if file_type == '.srd' or 'datawindow(' in content.lower():
+        if file_type == ".srd" or "datawindow(" in content.lower():
             _extract_datawindow_info(file_path, content, schema_data)
-            
+
         # Extract SQL statements
         _extract_sql_statements(file_path, content, schema_data)
-        
+
         # Extract function definitions
         _extract_function_info(file_path, content, schema_data)
-        
+
         # Extract table references
         _extract_table_references(file_path, content, schema_data)
-        
+
     except Exception as e:
         logger.debug("Error analyzing file %s: %s", file_path, e)
 
 
-def _extract_datawindow_info(file_path: Path, content: str, schema_data: dict[str, Any]) -> None:
+def _extract_datawindow_info(
+    file_path: Path, content: str, schema_data: dict[str, Any]
+) -> None:
     """Extract DataWindow definitions and associated table information."""
     import re
-    
+
     # Look for datawindow definitions
-    dw_pattern = r'datawindow\s*\(\s*([^)]+)\)'
+    dw_pattern = r"datawindow\s*\(\s*([^)]+)\)"
     matches = re.finditer(dw_pattern, content, re.IGNORECASE | re.DOTALL)
-    
+
     for match in matches:
         dw_definition = match.group(1)
         dw_name = file_path.stem
-        
+
         # Extract table information from DataWindow
         table_pattern = r'table\s*=\s*["\']([^"\']+)["\']'
         table_matches = re.findall(table_pattern, dw_definition, re.IGNORECASE)
-        
+
         # Extract column information
         column_pattern = r'column\s*=\s*["\']([^"\']+)["\']'
         column_matches = re.findall(column_pattern, dw_definition, re.IGNORECASE)
-        
+
         if table_matches or column_matches:
             schema_data["datawindows"][dw_name] = {
                 "file_path": str(file_path),
                 "tables": table_matches,
                 "columns": column_matches,
-                "definition": dw_definition[:500] + ("..." if len(dw_definition) > 500 else "")
+                "definition": dw_definition[:500]
+                + ("..." if len(dw_definition) > 500 else ""),
             }
-            
+
             # Add tables to schema
             for table in table_matches:
                 if table not in schema_data["tables"]:
@@ -393,89 +422,115 @@ def _extract_datawindow_info(file_path: Path, content: str, schema_data: dict[st
                         "name": table,
                         "columns": set(),
                         "referenced_by": [],
-                        "source_files": []
+                        "source_files": [],
                     }
-                schema_data["tables"][table]["referenced_by"].append(f"DataWindow: {dw_name}")
+                schema_data["tables"][table]["referenced_by"].append(
+                    f"DataWindow: {dw_name}"
+                )
                 schema_data["tables"][table]["source_files"].append(str(file_path))
 
 
-def _extract_sql_statements(file_path: Path, content: str, schema_data: dict[str, Any]) -> None:
+def _extract_sql_statements(
+    file_path: Path, content: str, schema_data: dict[str, Any]
+) -> None:
     """Extract SQL statements from PowerBuilder source code."""
     import re
-    
+
     # Common SQL statement patterns
     sql_patterns = [
-        r'SELECT\s+[^;]+;?',
-        r'INSERT\s+INTO\s+[^;]+;?',
-        r'UPDATE\s+[^;]+;?', 
-        r'DELETE\s+FROM\s+[^;]+;?',
-        r'CREATE\s+TABLE\s+[^;]+;?',
-        r'ALTER\s+TABLE\s+[^;]+;?',
-        r'DROP\s+TABLE\s+[^;]+;?'
+        r"SELECT\s+[^;]+;?",
+        r"INSERT\s+INTO\s+[^;]+;?",
+        r"UPDATE\s+[^;]+;?",
+        r"DELETE\s+FROM\s+[^;]+;?",
+        r"CREATE\s+TABLE\s+[^;]+;?",
+        r"ALTER\s+TABLE\s+[^;]+;?",
+        r"DROP\s+TABLE\s+[^;]+;?",
     ]
-    
+
     for pattern in sql_patterns:
-        matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL | re.MULTILINE)
-        
+        matches = re.finditer(
+            pattern, content, re.IGNORECASE | re.DOTALL | re.MULTILINE
+        )
+
         for match in matches:
             sql_statement = match.group(0).strip()
             if len(sql_statement) > 20:  # Filter out very short matches
-                schema_data["sql_statements"].append({
-                    "file_path": str(file_path),
-                    "statement": sql_statement[:500] + ("..." if len(sql_statement) > 500 else ""),
-                    "statement_type": _determine_sql_type(sql_statement),
-                    "tables_referenced": _extract_table_names_from_sql(sql_statement)
-                })
+                schema_data["sql_statements"].append(
+                    {
+                        "file_path": str(file_path),
+                        "statement": sql_statement[:500]
+                        + ("..." if len(sql_statement) > 500 else ""),
+                        "statement_type": _determine_sql_type(sql_statement),
+                        "tables_referenced": _extract_table_names_from_sql(
+                            sql_statement
+                        ),
+                    }
+                )
 
 
-def _extract_function_info(file_path: Path, content: str, schema_data: dict[str, Any]) -> None:
+def _extract_function_info(
+    file_path: Path, content: str, schema_data: dict[str, Any]
+) -> None:
     """Extract function definitions that might contain database operations."""
     import re
-    
+
     # Function definition patterns
     function_patterns = [
-        r'function\s+\w+\s+(\w+)\s*\([^)]*\)[^{]*{([^}]+)}',
-        r'event\s+(\w+)\s*\([^)]*\)[^{]*{([^}]+)}'
+        r"function\s+\w+\s+(\w+)\s*\([^)]*\)[^{]*{([^}]+)}",
+        r"event\s+(\w+)\s*\([^)]*\)[^{]*{([^}]+)}",
     ]
-    
+
     for pattern in function_patterns:
         matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
-        
+
         for match in matches:
             func_name = match.group(1)
             func_body = match.group(2) if len(match.groups()) > 1 else ""
-            
+
             # Check if function contains database operations
-            if any(keyword in func_body.upper() for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'EXECUTE', 'COMMIT']):
+            if any(
+                keyword in func_body.upper()
+                for keyword in [
+                    "SELECT",
+                    "INSERT",
+                    "UPDATE",
+                    "DELETE",
+                    "EXECUTE",
+                    "COMMIT",
+                ]
+            ):
                 schema_data["functions"][func_name] = {
                     "file_path": str(file_path),
                     "has_db_operations": True,
-                    "body_preview": func_body[:300] + ("..." if len(func_body) > 300 else "")
+                    "body_preview": func_body[:300]
+                    + ("..." if len(func_body) > 300 else ""),
                 }
 
 
-def _extract_table_references(file_path: Path, content: str, schema_data: dict[str, Any]) -> None:
+def _extract_table_references(
+    file_path: Path, content: str, schema_data: dict[str, Any]
+) -> None:
     """Extract table references from various contexts."""
     import re
-    
+
     # Look for table references in comments or string literals
     table_patterns = [
-        r'//.*table[:\s]+(\w+)',
-        r'\*.*table[:\s]+(\w+)',
-        r'["\'].*table[:\s]+(\w+).*["\']'
+        r"//.*table[:\s]+(\w+)",
+        r"\*.*table[:\s]+(\w+)",
+        r'["\'].*table[:\s]+(\w+).*["\']',
     ]
-    
+
     for pattern in table_patterns:
         matches = re.findall(pattern, content, re.IGNORECASE)
-        
+
         for table_name in matches:
-            if table_name and table_name.upper() not in ['TABLE', 'TABLES']:
+            if table_name and table_name.upper() not in ["TABLE", "TABLES"]:
                 if table_name not in schema_data["tables"]:
                     schema_data["tables"][table_name] = {
                         "name": table_name,
                         "columns": set(),
                         "referenced_by": [],
-                        "source_files": []
+                        "source_files": [],
                     }
                 schema_data["tables"][table_name]["source_files"].append(str(file_path))
 
@@ -483,69 +538,70 @@ def _extract_table_references(file_path: Path, content: str, schema_data: dict[s
 def _determine_sql_type(sql_statement: str) -> str:
     """Determine the type of SQL statement."""
     sql_upper = sql_statement.upper().strip()
-    
-    if sql_upper.startswith('SELECT'):
-        return 'SELECT'
-    elif sql_upper.startswith('INSERT'):
-        return 'INSERT'
-    elif sql_upper.startswith('UPDATE'):
-        return 'UPDATE'
-    elif sql_upper.startswith('DELETE'):
-        return 'DELETE'
-    elif sql_upper.startswith('CREATE'):
-        return 'CREATE'
-    elif sql_upper.startswith('ALTER'):
-        return 'ALTER'
-    elif sql_upper.startswith('DROP'):
-        return 'DROP'
-    else:
-        return 'OTHER'
+
+    if sql_upper.startswith("SELECT"):
+        return "SELECT"
+    if sql_upper.startswith("INSERT"):
+        return "INSERT"
+    if sql_upper.startswith("UPDATE"):
+        return "UPDATE"
+    if sql_upper.startswith("DELETE"):
+        return "DELETE"
+    if sql_upper.startswith("CREATE"):
+        return "CREATE"
+    if sql_upper.startswith("ALTER"):
+        return "ALTER"
+    if sql_upper.startswith("DROP"):
+        return "DROP"
+    return "OTHER"
 
 
 def _extract_table_names_from_sql(sql_statement: str) -> list[str]:
     """Extract table names referenced in an SQL statement."""
     import re
-    
+
     tables = []
-    
+
     # Simple patterns for table extraction
     patterns = [
-        r'FROM\s+(\w+)',
-        r'JOIN\s+(\w+)',
-        r'UPDATE\s+(\w+)',
-        r'INTO\s+(\w+)', 
-        r'TABLE\s+(\w+)'
+        r"FROM\s+(\w+)",
+        r"JOIN\s+(\w+)",
+        r"UPDATE\s+(\w+)",
+        r"INTO\s+(\w+)",
+        r"TABLE\s+(\w+)",
     ]
-    
+
     for pattern in patterns:
         matches = re.findall(pattern, sql_statement, re.IGNORECASE)
         tables.extend(matches)
-        
+
     return list(set(tables))  # Remove duplicates
 
 
-def _generate_schema_documentation(schema_data: dict[str, Any], output_path: Path, output_format: str) -> None:
+def _generate_schema_documentation(
+    schema_data: dict[str, Any], output_path: Path, output_format: str
+) -> None:
     """Generate the final schema documentation in the requested format."""
     import json
-    
+
     # Always save raw JSON data
     json_file = output_path / "database_schema_raw.json"
-    
+
     # Convert sets to lists for JSON serialization
     json_data = json.loads(json.dumps(schema_data, default=str))
     for table_name, table_info in json_data.get("tables", {}).items():
         if isinstance(table_info.get("columns"), set):
             table_info["columns"] = list(table_info["columns"])
-    
-    with open(json_file, 'w', encoding='utf-8') as f:
+
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=2, ensure_ascii=False)
-    
+
     # Generate formatted documentation
     doc_file = output_path / f"database_schema_documentation.{output_format}"
-    
-    if output_format.lower() == 'markdown':
+
+    if output_format.lower() == "markdown":
         _generate_markdown_docs(schema_data, doc_file)
-    elif output_format.lower() == 'html':
+    elif output_format.lower() == "html":
         _generate_html_docs(schema_data, doc_file)
     else:
         # Default to markdown
@@ -554,59 +610,63 @@ def _generate_schema_documentation(schema_data: dict[str, Any], output_path: Pat
 
 def _generate_markdown_docs(schema_data: dict[str, Any], doc_file: Path) -> None:
     """Generate markdown documentation."""
-    with open(doc_file, 'w', encoding='utf-8') as f:
+    with open(doc_file, "w", encoding="utf-8") as f:
         f.write("# PowerBuilder Database Schema Documentation\n\n")
         f.write(f"**Generated on:** {schema_data['extraction_date']}\n\n")
         f.write(f"**Project Directory:** {schema_data['project_directory']}\n\n")
-        
+
         # Statistics
-        stats = schema_data['statistics']
+        stats = schema_data["statistics"]
         f.write("## Summary Statistics\n\n")
         f.write(f"- **Files Processed:** {stats['files_processed']}\n")
-        f.write(f"- **Tables Found:** {stats['tables_found']}\n") 
+        f.write(f"- **Tables Found:** {stats['tables_found']}\n")
         f.write(f"- **DataWindows Found:** {stats['datawindows_found']}\n")
         f.write(f"- **SQL Statements Found:** {stats['sql_statements_found']}\n")
         f.write(f"- **Functions with DB Operations:** {stats['functions_found']}\n\n")
-        
+
         # Tables
-        if schema_data['tables']:
+        if schema_data["tables"]:
             f.write("## Database Tables\n\n")
-            for table_name, table_info in schema_data['tables'].items():
+            for table_name, table_info in schema_data["tables"].items():
                 f.write(f"### {table_name}\n\n")
-                if table_info.get('referenced_by'):
+                if table_info.get("referenced_by"):
                     f.write("**Referenced by:**\n")
-                    for ref in table_info['referenced_by']:
-                        f.write(f"- {ref}\n")
+                    f.writelines(f"- {ref}\n" for ref in table_info["referenced_by"])
                     f.write("\n")
-                    
+
         # DataWindows
-        if schema_data['datawindows']:
+        if schema_data["datawindows"]:
             f.write("## DataWindows\n\n")
-            for dw_name, dw_info in schema_data['datawindows'].items():
+            for dw_name, dw_info in schema_data["datawindows"].items():
                 f.write(f"### {dw_name}\n\n")
                 f.write(f"**File:** {dw_info['file_path']}\n\n")
-                if dw_info.get('tables'):
+                if dw_info.get("tables"):
                     f.write("**Associated Tables:**\n")
-                    for table in dw_info['tables']:
-                        f.write(f"- {table}\n")
+                    f.writelines(f"- {table}\n" for table in dw_info["tables"])
                     f.write("\n")
-                    
+
         # SQL Statements
-        if schema_data['sql_statements']:
+        if schema_data["sql_statements"]:
             f.write("## SQL Statements Found\n\n")
-            for i, sql_info in enumerate(schema_data['sql_statements'][:50], 1):  # Limit to 50
+            for i, sql_info in enumerate(
+                schema_data["sql_statements"][:50], 1
+            ):  # Limit to 50
                 f.write(f"### Statement {i} ({sql_info['statement_type']})\n\n")
                 f.write(f"**File:** {sql_info['file_path']}\n\n")
                 f.write("```sql\n")
-                f.write(sql_info['statement'])
+                f.write(sql_info["statement"])
                 f.write("\n```\n\n")
-                if sql_info.get('tables_referenced'):
-                    f.write("**Tables Referenced:** " + ", ".join(sql_info['tables_referenced']) + "\n\n")
+                if sql_info.get("tables_referenced"):
+                    f.write(
+                        "**Tables Referenced:** "
+                        + ", ".join(sql_info["tables_referenced"])
+                        + "\n\n"
+                    )
 
 
 def _generate_html_docs(schema_data: dict[str, Any], doc_file: Path) -> None:
     """Generate HTML documentation."""
-    with open(doc_file, 'w', encoding='utf-8') as f:
+    with open(doc_file, "w", encoding="utf-8") as f:
         f.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -621,36 +681,50 @@ def _generate_html_docs(schema_data: dict[str, Any], doc_file: Path) -> None:
 </head>
 <body>
 """)
-        
+
         f.write("<h1>PowerBuilder Database Schema Documentation</h1>\n")
-        f.write(f"<p><strong>Generated on:</strong> {schema_data['extraction_date']}</p>\n")
-        f.write(f"<p><strong>Project Directory:</strong> {schema_data['project_directory']}</p>\n")
-        
+        f.write(
+            f"<p><strong>Generated on:</strong> {schema_data['extraction_date']}</p>\n"
+        )
+        f.write(
+            f"<p><strong>Project Directory:</strong> {schema_data['project_directory']}</p>\n"
+        )
+
         # Statistics
-        stats = schema_data['statistics']
+        stats = schema_data["statistics"]
         f.write('<div class="stats">\n<h2>Summary Statistics</h2>\n')
-        f.write(f"<ul>\n")
-        f.write(f"<li><strong>Files Processed:</strong> {stats['files_processed']}</li>\n")
+        f.write("<ul>\n")
+        f.write(
+            f"<li><strong>Files Processed:</strong> {stats['files_processed']}</li>\n"
+        )
         f.write(f"<li><strong>Tables Found:</strong> {stats['tables_found']}</li>\n")
-        f.write(f"<li><strong>DataWindows Found:</strong> {stats['datawindows_found']}</li>\n")
-        f.write(f"<li><strong>SQL Statements Found:</strong> {stats['sql_statements_found']}</li>\n")
-        f.write(f"<li><strong>Functions with DB Operations:</strong> {stats['functions_found']}</li>\n")
-        f.write(f"</ul>\n</div>\n")
-        
+        f.write(
+            f"<li><strong>DataWindows Found:</strong> {stats['datawindows_found']}</li>\n"
+        )
+        f.write(
+            f"<li><strong>SQL Statements Found:</strong> {stats['sql_statements_found']}</li>\n"
+        )
+        f.write(
+            f"<li><strong>Functions with DB Operations:</strong> {stats['functions_found']}</li>\n"
+        )
+        f.write("</ul>\n</div>\n")
+
         # Tables
-        if schema_data['tables']:
+        if schema_data["tables"]:
             f.write("<h2>Database Tables</h2>\n")
-            for table_name, table_info in schema_data['tables'].items():
-                f.write(f'<div class="table-info">\n')
+            for table_name, table_info in schema_data["tables"].items():
+                f.write('<div class="table-info">\n')
                 f.write(f"<h3>{table_name}</h3>\n")
-                if table_info.get('referenced_by'):
+                if table_info.get("referenced_by"):
                     f.write("<strong>Referenced by:</strong>\n<ul>\n")
-                    for ref in table_info['referenced_by']:
-                        f.write(f"<li>{ref}</li>\n")
+                    f.writelines(
+                        f"<li>{ref}</li>\n" for ref in table_info["referenced_by"]
+                    )
                     f.write("</ul>\n")
                 f.write("</div>\n")
-                
+
         f.write("</body>\n</html>\n")
+
 
 # stream_extract_pbd was removed during consolidation - using Library class instead
 
@@ -696,9 +770,9 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool, no_overwrite: bool) 
     # Use unified logging setup
     verbose = loglevel.upper() == "DEBUG"
     setup_logging(
-        name="powerrebuilder", 
+        name="powerrebuilder",
         level=loglevel.upper(),
-        format_type="structured" if verbose else "simple"
+        format_type="structured" if verbose else "simple",
     )
 
     # Override with specific log level if needed
@@ -788,10 +862,10 @@ def extract_files(
             output_dir=output_path,
             recovery_enabled=enable_byte_recovery,
         )
-        
+
         # Process with the universal coordinator
         result = coordinator.process()
-        
+
         # Check success
         success = result.get("files_failed", 0) == 0
 
@@ -1133,9 +1207,9 @@ def decompile(
             cache_enabled=True,
             max_workers=max_workers if parallel else None,
         )
-        
+
         result = coordinator.process()
-        
+
         # Log summary
         if result.get("files_failed", 0) == 0:
             logger.info("Decompilation completed successfully:")
@@ -1144,10 +1218,10 @@ def decompile(
                 result.get("files_processed", 0),
             )
             if "duration_seconds" in result:
+                logger.info("  Duration: %.1f seconds", result["duration_seconds"])
                 logger.info(
-                    "  Duration: %.1f seconds", result["duration_seconds"]
+                    "  Success rate: %.1f%%", result.get("success_rate", 0) * 100
                 )
-                logger.info("  Success rate: %.1f%%", result.get("success_rate", 0) * 100)
         else:
             logger.error(
                 "Decompilation failed with %d errors",
@@ -1213,8 +1287,8 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
 
         # Log results
         success_rate = (
-            result.get("files_processed", 0) / 
-            (result.get("files_processed", 0) + result.get("files_failed", 0))
+            result.get("files_processed", 0)
+            / (result.get("files_processed", 0) + result.get("files_failed", 0))
             if (result.get("files_processed", 0) + result.get("files_failed", 0)) > 0
             else 0
         )
@@ -1314,9 +1388,7 @@ def generate(
             # Results is a dict with counts, not file lists
             total_files = results.get("files_generated", 0)
             logger.info("Generated %s files", total_files)
-            logger.info(
-                "  Processed: %s model files", results.get("total_models", 0)
-            )
+            logger.info("  Processed: %s model files", results.get("total_models", 0))
             logger.info("  Failed: %s files", len(results.get("failed_files", [])))
 
         # Fall back to legacy pipeline
@@ -1325,7 +1397,7 @@ def generate(
 
             # Use default output directory for legacy pipeline
             legacy_output = "output/generated"
-            
+
             if target in ["python", "both"]:
                 logger.info("Generating database models...")
                 generate_models(parsed_dir, legacy_output)
@@ -1531,9 +1603,9 @@ def all(
         logger.info("Initializing universal coordinator...")
         coordinator = UniversalCoordinator(
             stage=PipelineStage.ALL,
-            input_dir=pbl_input_dir, 
+            input_dir=pbl_input_dir,
             output_dir=str(output_path),
-            config=config
+            config=config,
         )
 
         # Find all PBL/PBD files to process
@@ -1784,7 +1856,7 @@ def extract_streaming(
     # Convert string paths to Path objects
     input_path_obj = Path(input_path)
     output_path_obj = Path(output_path)
-    
+
     output_path_obj.mkdir(parents=True, exist_ok=True)
 
     if input_path_obj.is_file() and input_path_obj.suffix.lower() in (".pbd", ".pbl"):
@@ -1794,7 +1866,9 @@ def extract_streaming(
             logger.info("Extracted entries from %s", input_path_obj.name)
     else:
         # Directory extraction
-        pbd_files = list(input_path_obj.glob("*.pbd")) + list(input_path_obj.glob("*.pbl"))
+        pbd_files = list(input_path_obj.glob("*.pbd")) + list(
+            input_path_obj.glob("*.pbl")
+        )
         logger.info("Found %s PBD/PBL files", len(pbd_files))
 
         for pbd_file in pbd_files:
@@ -1862,7 +1936,7 @@ def all_parallel(
     - Streaming support for large files
     - Caching of parsed ASTs
     """
-    from src.core.unified_core import UniversalCoordinator, PipelineStage
+    from src.core.unified_core import PipelineStage
 
     logger.info("Running optimized pipeline:")
     logger.info("  Target: %s", target)
@@ -1930,7 +2004,7 @@ def cache_stats(size: int, memory: int) -> None:
 
     def show_stats() -> None:
         cache_manager = CacheManager()
-        
+
         logger.info("Cache Statistics:")
         logger.info("  Max size: %s entries", size)
         logger.info("  Max memory: %s MB", memory)

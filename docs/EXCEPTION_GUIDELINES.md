@@ -205,7 +205,7 @@ except SimeFinchError as e:
     # Access context information
     if e.context.get('line'):
         print(f"Error at line {e.context['line']}")
-    
+
     # Re-raise with additional context
     raise SimeFinchError(
         "Processing failed",
@@ -220,7 +220,7 @@ except SimeFinchError as e:
 ### Example 1: Parser Error Handling
 ```python
 from src.common.exceptions import (
-    ParseError, 
+    ParseError,
     PowerBuilderSyntaxError,
     GrammarLoadError
 )
@@ -234,7 +234,7 @@ class PowerBuilderParser:
             raise GrammarLoadError(
                 f"Grammar file not found: {e.filename}"
             ) from e
-        
+
         try:
             # Parse source
             tree = grammar.parse(source_code)
@@ -272,7 +272,7 @@ class PBDExtractor:
                 f"Cannot read PBD file: {pbd_file}",
                 file_path=str(pbd_file)
             ) from e
-        
+
         try:
             header = self.parse_header(data)
         except struct.error as e:
@@ -280,7 +280,7 @@ class PBDExtractor:
                 f"Invalid PBD header in {pbd_file.name}",
                 file_path=str(pbd_file)
             ) from e
-        
+
         # Check for PFC exclusion
         if self.is_pfc_object(object_name):
             raise PfcExcludedError(
@@ -306,7 +306,7 @@ class CodeGenerator:
             raise ConfigurationError(
                 f"Missing required config: {e}"
             ) from e
-        
+
         # Generate code
         try:
             template = self.load_template(config['template'])
@@ -359,14 +359,14 @@ from src.common.exceptions import HeaderError, NodeError
 def test_invalid_header():
     with pytest.raises(HeaderError) as exc_info:
         extract_header(b"invalid data")
-    
+
     assert "Invalid PBD header" in str(exc_info.value)
     assert exc_info.value.context.get('file_path') == 'test.pbd'
 
 def test_node_error_chaining():
     with pytest.raises(NodeError) as exc_info:
         parse_node(corrupted_data)
-    
+
     # Verify the cause is preserved
     assert isinstance(exc_info.value.__cause__, struct.error)
 ```

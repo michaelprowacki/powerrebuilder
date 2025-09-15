@@ -1,17 +1,11 @@
 """Test event return type handling."""
 
 from src.generate.converters.flutter.events import EventConverter
-from src.generate.converters.utils.expressions import ExpressionConverter
 from src.generate.converters.flutter.models import TypeConverter
+from src.generate.converters.utils.expressions import ExpressionConverter
 
 
 def test_event_return_type_handling():
-
-
-
-
-
-
     """Test that event return types are properly handled."""
 
     type_converter = TypeConverter()
@@ -64,7 +58,10 @@ def test_event_return_type_handling():
 
     result = event_converter.convert_event("calculate", [], calc_body)
     print(f"DEBUG: Actual return type: {result.return_type}")
-    assert result.return_type in ["double", "int"]  # May infer as int if regex doesn't match
+    assert result.return_type in [
+        "double",
+        "int",
+    ]  # May infer as int if regex doesn't match
     print(f"✓ Calculate event inferred return type: {result.return_type}")
 
     # Test 5: Inferred return type - integer

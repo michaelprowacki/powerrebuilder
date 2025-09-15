@@ -11,10 +11,6 @@ class TestTypeConverter:
     """Test suite for TypeConverter."""
 
     def test_init_default_mapping_file(self):
-
-
-
-
         """Test initialization with default mapping file."""
         with patch("builtins.open", mock_open(read_data='{"type_mappings": {}}')):
             converter = TypeConverter()
@@ -22,16 +18,16 @@ class TestTypeConverter:
             assert isinstance(converter._type_cache, dict)
 
     def test_init_custom_mapping_file(self, tmp_path):
-
-
-
-
         """Test initialization with custom mapping file."""
         mapping_file = tmp_path / "custom_mapping.json"
         mapping_data = {
             "type_mappings": {
                 "basic_types": {
-                    "integer": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
+                    "integer": {
+                        "dart_type": "int",
+                        "nullable_syntax": "int?",
+                        "default_value": "0",
+                    },
                 },
             },
         }
@@ -42,10 +38,6 @@ class TestTypeConverter:
         assert "integer" in converter.mappings["basic_types"]
 
     def test_load_mappings_file_not_found(self):
-
-
-
-
         """Test loading mappings when file doesn't exist."""
         converter = TypeConverter(Path("nonexistent.json"))
         # Should fall back to default mappings
@@ -53,10 +45,6 @@ class TestTypeConverter:
         assert "integer" in converter.mappings["basic_types"]
 
     def test_convert_basic_types(self):
-
-
-
-
         """Test converting basic PowerBuilder types."""
         converter = TypeConverter()
 
@@ -83,10 +71,6 @@ class TestTypeConverter:
         assert converter.convert_type("any") == "dynamic"
 
     def test_convert_nullable_types(self):
-
-
-
-
         """Test converting nullable types."""
         converter = TypeConverter()
 
@@ -100,10 +84,6 @@ class TestTypeConverter:
         assert converter.convert_type("any", nullable=True) == "dynamic"
 
     def test_convert_array_types(self):
-
-
-
-
         """Test converting array types."""
         converter = TypeConverter()
 
@@ -118,10 +98,6 @@ class TestTypeConverter:
         assert converter.convert_type("string[]", nullable=True) == "List<String>?"
 
     def test_convert_type_objects(self):
-
-
-
-
         """Test converting Type objects instead of strings."""
         converter = TypeConverter()
 
@@ -143,10 +119,6 @@ class TestTypeConverter:
         assert converter.convert_type(type_obj) == "List<int>"
 
     def test_convert_unknown_types(self):
-
-
-
-
         """Test converting unknown PowerBuilder types."""
         converter = TypeConverter()
 
@@ -155,10 +127,6 @@ class TestTypeConverter:
         assert converter.convert_type("unknowntype") == "dynamic"
 
     def test_convert_case_insensitive(self):
-
-
-
-
         """Test that type conversion is case insensitive."""
         converter = TypeConverter()
 
@@ -168,10 +136,6 @@ class TestTypeConverter:
         assert converter.convert_type("String") == "String"
 
     def test_type_cache(self):
-
-
-
-
         """Test that converted types are cached."""
         converter = TypeConverter()
 
@@ -186,10 +150,6 @@ class TestTypeConverter:
             assert result1 == result2
 
     def test_decimal_precision(self):
-
-
-
-
         """Test decimal type with precision."""
         converter = TypeConverter()
 
@@ -198,10 +158,6 @@ class TestTypeConverter:
         assert converter.convert_type("decimal(10,2)") == "double"
 
     def test_char_length(self):
-
-
-
-
         """Test char type with length."""
         converter = TypeConverter()
 
@@ -210,10 +166,6 @@ class TestTypeConverter:
         assert converter.convert_type("char(1)") == "String"
 
     def test_get_default_value(self):
-
-
-
-
         """Test getting default values for types."""
         converter = TypeConverter()
 
@@ -225,10 +177,6 @@ class TestTypeConverter:
         assert converter.get_default_value("any") == "null"
 
     def test_get_imports_for_type(self):
-
-
-
-
         """Test getting required imports for Dart types."""
         converter = TypeConverter()
 
@@ -245,10 +193,6 @@ class TestTypeConverter:
         assert len(imports) == 0  # DateTime is built-in
 
     def test_is_complex_type(self):
-
-
-
-
         """Test identifying complex types."""
         converter = TypeConverter()
 
@@ -263,10 +207,6 @@ class TestTypeConverter:
         assert converter.is_complex_type("custom_object")
 
     def test_convert_with_type_parameters(self):
-
-
-
-
         """Test converting generic types with parameters."""
         converter = TypeConverter()
 
@@ -276,10 +216,6 @@ class TestTypeConverter:
         assert converter.convert_type("map<string,integer>") == "dynamic"
 
     def test_edge_cases(self):
-
-
-
-
         """Test edge cases in type conversion."""
         converter = TypeConverter()
 

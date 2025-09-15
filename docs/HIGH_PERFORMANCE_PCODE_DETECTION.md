@@ -43,7 +43,7 @@ Fast string matching algorithm that skips characters when possible:
 # Pre-computed bad character tables for P-code signatures
 PCODE_SIGNATURES = [
     b"\x00\x00",    # RETURN instruction
-    b"\x04\x00",    # JUMP instruction  
+    b"\x04\x00",    # JUMP instruction
     b"\x05\x00",    # DBSTART instruction
     b"\x29\x00",    # GLOBFUNCCALL instruction
     b"\x2c\x00",    # DOTFUNCCALL instruction
@@ -248,7 +248,7 @@ The algorithm provides several tunable parameters:
 ```python
 class HighPerformancePCodeDetector:
     WINDOW_SIZE = 64                    # Sliding window size
-    CACHE_SIZE = 1000                   # Confidence cache size  
+    CACHE_SIZE = 1000                   # Confidence cache size
     CHUNK_SIZE = 8192                   # Processing chunk size
     MIN_CONFIDENCE_THRESHOLD = 0.7      # Detection threshold
     EARLY_TERMINATION_SIZE = 512        # Early termination limit
@@ -261,7 +261,7 @@ class HighPerformancePCodeDetector:
 The new algorithm maintains full API compatibility with the original:
 
 - Same method signatures
-- Same return value formats  
+- Same return value formats
 - Same confidence scoring system
 - Same section detection behavior
 
@@ -270,7 +270,7 @@ The new algorithm maintains full API compatibility with the original:
 Supports all PowerBuilder versions from 6.0 through 12.0+:
 
 - PB 6.0: Opcodes 0x00-0xFF (256 opcodes)
-- PB 8.0: Opcodes 0x00-0x246 (594 opcodes) 
+- PB 8.0: Opcodes 0x00-0x246 (594 opcodes)
 - PB 10.5+: Same as PB 8.0
 
 ### File Format Support
@@ -278,7 +278,7 @@ Supports all PowerBuilder versions from 6.0 through 12.0+:
 Works with all PowerBuilder object types:
 - Functions (.fun)
 - User Objects (.sru)
-- Windows (.srw) 
+- Windows (.srw)
 - Menus (.srm)
 - Applications (.sra)
 - Export format with headers
@@ -292,13 +292,13 @@ The algorithm includes comprehensive test coverage:
 ```python
 def test_boyer_moore_pattern_matching():
     """Test Boyer-Moore search algorithm."""
-    
+
 def test_confidence_caching():
     """Test sliding window confidence caching."""
-    
+
 def test_early_termination():
     """Test early termination logic."""
-    
+
 def test_chunked_processing():
     """Test memory-efficient chunked processing."""
 ```
@@ -310,10 +310,10 @@ Automated benchmarking against the original algorithm:
 ```python
 def test_performance_improvement():
     """Verify O(n) vs O(n²) performance improvement."""
-    
+
 def test_memory_usage():
     """Verify reduced memory usage."""
-    
+
 def test_accuracy_improvement():
     """Verify improved detection accuracy."""
 ```
@@ -325,7 +325,7 @@ Ensures backward compatibility:
 ```python
 def test_api_compatibility():
     """Verify API compatibility with original detector."""
-    
+
 def test_result_format_compatibility():
     """Verify return value format compatibility."""
 ```

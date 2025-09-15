@@ -137,7 +137,7 @@ END IF
 **Dart:**
 ```dart
 if (liCount > 0) {
-    showDialog(context: context, 
+    showDialog(context: context,
         builder: (_) => AlertDialog(
             title: Text("Info"),
             content: Text("Count is positive")));
@@ -197,7 +197,7 @@ WHERE employee_id = :li_id;
 final result = await db.select(employees)
     .where((e) => e.employeeId.equals(liId))
     .getSingle();
-    
+
 String lsName = result.employeeName;
 double ldSalary = result.salary;
 ```
@@ -208,7 +208,7 @@ double ldSalary = result.salary;
 result = session.query(Employee)\
     .filter(Employee.employee_id == li_id)\
     .first()
-    
+
 ls_name = result.employee_name
 ld_salary = result.salary
 ```
@@ -221,7 +221,7 @@ window w_employee
     // controls
     commandbutton cb_save
     singlelineedit sle_name
-    
+
     // events
     event clicked() on cb_save
         // save logic
@@ -238,11 +238,11 @@ class EmployeeScreen extends StatefulWidget {
 
 class _EmployeeScreenState extends State<EmployeeScreen> {
     final _nameController = TextEditingController();
-    
+
     void _onSaveClicked() {
         // save logic
     }
-    
+
     @override
     Widget build(BuildContext context) {
         return Scaffold(
@@ -361,7 +361,7 @@ class CustomerScreenState extends State<CustomerScreen> {
     int? _customerId;
     String _customerName = '';
     bool _isModified = false;
-    
+
     // Or using Provider/Riverpod
     final customerProvider = StateNotifierProvider<CustomerNotifier, CustomerState>((ref) {
         return CustomerNotifier();
@@ -394,7 +394,7 @@ end event
 event ue_search;
     string ls_search
     ls_search = sle_search.text
-    
+
     if Len(ls_search) > 0 then
         dw_customers.SetFilter("customer_name like '%" + ls_search + "%'")
         dw_customers.Filter()
@@ -413,13 +413,13 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
     final _searchController = TextEditingController();
     List<Customer> _customers = [];
     List<Customer> _filteredCustomers = [];
-    
+
     @override
     void initState() {
         super.initState();
         _loadCustomers();
     }
-    
+
     Future<void> _loadCustomers() async {
         final customers = await CustomerService.getAll();
         setState(() {
@@ -427,7 +427,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
             _filteredCustomers = customers;
         });
     }
-    
+
     void _searchCustomers(String query) {
         setState(() {
             if (query.isEmpty) {
@@ -439,7 +439,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
             }
         });
     }
-    
+
     @override
     Widget build(BuildContext context) {
         return Scaffold(
@@ -472,7 +472,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                                 DataColumn(label: Text('Name')),
                                 DataColumn(label: Text('Actions')),
                             ],
-                            rows: _filteredCustomers.map((customer) => 
+                            rows: _filteredCustomers.map((customer) =>
                                 DataRow(cells: [
                                     DataCell(Text(customer.id.toString())),
                                     DataCell(Text(customer.name)),
@@ -507,7 +507,7 @@ menu m_main from menu
     on m_main.create
         this.Item[] = {this.m_file, this.m_edit, this.m_window}
     end on
-    
+
     menu m_file from menu
         menuitem m_new "&New\tCtrl+N"
         menuitem m_open "&Open\tCtrl+O"

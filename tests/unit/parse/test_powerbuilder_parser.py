@@ -23,29 +23,17 @@ class TestGrammarManager:
     """Test the GrammarManager class."""
 
     def test_manager_initialization(self):
-
-
-
-
         """Test GrammarManager initialization."""
         gm = GrammarManager()
         assert gm is not None
 
     def test_manager_load_basic_grammar(self):
-
-
-
-
         """Test loading basic grammar."""
         gm = GrammarManager()
         parser = gm.get_parser("powerbuilder")
         assert parser is not None
 
     def test_list_available_grammars(self):
-
-
-
-
         """Test listing available grammar files."""
         gm = GrammarManager()
         grammars = gm.list_available_grammars()
@@ -55,10 +43,6 @@ class TestGrammarManager:
         assert any("powerbuilder" in g for g in grammars)
 
     def test_get_grammar_path(self):
-
-
-
-
         """Test getting path to a specific grammar."""
         gm = GrammarManager()
 
@@ -72,10 +56,6 @@ class TestGrammarManager:
             gm.get_grammar_path("nonexistent_grammar")
 
     def test_load_grammar(self):
-
-
-
-
         """Test loading a grammar file."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -88,15 +68,12 @@ class TestPowerBuilderPreprocessor:
     """Test the PowerBuilder preprocessor."""
 
     def test_preprocessor_init(self):
-
-
-
-
         """Test preprocessor initialization."""
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
         assert pp.base_path == Path.cwd()  # Check something that exists
 
         # def test_remove_line_continuations(self):
+
     #     """Test removing line continuations."""
     #     pp = PowerBuilderPreprocessor(Path.cwd())
     #
@@ -141,10 +118,6 @@ class TestPowerBuilderConstants:
     """Test PowerBuilder constants definitions."""
 
     def test_keywords_defined(self):
-
-
-
-
         """Test that keywords are properly defined."""
         assert len(PB_KEYWORDS) > 0
         assert "if" in PB_KEYWORDS
@@ -155,10 +128,6 @@ class TestPowerBuilderConstants:
         assert "next" in PB_KEYWORDS
 
     def test_types_defined(self):
-
-
-
-
         """Test that types are properly defined."""
         assert len(PB_BASIC_TYPES) > 0
         assert "integer" in PB_BASIC_TYPES
@@ -168,10 +137,6 @@ class TestPowerBuilderConstants:
         assert "date" in PB_BASIC_TYPES
 
     def test_operators_defined(self):
-
-
-
-
         """Test that operators are properly defined."""
         assert len(PB_OPERATORS) > 0
         assert "+" in PB_OPERATORS
@@ -186,10 +151,6 @@ class TestParserIntegration:
     """Test parser integration with grammar and preprocessing."""
 
     def test_parse_simple_declaration(self):
-
-
-
-
         """Test parsing a simple variable declaration."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -203,10 +164,6 @@ class TestParserIntegration:
         assert tree.data == "start"
 
     def test_parse_with_line_continuation(self):
-
-
-
-
         """Test parsing code with line continuation."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -221,10 +178,6 @@ class TestParserIntegration:
         assert isinstance(tree, Tree)
 
     def test_parse_multiple_statements(self):
-
-
-
-
         """Test parsing multiple statements."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -241,10 +194,6 @@ class TestParserIntegration:
         assert isinstance(tree, Tree)
 
     def test_parse_control_structures(self):
-
-
-
-
         """Test parsing control structures."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -263,10 +212,6 @@ class TestParserIntegration:
         assert isinstance(tree, Tree)
 
     def test_parse_error_handling(self):
-
-
-
-
         """Test parser error handling."""
         gm = GrammarManager()
         parser = gm.load_grammar("powerbuilder_core")
@@ -285,24 +230,16 @@ class TestGrammarCoverage:
 
     @pytest.fixture
     def parser(self):
-
-
         """Create a parser instance for tests."""
         gm = GrammarManager()
         return gm.load_grammar("powerbuilder_core")
 
     @pytest.fixture
     def preprocessor(self):
-
-
         """Create a preprocessor instance for tests."""
         return PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
     def test_all_basic_types(self, parser, preprocessor):
-
-
-
-
         """Test all basic PowerBuilder types."""
         types_to_test = [
             "integer",
@@ -327,10 +264,6 @@ class TestGrammarCoverage:
                 assert isinstance(tree, Tree)
 
     def test_operators(self, parser, preprocessor):
-
-
-
-
         """Test various operators."""
         test_cases = [
             "x = y + z",
@@ -351,10 +284,6 @@ class TestGrammarCoverage:
             assert isinstance(tree, Tree)
 
     def test_string_literals(self, parser, preprocessor):
-
-
-
-
         """Test various string literal formats."""
         test_cases = [
             'x = "double quoted"',
@@ -371,10 +300,6 @@ class TestGrammarCoverage:
             assert isinstance(tree, Tree)
 
     def test_numeric_literals(self, parser, preprocessor):
-
-
-
-
         """Test various numeric literal formats."""
         test_cases = [
             "x = 123",  # Integer
@@ -391,10 +316,6 @@ class TestGrammarCoverage:
             assert isinstance(tree, Tree)
 
     def test_boolean_literals(self, parser, preprocessor):
-
-
-
-
         """Test boolean literals."""
         test_cases = [
             "x = true",

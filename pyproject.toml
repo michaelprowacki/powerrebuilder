@@ -72,7 +72,7 @@ ignore = [
   "E117",   # Indentation (formatter handles this)
   "E501",   # Line too long (formatter handles this)
 
-  # Overly strict rules  
+  # Overly strict rules
   "D203",
   "D213",    # Conflicting docstring rules
   "PLR0913", # Too many arguments

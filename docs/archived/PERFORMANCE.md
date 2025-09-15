@@ -65,7 +65,7 @@ parallel:
   # Global settings
   max_workers: 8  # CPU cores
   max_memory_per_worker: 512MB
-  
+
   # Per-stage settings
   stages:
     extract:
@@ -99,13 +99,13 @@ memory:
     enabled: true
     size: 104857600      # 100MB pool
     buffer_size: 65536   # 64KB buffers
-    
+
   # Caching
   cache:
     enabled: true
     max_size: 268435456  # 256MB
     ttl: 300            # 5 minutes
-    
+
   # Limits
   limits:
     max_heap: 2147483648  # 2GB
@@ -130,12 +130,12 @@ io:
     write_buffer: 131072  # 128KB
     direct_io: false      # Use OS cache
     async_io: true        # Non-blocking I/O
-    
+
   # File handling
   files:
     max_open: 1024        # File descriptor limit
     mmap_threshold: 10485760  # Use mmap for >10MB
-    
+
   # Network (if applicable)
   network:
     connection_pool: 10
@@ -404,18 +404,18 @@ from concurrent.futures import ThreadPoolExecutor
 
 def test_throughput(file_count=1000):
     start = time.time()
-    
+
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
         for i in range(file_count):
             future = executor.submit(process_file, f"file_{i}")
             futures.append(future)
-        
+
         results = [f.result() for f in futures]
-    
+
     duration = time.time() - start
     throughput = file_count / duration
-    
+
     print(f"Throughput: {throughput:.2f} files/second")
 ```
 

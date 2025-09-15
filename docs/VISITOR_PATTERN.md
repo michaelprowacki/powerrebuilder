@@ -13,7 +13,7 @@ The old approach used regex patterns to parse string representations of AST:
 ```python
 # Old regex-based approach (fragile)
 event_matches = re.findall(
-    r"Tree\(Token\('RULE', 'event_handler'\).*?Token\('IDENTIFIER', '(\w+)'\)", 
+    r"Tree\(Token\('RULE', 'event_handler'\).*?Token\('IDENTIFIER', '(\w+)'\)",
     ast_str
 )
 ```
@@ -89,7 +89,7 @@ identifiers = ASTWalker.extract_identifiers(ast)
 
 # Find nodes matching a predicate
 public_functions = ASTWalker.find_by_predicate(
-    ast, 
+    ast,
     lambda n: is_function(n) and has_public_modifier(n)
 )
 ```
@@ -121,13 +121,13 @@ class MyCustomVisitor(ASTTreeVisitor):
     def __init__(self):
         super().__init__()
         self.functions = []
-    
+
     def visit_function_declaration(self, node):
         """Custom handler for function declarations."""
         # Extract function information
         func_info = self._extract_function_info(node)
         self.functions.append(func_info)
-        
+
         # Continue traversal
         return super().visit_function_declaration(node)
 ```
@@ -191,7 +191,7 @@ functions = ASTWalker.find_by_type(ast, 'function_decl')
 # Old approach
 def _extract_window_model(self, ast):
     # Complex regex parsing...
-    
+
 # New approach
 def _extract_window_model(self, ast):
     visitor = ModelExtractorVisitor()

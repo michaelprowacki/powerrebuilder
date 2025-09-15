@@ -29,29 +29,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Check for updates
         id: check-updates
         run: |
           # Create a backup of current lock file
           cp uv.lock uv.lock.backup
-          
+
           # Check for outdated packages
           echo "## Checking for outdated packages..." > UPDATE_REPORT.md
           echo "" >> UPDATE_REPORT.md
-          
+
           # Try to update based on input type
           UPDATE_TYPE="${{ inputs.update_type || 'patch' }}"
-          
+
           case $UPDATE_TYPE in
             patch)
               echo "Updating patch versions only..."
@@ -70,7 +70,7 @@ jobs:
               uv lock --upgrade
               ;;
           esac
-          
+
           # Check if there are changes
           if diff -q uv.lock uv.lock.backup > /dev/null; then
             echo "No updates available"
@@ -78,7 +78,7 @@ jobs:
           else
             echo "Updates found"
             echo "has_updates=true" >> $GITHUB_OUTPUT
-            
+
             # Generate update report
             echo "### Updated Packages" >> UPDATE_REPORT.md
             echo "" >> UPDATE_REPORT.md
@@ -86,13 +86,13 @@ jobs:
             diff -u uv.lock.backup uv.lock | grep -E "^[+-]" | grep -v "^[+-]{3}" | head -50 >> UPDATE_REPORT.md || true
             echo "\`\`\`" >> UPDATE_REPORT.md
           fi
-      
+
       - name: Run tests with updated dependencies
         if: steps.check-updates.outputs.has_updates == 'true'
         run: |
           # Install updated dependencies
           uv sync --frozen --all-extras
-          
+
           # Run quick smoke tests
           uv run pytest tests/ -v -m "not slow" --tb=short || {
             echo "⚠️ Tests failed with updated dependencies" >> UPDATE_REPORT.md
@@ -101,24 +101,24 @@ jobs:
             echo "has_updates=false" >> $GITHUB_OUTPUT
             exit 1
           }
-          
+
           echo "" >> UPDATE_REPORT.md
           echo "✅ All tests passed with updated dependencies" >> UPDATE_REPORT.md
-      
+
       - name: Check for security improvements
         if: steps.check-updates.outputs.has_updates == 'true'
         run: |
           echo "" >> UPDATE_REPORT.md
           echo "### Security Check" >> UPDATE_REPORT.md
           echo "" >> UPDATE_REPORT.md
-          
+
           # Run safety check
           uv tool install safety
           uv run safety check --json > safety-after.json || true
-          
+
           # Compare with previous if possible
           echo "Security scan completed. Review any vulnerability fixes." >> UPDATE_REPORT.md
-      
+
       - name: Create Pull Request
         if: steps.check-updates.outputs.has_updates == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -128,17 +128,17 @@ jobs:
           title: '⬆️ Update ${{ inputs.update_type || 'patch' }} dependencies'
           body: |
             ## Automated Dependency Update
-            
+
             This PR updates ${{ inputs.update_type || 'patch' }}-level dependencies.
-            
+
             $(cat UPDATE_REPORT.md)
-            
+
             ### Pre-merge Checklist
             - [ ] All tests pass
             - [ ] No security vulnerabilities introduced
             - [ ] No breaking changes detected
             - [ ] Documentation updated if needed
-            
+
             ---
             *This PR was automatically created by the dependency update workflow.*
           branch: deps/update-${{ inputs.update_type || 'patch' }}-${{ github.run_number }}
@@ -155,19 +155,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      
+
       - name: Install pre-commit
         run: pip install pre-commit
-      
+
       - name: Update pre-commit hooks
         run: |
           pre-commit autoupdate
-      
+
       - name: Check for changes
         id: check-changes
         run: |
@@ -178,12 +178,12 @@ jobs:
             echo "Pre-commit updates found"
             echo "has_updates=true" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Run pre-commit
         if: steps.check-changes.outputs.has_updates == 'true'
         run: |
           pre-commit run --all-files || true
-      
+
       - name: Create Pull Request
         if: steps.check-changes.outputs.has_updates == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -193,18 +193,18 @@ jobs:
           title: '⬆️ Update pre-commit hooks'
           body: |
             ## Pre-commit Hook Updates
-            
+
             This PR updates the pre-commit hooks to their latest versions.
-            
+
             ### Changes
             ```diff
             $(git diff .pre-commit-config.yaml)
             ```
-            
+
             ### Pre-merge Checklist
             - [ ] Pre-commit checks pass
             - [ ] No unexpected behavior changes
-            
+
             ---
             *This PR was automatically created by the dependency update workflow.*
           branch: deps/update-pre-commit-${{ github.run_number }}
@@ -221,7 +221,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Check for Action updates
         uses: actions/github-script@v7
         id: check-updates
@@ -230,27 +230,27 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             const yaml = require('js-yaml');
-            
+
             let hasUpdates = false;
             const updates = [];
-            
+
             // Check all workflow files
             const workflowDir = '.github/workflows';
             const files = fs.readdirSync(workflowDir);
-            
+
             for (const file of files) {
               if (!file.endsWith('.yml') && !file.endsWith('.yaml')) continue;
-              
+
               const filePath = path.join(workflowDir, file);
               const content = fs.readFileSync(filePath, 'utf8');
-              
+
               // Find all action uses
               const actionRegex = /uses:\s*([^@]+)@([^\s]+)/g;
               let match;
-              
+
               while ((match = actionRegex.exec(content)) !== null) {
                 const [full, action, version] = match;
-                
+
                 // Check if there's a newer version (simplified check)
                 // In production, you'd check against the actual GitHub API
                 if (version.startsWith('v') && !version.includes('sha')) {
@@ -263,24 +263,24 @@ jobs:
                 }
               }
             }
-            
+
             if (updates.length > 0) {
               hasUpdates = true;
-              
+
               // Create update report
               let report = '## GitHub Actions Updates Available\n\n';
               report += '| Workflow | Action | Current | Suggested |\n';
               report += '|----------|--------|---------|----------|\n';
-              
+
               for (const update of updates) {
                 report += `| ${update.file} | ${update.action} | ${update.currentVersion} | ${update.suggestedVersion} |\n`;
               }
-              
+
               fs.writeFileSync('ACTION_UPDATES.md', report);
             }
-            
+
             return hasUpdates;
-      
+
       - name: Create Pull Request
         if: steps.check-updates.outputs.result == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -290,15 +290,15 @@ jobs:
           title: '⬆️ Update GitHub Actions'
           body: |
             ## GitHub Actions Updates
-            
+
             This PR updates GitHub Actions to newer versions.
-            
+
             $(cat ACTION_UPDATES.md)
-            
+
             ### Pre-merge Checklist
             - [ ] Review action changelog for breaking changes
             - [ ] Verify CI still works correctly
-            
+
             ---
             *This PR was automatically created by the dependency update workflow.*
           branch: deps/update-actions-${{ github.run_number }}

@@ -18,8 +18,6 @@ from src.model.ast import (
 
 @pytest.fixture
 def integer_type():
-
-
     """Fixture for INTEGER type."""
     return Type(
         name="INTEGER",
@@ -29,8 +27,6 @@ def integer_type():
 
 @pytest.fixture
 def string_type():
-
-
     """Fixture for STRING type."""
     return Type(
         name=BasicType.STRING.type_name,
@@ -40,8 +36,6 @@ def string_type():
 
 @pytest.fixture
 def simple_array_type(integer_type):
-
-
     """Fixture for 1D integer array type."""
     return ArrayType(
         name="ARRAY OF INTEGER",
@@ -53,8 +47,6 @@ def simple_array_type(integer_type):
 
 @pytest.fixture
 def matrix_type(integer_type):
-
-
     """Fixture for 2D integer array type."""
     return ArrayType(
         name="ARRAY OF INTEGER",
@@ -68,12 +60,6 @@ def matrix_type(integer_type):
 
 
 def test_array_declaration_validation(integer_type):
-
-
-
-
-
-
     """Test array declaration validation."""
     # Valid declaration
     decl = ArrayDeclaration(
@@ -104,12 +90,6 @@ def test_array_declaration_validation(integer_type):
 
 
 def test_array_access_validation(simple_array_type):
-
-
-
-
-
-
     """Test array access validation."""
     # Valid access
     access = ArrayAccess(
@@ -137,12 +117,6 @@ def test_array_access_validation(simple_array_type):
 
 
 def test_array_assignment_validation(simple_array_type, integer_type):
-
-
-
-
-
-
     """Test array assignment validation."""
     access = ArrayAccess(
         array_name="numbers",
@@ -166,12 +140,6 @@ def test_array_assignment_validation(simple_array_type, integer_type):
 
 
 def test_array_slice_validation(matrix_type):
-
-
-
-
-
-
     """Test array slice validation."""
     # Valid 2D slice
     slice_op = ArraySlice(
@@ -202,12 +170,6 @@ def test_array_slice_validation(matrix_type):
 
 
 def test_array_operations(simple_array_type, matrix_type):
-
-
-
-
-
-
     """Test array operations."""
     # Test LENGTH
     op = ArrayOperation(

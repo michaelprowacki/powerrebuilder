@@ -21,38 +21,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run Safety check
         run: |
           uv tool install safety
           uv run safety check --json --output safety-report.json
         continue-on-error: true
-      
+
       - name: Upload Safety results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: safety-report
           path: safety-report.json
-      
+
       - name: Run pip-audit
         run: |
           uv tool install pip-audit
           uv run pip-audit --format json --output pip-audit-report.json
         continue-on-error: true
-      
+
       - name: Upload pip-audit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -65,36 +65,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Run Bandit
         run: |
           uv tool install bandit[toml]
           uv run bandit -r src/ -f json -o bandit-report.json
         continue-on-error: true
-      
+
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: bandit-report
           path: bandit-report.json
-      
+
       - name: Parse Bandit results
         if: always()
         run: |
           uv run bandit -r src/ -ll --format custom \
             --msg-template "{line}: {test_id}[{severity}]: {msg}" \
             > bandit-summary.txt || true
-          
+
           if [ -s bandit-summary.txt ]; then
             echo "⚠️ Security issues found:"
             cat bandit-summary.txt
@@ -109,14 +109,14 @@ jobs:
       image: returntocorp/semgrep
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run Semgrep
         run: |
           semgrep --config=auto \
             --json \
             --output=semgrep-report.json \
             src/ || true
-      
+
       - name: Upload Semgrep results
         uses: actions/upload-artifact@v4
         if: always()
@@ -131,19 +131,19 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'python' ]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: +security-extended,security-and-quality
-      
+
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-      
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
         with:
@@ -164,7 +164,7 @@ jobs:
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --debug --only-verified
-      
+
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -177,34 +177,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Check licenses
         run: |
           uv tool install pip-licenses
           uv run pip-licenses --format=json --output=licenses.json
-          
+
           # Check for problematic licenses
           PROBLEMATIC_LICENSES="GPL|AGPL|LGPL|SSPL|EUPL"
-          
+
           if grep -E "$PROBLEMATIC_LICENSES" licenses.json; then
             echo "⚠️ Warning: Found potentially problematic licenses"
             echo "Please review the licenses.json file"
           else
             echo "✅ License check passed"
           fi
-      
+
       - name: Upload license report
         uses: actions/upload-artifact@v4
         with:
@@ -217,11 +217,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build Docker image
         run: |
           docker build -t powerrebuilder:scan .
-      
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -229,12 +229,12 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
-      
+
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-      
+
       - name: Run Grype vulnerability scanner
         uses: anchore/scan-action@v3
         with:
@@ -249,45 +249,45 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: security-artifacts
-      
+
       - name: Generate consolidated report
         run: |
           echo "# Security Scan Report" > SECURITY_REPORT.md
           echo "**Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> SECURITY_REPORT.md
           echo "**Commit**: ${{ github.sha }}" >> SECURITY_REPORT.md
           echo "" >> SECURITY_REPORT.md
-          
+
           echo "## Summary" >> SECURITY_REPORT.md
           echo "" >> SECURITY_REPORT.md
-          
+
           # Check each report
           ISSUES_FOUND=false
-          
+
           if [ -f security-artifacts/safety-report/safety-report.json ]; then
             SAFETY_ISSUES=$(jq '.vulnerabilities | length' security-artifacts/safety-report/safety-report.json)
             echo "- **Dependency vulnerabilities (Safety)**: $SAFETY_ISSUES issues" >> SECURITY_REPORT.md
             [ "$SAFETY_ISSUES" -gt 0 ] && ISSUES_FOUND=true
           fi
-          
+
           if [ -f security-artifacts/bandit-report/bandit-report.json ]; then
             BANDIT_ISSUES=$(jq '.results | length' security-artifacts/bandit-report/bandit-report.json)
             echo "- **Code security issues (Bandit)**: $BANDIT_ISSUES issues" >> SECURITY_REPORT.md
             [ "$BANDIT_ISSUES" -gt 0 ] && ISSUES_FOUND=true
           fi
-          
+
           if [ -f security-artifacts/semgrep-report/semgrep-report.json ]; then
             SEMGREP_ISSUES=$(jq '.results | length' security-artifacts/semgrep-report/semgrep-report.json)
             echo "- **SAST findings (Semgrep)**: $SEMGREP_ISSUES issues" >> SECURITY_REPORT.md
             [ "$SEMGREP_ISSUES" -gt 0 ] && ISSUES_FOUND=true
           fi
-          
+
           echo "" >> SECURITY_REPORT.md
-          
+
           if [ "$ISSUES_FOUND" = true ]; then
             echo "## ⚠️ Action Required" >> SECURITY_REPORT.md
             echo "Security issues were detected. Please review the detailed reports in the artifacts." >> SECURITY_REPORT.md
@@ -295,15 +295,15 @@ jobs:
             echo "## ✅ All Clear" >> SECURITY_REPORT.md
             echo "No significant security issues detected." >> SECURITY_REPORT.md
           fi
-          
+
           cat SECURITY_REPORT.md
-      
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
           name: security-report-summary
           path: SECURITY_REPORT.md
-      
+
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -312,7 +312,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('SECURITY_REPORT.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

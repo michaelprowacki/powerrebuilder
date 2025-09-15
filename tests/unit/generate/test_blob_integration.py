@@ -8,8 +8,8 @@ from src.generate.converters.flutter.datawindows import (
     DataWindowColumn,
     DataWindowConverter,
 )
-from src.generate.converters.utils.expressions import ExpressionConverter
 from src.generate.converters.flutter.models import TypeConverter
+from src.generate.converters.utils.expressions import ExpressionConverter
 
 
 class TestBlobIntegration:
@@ -17,13 +17,13 @@ class TestBlobIntegration:
 
     @pytest.fixture
     def converters(self):
-
-
         """Create converter instances."""
         type_converter = TypeConverter()
         expr_converter = ExpressionConverter(type_converter)
         blob_converter = BlobConverter()
-        dw_converter = DataWindowConverter(type_converter, expr_converter, blob_converter)
+        dw_converter = DataWindowConverter(
+            type_converter, expr_converter, blob_converter
+        )
 
         return {
             "type": type_converter,
@@ -33,12 +33,8 @@ class TestBlobIntegration:
         }
 
     def test_datawindow_blob_column_metadata(self, converters):
-
-
-
-
         """Test DataWindow blob column gets proper metadata."""
-        dw_syntax = '''
+        dw_syntax = """
         datawindow(
             processing=0
         )
@@ -47,7 +43,7 @@ class TestBlobIntegration:
             column=(type=blob name=employee_photo)
             column=(type=blob name=resume_document)
         )
-        '''
+        """
 
         dw_def = converters["dw"].convert_datawindow(dw_syntax, "d_employee")
 
@@ -71,10 +67,6 @@ class TestBlobIntegration:
         assert len(blob_cols) == 2
 
     def test_datawindow_blob_imports(self, converters):
-
-
-
-
         """Test DataWindow with blob columns generates correct imports."""
         # Create a DataWindow definition with blob column
         photo_col = DataWindowColumn(
@@ -96,10 +88,6 @@ class TestBlobIntegration:
         assert "import '../widgets/profile_pic_blob_display.dart';" in imports
 
     def test_blob_handling_code_generation(self, converters):
-
-
-
-
         """Test blob handling code generation."""
         # Create columns with blob metadata
         photo_col = DataWindowColumn(
@@ -113,7 +101,10 @@ class TestBlobIntegration:
             name="attachment",
             label="Attachment",
             data_type="Uint8List",
-            blob_metadata={"usage": "document", "display_widget": "AttachmentBlobDisplay"},
+            blob_metadata={
+                "usage": "document",
+                "display_widget": "AttachmentBlobDisplay",
+            },
         )
 
         dw_def = converters["dw"].convert_datawindow("", "d_test")
@@ -139,10 +130,6 @@ class TestBlobIntegration:
         assert "ListTile" in attach_widget["code"]
 
     def test_expression_converter_blob_functions(self, converters):
-
-
-
-
         """Test expression converter handles blob functions."""
         expr_conv = converters["expr"]
 
@@ -167,10 +154,6 @@ class TestBlobIntegration:
         assert result == "myUint8List.length"
 
     def test_expression_converter_blob_imports(self, converters):
-
-
-
-
         """Test expression converter generates blob imports."""
         expr_conv = converters["expr"]
 
@@ -187,10 +170,6 @@ class TestBlobIntegration:
         assert "import 'dart:typed_data';" in imports
 
     def test_type_converter_blob_arrays(self, converters):
-
-
-
-
         """Test type converter handles blob arrays."""
         type_conv = converters["type"]
 
@@ -203,10 +182,6 @@ class TestBlobIntegration:
         assert dart_type == "List<Uint8List>?"
 
     def test_column_to_dict_with_blob(self, converters):
-
-
-
-
         """Test DataWindowColumn.to_dict includes blob metadata."""
         col = DataWindowColumn(
             name="signature",
@@ -222,10 +197,6 @@ class TestBlobIntegration:
         assert col_dict["blob_metadata"]["display_widget"] == "SignatureDisplay"
 
     def test_blob_usage_detection(self, converters):
-
-
-
-
         """Test blob usage type detection from column names."""
         dw_conv = converters["dw"]
 

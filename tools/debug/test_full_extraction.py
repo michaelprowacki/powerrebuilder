@@ -5,27 +5,11 @@ import struct
 
 
 def create_test_pbd_data() -> None:
-
-
-
-
-
-
-
-
     """Create a minimal test PBD with known P-code data."""
     # This would create test data - for now, let's analyze real data
 
 
 def analyze_extraction_issue() -> None:
-
-
-
-
-
-
-
-
     """Analyze why extracted P-code doesn't match expected format."""
     # The hex dump from the original message shows:
     # 00000000: 4841 2450 4245 7870 6f72 7448 6561 6465  HA$PBExportHeade
@@ -36,10 +20,10 @@ def analyze_extraction_issue() -> None:
 
     raw_data = bytes.fromhex(
         "48412450424578706f7274486561646572"  # HA$PBExportHeader
-        + "24665f6765745f757365726e616d65"  # $f_get_username
-        + "2e66756e0a2450424578706f7274436f"  # .fun.$PBExportCo
-        + "6d6d656e7473240a"  # mments$.
-        + "03006e4001001000000036e0eb44a9c8134f0800000010",  # P-code data
+        "24665f6765745f757365726e616d65"  # $f_get_username
+        "2e66756e0a2450424578706f7274436f"  # .fun.$PBExportCo
+        "6d6d656e7473240a"  # mments$.
+        "03006e4001001000000036e0eb44a9c8134f0800000010",  # P-code data
     )
 
     # Find header boundaries

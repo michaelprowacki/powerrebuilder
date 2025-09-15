@@ -18,27 +18,17 @@ from src.model.utils.validators import ASTValidator
 
 @pytest.fixture
 def type_registry():
-
-
     """Create a type registry for testing."""
     return TypeRegistry()
 
 
 @pytest.fixture
 def ast_validator(type_registry):
-
-
     """Create an AST validator for testing."""
     return ASTValidator(type_registry)
 
 
 def test_parameter_validation(type_registry):
-
-
-
-
-
-
     """Test parameter validation."""
     int_type = type_registry.get_type("INTEGER")
     param = Parameter("x", int_type)
@@ -55,12 +45,6 @@ def test_parameter_validation(type_registry):
 
 
 def test_signature_validation(type_registry):
-
-
-
-
-
-
     """Test function signature validation."""
     int_type = type_registry.get_type("INTEGER")
     string_type = type_registry.get_type("STRING")
@@ -92,12 +76,6 @@ def test_signature_validation(type_registry):
 
 
 def test_function_definition(ast_validator):
-
-
-
-
-
-
     """Test function definition and validation."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
 
@@ -118,12 +96,6 @@ def test_function_definition(ast_validator):
 
 
 def test_procedure_definition(ast_validator):
-
-
-
-
-
-
     """Test procedure definition and validation."""
     string_type = ast_validator.type_registry.get_type("STRING")
 
@@ -143,12 +115,6 @@ def test_procedure_definition(ast_validator):
 
 
 def test_function_call_validation(ast_validator):
-
-
-
-
-
-
     """Test function call validation."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
 
@@ -180,12 +146,6 @@ def test_function_call_validation(ast_validator):
 
 
 def test_procedure_call_validation(ast_validator):
-
-
-
-
-
-
     """Test procedure call validation."""
     string_type = ast_validator.type_registry.get_type("STRING")
     int_type = ast_validator.type_registry.get_type("INTEGER")
@@ -217,12 +177,6 @@ def test_procedure_call_validation(ast_validator):
 
 
 def test_nested_scope_handling(ast_validator):
-
-
-
-
-
-
     """Test nested scope handling."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
 
@@ -259,12 +213,6 @@ def test_nested_scope_handling(ast_validator):
 
 
 def test_recursive_function_validation(ast_validator):
-
-
-
-
-
-
     """Test recursive function validation."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
 
@@ -290,12 +238,6 @@ def test_recursive_function_validation(ast_validator):
 
 
 def test_scope_variable_visibility(ast_validator):
-
-
-
-
-
-
     """Test variable visibility across scopes."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
 
@@ -321,12 +263,6 @@ def test_scope_variable_visibility(ast_validator):
 
 
 def test_function_overloading(ast_validator):
-
-
-
-
-
-
     """Test function overloading is not allowed."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
     string_type = ast_validator.type_registry.get_type("STRING")

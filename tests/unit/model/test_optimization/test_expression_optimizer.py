@@ -1,6 +1,6 @@
 """Tests for expression optimizer."""
 
-
+from src.decompile.analysis.data import ExpressionOptimizer
 from src.model.unified_expressions import (
     PBBinaryOperator,
     PBBooleanLiteral,
@@ -13,17 +13,12 @@ from src.model.unified_expressions import (
     PBUnaryOperator,
     PBVariable,
 )
-from src.decompile.analysis.data import ExpressionOptimizer
 
 
 class TestConstantFolding:
     """Test constant folding optimizations."""
 
     def test_fold_numeric_addition(self):
-
-
-
-
         """Test folding of numeric addition."""
         optimizer = ExpressionOptimizer()
 
@@ -40,10 +35,6 @@ class TestConstantFolding:
         assert optimizer.optimizations_applied == 1
 
     def test_fold_numeric_subtraction(self):
-
-
-
-
         """Test folding of numeric subtraction."""
         optimizer = ExpressionOptimizer()
 
@@ -59,10 +50,6 @@ class TestConstantFolding:
         assert result.value == 6
 
     def test_fold_numeric_multiplication(self):
-
-
-
-
         """Test folding of numeric multiplication."""
         optimizer = ExpressionOptimizer()
 
@@ -78,10 +65,6 @@ class TestConstantFolding:
         assert result.value == 12
 
     def test_fold_numeric_division(self):
-
-
-
-
         """Test folding of numeric division."""
         optimizer = ExpressionOptimizer()
 
@@ -97,10 +80,6 @@ class TestConstantFolding:
         assert result.value == 5
 
     def test_no_fold_division_by_zero(self):
-
-
-
-
         """Test that division by zero is not folded."""
         optimizer = ExpressionOptimizer()
 
@@ -116,10 +95,6 @@ class TestConstantFolding:
         assert optimizer.optimizations_applied == 0
 
     def test_fold_string_concatenation(self):
-
-
-
-
         """Test folding of string concatenation."""
         optimizer = ExpressionOptimizer()
 
@@ -135,10 +110,6 @@ class TestConstantFolding:
         assert result.value == "Hello World"
 
     def test_fold_concatenation_operator(self):
-
-
-
-
         """Test folding of concatenation operator."""
         optimizer = ExpressionOptimizer()
 
@@ -156,10 +127,6 @@ class TestConstantFolding:
         assert result.value == "ABC"
 
     def test_partial_concatenation_folding(self):
-
-
-
-
         """Test partial folding of concatenation with non-literals."""
         optimizer = ExpressionOptimizer()
 
@@ -183,10 +150,6 @@ class TestConstantFolding:
         assert result.operands[2].value == "CD"
 
     def test_fold_boolean_operations(self):
-
-
-
-
         """Test folding of boolean operations."""
         optimizer = ExpressionOptimizer()
 
@@ -213,10 +176,6 @@ class TestConstantFolding:
         assert result.value is True
 
     def test_fold_comparison_operations(self):
-
-
-
-
         """Test folding of comparison operations."""
         optimizer = ExpressionOptimizer()
 
@@ -243,10 +202,6 @@ class TestConstantFolding:
         assert result.value is True
 
     def test_fold_unary_operations(self):
-
-
-
-
         """Test folding of unary operations."""
         optimizer = ExpressionOptimizer()
 
@@ -271,10 +226,6 @@ class TestConstantFolding:
         assert result.value is False
 
     def test_fold_power_operation(self):
-
-
-
-
         """Test folding of power operations."""
         optimizer = ExpressionOptimizer()
 
@@ -289,10 +240,6 @@ class TestConstantFolding:
         assert result.value == 8
 
     def test_fold_ternary_with_constant_condition(self):
-
-
-
-
         """Test folding of ternary expressions with constant conditions."""
         optimizer = ExpressionOptimizer()
 
@@ -319,10 +266,6 @@ class TestConstantFolding:
         assert result.value == 20
 
     def test_nested_constant_folding(self):
-
-
-
-
         """Test folding of nested expressions."""
         optimizer = ExpressionOptimizer()
 
@@ -351,10 +294,6 @@ class TestAlgebraicSimplification:
     """Test algebraic simplification optimizations."""
 
     def test_add_zero_identity(self):
-
-
-
-
         """Test x + 0 = x and 0 + x = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -382,10 +321,6 @@ class TestAlgebraicSimplification:
         assert result.name == "x"
 
     def test_subtract_zero_identity(self):
-
-
-
-
         """Test x - 0 = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -402,10 +337,6 @@ class TestAlgebraicSimplification:
         assert result.name == "x"
 
     def test_subtract_self_identity(self):
-
-
-
-
         """Test x - x = 0."""
         optimizer = ExpressionOptimizer()
         var1 = PBVariable(name="x")
@@ -423,10 +354,6 @@ class TestAlgebraicSimplification:
         assert result.value == 0
 
     def test_multiply_one_identity(self):
-
-
-
-
         """Test x * 1 = x and 1 * x = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -454,10 +381,6 @@ class TestAlgebraicSimplification:
         assert result.name == "x"
 
     def test_multiply_zero_identity(self):
-
-
-
-
         """Test x * 0 = 0 and 0 * x = 0."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -485,10 +408,6 @@ class TestAlgebraicSimplification:
         assert result.value == 0
 
     def test_divide_one_identity(self):
-
-
-
-
         """Test x / 1 = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -505,10 +424,6 @@ class TestAlgebraicSimplification:
         assert result.name == "x"
 
     def test_power_zero_identity(self):
-
-
-
-
         """Test x ^ 0 = 1."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -524,10 +439,6 @@ class TestAlgebraicSimplification:
         assert result.value == 1
 
     def test_power_one_identity(self):
-
-
-
-
         """Test x ^ 1 = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -547,10 +458,6 @@ class TestBooleanOptimization:
     """Test boolean expression optimizations."""
 
     def test_and_true_identity(self):
-
-
-
-
         """Test true AND x = x and x AND true = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -578,10 +485,6 @@ class TestBooleanOptimization:
         assert result.name == "x"
 
     def test_and_false_identity(self):
-
-
-
-
         """Test false AND x = false and x AND false = false."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -609,10 +512,6 @@ class TestBooleanOptimization:
         assert result.value is False
 
     def test_or_true_identity(self):
-
-
-
-
         """Test true OR x = true and x OR true = true."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -640,10 +539,6 @@ class TestBooleanOptimization:
         assert result.value is True
 
     def test_or_false_identity(self):
-
-
-
-
         """Test false OR x = x and x OR false = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -671,10 +566,6 @@ class TestBooleanOptimization:
         assert result.name == "x"
 
     def test_double_negation_elimination(self):
-
-
-
-
         """Test NOT NOT x = x."""
         optimizer = ExpressionOptimizer()
         var = PBVariable(name="x")
@@ -697,10 +588,6 @@ class TestComplexOptimizations:
     """Test complex optimization scenarios."""
 
     def test_mixed_optimizations(self):
-
-
-
-
         """Test expressions requiring multiple optimization types."""
         optimizer = ExpressionOptimizer()
 
@@ -721,10 +608,6 @@ class TestComplexOptimizations:
         assert result.name == "x"
 
     def test_no_optimization_needed(self):
-
-
-
-
         """Test that expressions without optimization opportunities are unchanged."""
         optimizer = ExpressionOptimizer()
 
@@ -740,10 +623,6 @@ class TestComplexOptimizations:
         assert optimizer.optimizations_applied == 0
 
     def test_null_handling(self):
-
-
-
-
         """Test optimization with null values."""
         optimizer = ExpressionOptimizer()
 
@@ -758,10 +637,6 @@ class TestComplexOptimizations:
         assert isinstance(result, PBNullLiteral)
 
     def test_deeply_nested_optimization(self):
-
-
-
-
         """Test optimization of deeply nested expressions."""
         optimizer = ExpressionOptimizer()
 

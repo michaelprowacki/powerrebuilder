@@ -15,7 +15,7 @@ This guide covers the performance improvements implemented to address slow decom
 
 **Problem**: Cache was configured but not being used effectively.
 
-**Solution**: 
+**Solution**:
 - Fixed cache initialization in decompile coordinator
 - Added proper cache hit/miss tracking
 - Implemented file-based cache validation using modification timestamps
@@ -114,7 +114,7 @@ from src.common.performance import monitor_performance
 with monitor_performance("decompilation") as metrics:
     # Your decompilation code here
     result = coordinator.decompile()
-    
+
     # Update metrics
     metrics.files_processed = result["total_files"]
     metrics.cache_hits = result["cache_hits"]
@@ -247,7 +247,7 @@ print(f"Overall throughput: {summary['overall_throughput_mb_per_sec']:.1f} MB/s"
 Additional optimizations that could be implemented:
 
 1. **GPU Acceleration**: For complex P-code analysis
-2. **Distributed Processing**: Process files across multiple machines  
+2. **Distributed Processing**: Process files across multiple machines
 3. **Incremental Processing**: Only process changed files
 4. **Advanced Caching**: Content-based deduplication
 5. **Profile-Guided Optimization**: Runtime performance tuning

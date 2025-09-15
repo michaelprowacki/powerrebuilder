@@ -13,10 +13,6 @@ class TestGlassmorphicStyle:
     """Test cases for GlassmorphicStyle."""
 
     def test_default_values(self):
-
-
-
-
         """Test default glassmorphic style values."""
         style = GlassmorphicStyle()
 
@@ -29,10 +25,6 @@ class TestGlassmorphicStyle:
         assert style.border_radius == 20.0
 
     def test_custom_values(self):
-
-
-
-
         """Test custom glassmorphic style values."""
         style = GlassmorphicStyle(
             blur=30.0,
@@ -45,10 +37,6 @@ class TestGlassmorphicStyle:
         assert style.border_radius == 12.0
 
     def test_to_flutter_conversion(self):
-
-
-
-
         """Test conversion to Flutter properties."""
         style = GlassmorphicStyle(opacity=0.2, border_opacity=0.3)
         flutter_props = style.to_flutter()
@@ -70,10 +58,6 @@ class TestIconMapping:
     """Test cases for IconMapping."""
 
     def test_material_icon_mapping(self):
-
-
-
-
         """Test Material icon mapping."""
         mapping = IconMapping(
             pb_name="save",
@@ -86,10 +70,6 @@ class TestIconMapping:
         assert mapping.to_flutter_import() == "import 'package:flutter/material.dart';"
 
     def test_cupertino_icon_mapping(self):
-
-
-
-
         """Test Cupertino icon mapping."""
         mapping = IconMapping(
             pb_name="settings",
@@ -101,10 +81,6 @@ class TestIconMapping:
         assert mapping.to_flutter_import() == "import 'package:flutter/cupertino.dart';"
 
     def test_sf_symbols_icon_mapping(self):
-
-
-
-
         """Test SF Symbols icon mapping."""
         mapping = IconMapping(
             pb_name="share",
@@ -113,13 +89,12 @@ class TestIconMapping:
         )
 
         assert mapping.to_flutter_code() == "SFIcons.sf_square_and_arrow_up"
-        assert mapping.to_flutter_import() == "import 'package:flutter_sficon/flutter_sficon.dart';"
+        assert (
+            mapping.to_flutter_import()
+            == "import 'package:flutter_sficon/flutter_sficon.dart';"
+        )
 
     def test_custom_icon_mapping(self):
-
-
-
-
         """Test custom icon mapping."""
         mapping = IconMapping(
             pb_name="logo",
@@ -135,18 +110,10 @@ class TestDesignSystemConverter:
     """Test cases for DesignSystemConverter."""
 
     def setup_method(self):
-
-
-
-
         """Set up test instances."""
         self.converter = DesignSystemConverter(design_theme="liquid_glass")
 
     def test_initialization(self):
-
-
-
-
         """Test converter initialization."""
         assert self.converter is not None
         assert self.converter.design_theme == "liquid_glass"
@@ -154,10 +121,6 @@ class TestDesignSystemConverter:
         assert len(self.converter.glass_styles) > 0
 
     def test_different_themes(self):
-
-
-
-
         """Test initialization with different themes."""
         material_converter = DesignSystemConverter(design_theme="material")
         assert material_converter.design_theme == "material"
@@ -166,10 +129,6 @@ class TestDesignSystemConverter:
         assert fluent_converter.design_theme == "fluent"
 
     def test_glass_styles_for_controls(self):
-
-
-
-
         """Test predefined glass styles for different controls."""
         assert "window" in self.converter.glass_styles
         assert "button" in self.converter.glass_styles
@@ -183,10 +142,6 @@ class TestDesignSystemConverter:
         assert window_style.blur > button_style.blur
 
     def test_icon_mappings_loaded(self):
-
-
-
-
         """Test that common icon mappings are loaded."""
         # Check common file operations
         assert "new" in self.converter.icon_mappings
@@ -203,10 +158,6 @@ class TestDesignSystemConverter:
         assert "next" in self.converter.icon_mappings
 
     def test_extract_icon_key(self):
-
-
-
-
         """Test icon key extraction."""
         test_cases = [
             ("save.ico", "save"),
@@ -223,10 +174,6 @@ class TestDesignSystemConverter:
             assert result == expected
 
     def test_extract_keywords(self):
-
-
-
-
         """Test keyword extraction from icon name and context."""
         # Test without context
         keywords = self.converter._extract_keywords("save_document_icon")
@@ -246,10 +193,6 @@ class TestDesignSystemConverter:
         assert "current" in keywords
 
     def test_convert_icon_direct_mapping(self):
-
-
-
-
         """Test direct icon mapping conversion."""
         mapping = self.converter.convert_icon("save.ico")
 
@@ -259,10 +202,6 @@ class TestDesignSystemConverter:
         assert mapping.confidence == 1.0
 
     def test_convert_icon_keyword_matching(self):
-
-
-
-
         """Test icon conversion via keyword matching."""
         mapping = self.converter.convert_icon("document_save_button.png")
 
@@ -271,10 +210,6 @@ class TestDesignSystemConverter:
         assert mapping.confidence == 0.8  # Lower confidence for keyword match
 
     def test_convert_icon_contextual_fallback(self):
-
-
-
-
         """Test contextual fallback for unknown icons."""
         context = {"control_type": "DataWindow"}
         mapping = self.converter.convert_icon("unknown_icon.ico", context)
@@ -285,10 +220,6 @@ class TestDesignSystemConverter:
         assert mapping.confidence == 0.5
 
     def test_convert_icon_generic_fallback(self):
-
-
-
-
         """Test generic fallback for completely unknown icons."""
         mapping = self.converter.convert_icon("xyz123.ico")
 
@@ -297,10 +228,6 @@ class TestDesignSystemConverter:
         assert mapping.confidence == 0.3
 
     def test_apply_glassmorphism(self):
-
-
-
-
         """Test applying glassmorphism to controls."""
         properties = {
             "width": 200,
@@ -317,10 +244,6 @@ class TestDesignSystemConverter:
         assert "withOpacity(0.1)" in enhanced["background_color"]
 
     def test_apply_glassmorphism_non_glass_theme(self):
-
-
-
-
         """Test that glassmorphism is not applied for non-glass themes."""
         material_converter = DesignSystemConverter(design_theme="material")
         properties = {"width": 200}
@@ -331,10 +254,6 @@ class TestDesignSystemConverter:
         assert enhanced == properties  # Should be unchanged
 
     def test_generate_glass_container(self):
-
-
-
-
         """Test generating Flutter code for glass container."""
         control = {
             "width": 300,
@@ -344,11 +263,17 @@ class TestDesignSystemConverter:
                 "borderRadius": 12,
                 "border": 1.5,
                 "linearGradient": {
-                    "colors": ["Color(0xFFFFFFFF).withOpacity(0.1)", "Color(0xFFFFFFFF).withOpacity(0.05)"],
+                    "colors": [
+                        "Color(0xFFFFFFFF).withOpacity(0.1)",
+                        "Color(0xFFFFFFFF).withOpacity(0.05)",
+                    ],
                     "stops": [0.1, 1.0],
                 },
                 "borderGradient": {
-                    "colors": ["Color(0xFFFFFFFF).withOpacity(0.2)", "Color(0xFFFFFFFF).withOpacity(0.1)"],
+                    "colors": [
+                        "Color(0xFFFFFFFF).withOpacity(0.2)",
+                        "Color(0xFFFFFFFF).withOpacity(0.1)",
+                    ],
                 },
             },
         }
@@ -363,10 +288,6 @@ class TestDesignSystemConverter:
         assert any("child: Text('Hello')," in line for line in lines)
 
     def test_generate_regular_container(self):
-
-
-
-
         """Test generating regular container when no glassmorphism."""
         control = {
             "width": 100,
@@ -381,10 +302,6 @@ class TestDesignSystemConverter:
         assert any("child: Icon(Icons.save)," in line for line in lines)
 
     def test_get_required_packages(self):
-
-
-
-
         """Test getting required Flutter packages."""
         packages = self.converter.get_required_packages()
 
@@ -401,10 +318,6 @@ class TestDesignSystemConverter:
         assert any("flutter_sficon" in pkg for pkg in packages)
 
     def test_generate_theme_extensions_glass(self):
-
-
-
-
         """Test generating theme extensions for glass theme."""
         extensions = self.converter.generate_theme_extensions()
 
@@ -420,13 +333,11 @@ class TestDesignSystemConverter:
         assert any("glassDecoration" in dec for dec in extensions["decorations"])
 
         # Check animations
-        assert any("glassAnimationDuration" in anim for anim in extensions["animations"])
+        assert any(
+            "glassAnimationDuration" in anim for anim in extensions["animations"]
+        )
 
     def test_generate_theme_extensions_non_glass(self):
-
-
-
-
         """Test theme extensions for non-glass themes."""
         material_converter = DesignSystemConverter(design_theme="material")
         extensions = material_converter.generate_theme_extensions()
@@ -435,10 +346,6 @@ class TestDesignSystemConverter:
         assert all(len(values) == 0 for values in extensions.values())
 
     def test_icon_mapping_case_insensitive(self):
-
-
-
-
         """Test that icon mapping is case-insensitive."""
         test_cases = ["SAVE", "Save", "save", "SaVe"]
 
@@ -447,23 +354,18 @@ class TestDesignSystemConverter:
             assert mapping.modern_icon == "save"
 
     def test_multiple_keyword_matches(self):
-
-
-
-
         """Test handling multiple keyword matches."""
         # Both 'new' and 'create' are keywords for the add_box icon
         mapping = self.converter.convert_icon("create_new_document.png")
 
         assert mapping is not None
-        assert mapping.modern_icon in ["add_box", "add_circle_outline"]  # Could match either
+        assert mapping.modern_icon in [
+            "add_box",
+            "add_circle_outline",
+        ]  # Could match either
         assert mapping.confidence == 0.8
 
     def test_icon_mapping_with_all_contexts(self):
-
-
-
-
         """Test icon mapping with various control type contexts."""
         control_contexts = [
             ("commandbutton", "touch_app"),

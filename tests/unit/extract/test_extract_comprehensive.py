@@ -13,10 +13,6 @@ class TestPBDExtraction:
     """Test PBD file extraction functionality."""
 
     def create_mock_pbd_file(self, entries: list[dict]) -> Path:
-
-
-
-
         """Create a mock PBD file for testing."""
         # Create temporary file
         temp_file = tempfile.NamedTemporaryFile(suffix=".pbd", delete=False)
@@ -44,22 +40,22 @@ class TestPBDExtraction:
         return temp_path
 
     def test_extract_single_object(self):
-
-
-
-
         """Test extracting a single PowerBuilder object."""
         # Create mock PBD with one object
-        entries = [{
-            "name": "n_test",
-            "data": "type n_test from nonvisualobject\nend type",
-        }]
+        entries = [
+            {
+                "name": "n_test",
+                "data": "type n_test from nonvisualobject\nend type",
+            }
+        ]
         pbd_path = self.create_mock_pbd_file(entries)
 
         try:
             # Extract to temporary directory
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 # Check result
                 assert result is True
@@ -73,21 +69,22 @@ class TestPBDExtraction:
             pbd_path.unlink()
 
     def test_extract_multiple_objects(self):
-
-
-
-
         """Test extracting multiple objects from PBD."""
         entries = [
             {"name": "w_main", "data": "window w_main\nend window"},
-            {"name": "n_custom", "data": "type n_custom from nonvisualobject\nend type"},
+            {
+                "name": "n_custom",
+                "data": "type n_custom from nonvisualobject\nend type",
+            },
             {"name": "d_employee", "data": "datawindow d_employee\nend datawindow"},
         ]
         pbd_path = self.create_mock_pbd_file(entries)
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 assert result is True
 
@@ -100,16 +97,13 @@ class TestPBDExtraction:
             pbd_path.unlink()
 
     def test_binary_detection(self):
-
-
-
-
         """Test binary data detection with magic numbers."""
         # Test with 0x444F4D76 magic number (known binary indicator)
         binary_data = struct.pack("<I", 0x444F4D76) + b"\x00" * 100
 
         # Should detect as binary
         from src.extract.pbd.structures.data_block import is_binary_data
+
         assert is_binary_data(binary_data) is True
 
         # Test with text data
@@ -117,14 +111,9 @@ class TestPBDExtraction:
         assert is_binary_data(text_data) is False
 
     def test_object_type_detection(self):
-
-
-
-
         """Test PowerBuilder object type detection."""
+
         def detect_object_type(content: str) -> tuple[str, str]:
-
-
             """Detect PowerBuilder object type from content.
 
             Args:
@@ -138,22 +127,27 @@ class TestPBDExtraction:
             # Pattern matching for different object types
             if content_lower.startswith("window "):
                 return "window", ".srw"
-            elif content_lower.startswith("type ") and "from nonvisualobject" in content_lower:
+            if (
+                content_lower.startswith("type ")
+                and "from nonvisualobject" in content_lower
+            ):
                 return "nonvisualobject", ".sru"
-            elif content_lower.startswith("datawindow "):
+            if content_lower.startswith("datawindow "):
                 return "datawindow", ".srd"
-            elif content_lower.startswith("function "):
+            if content_lower.startswith("function "):
                 return "function", ".srf"
-            elif content_lower.startswith("menu "):
+            if content_lower.startswith("menu "):
                 return "menu", ".srm"
-            elif content_lower.startswith("structure "):
+            if content_lower.startswith("structure "):
                 return "structure", ".srs"
-            elif content_lower.startswith("global type ") and "from query" in content_lower:
+            if (
+                content_lower.startswith("global type ")
+                and "from query" in content_lower
+            ):
                 return "query", ".srq"
-            elif content_lower.startswith("userobject "):
+            if content_lower.startswith("userobject "):
                 return "userobject", ".sru"
-            else:
-                return "unknown", ".sru"
+            return "unknown", ".sru"
 
         test_cases = [
             ("window w_test", "window", ".srw"),
@@ -172,10 +166,6 @@ class TestPBDExtraction:
             assert ext == expected_ext
 
     def test_datawindow_syntax_extraction(self):
-
-
-
-
         """Test DataWindow syntax extraction."""
         # Mock DataWindow with syntax
         dw_content = """
@@ -193,7 +183,9 @@ class TestPBDExtraction:
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 # Check DataWindow file created (in subdirectory)
                 pbd_subdir = Path(output_dir) / pbd_path.name
@@ -208,20 +200,20 @@ class TestPBDExtraction:
             pbd_path.unlink()
 
     def test_corruption_handling(self):
-
-
-
-
         """Test handling of corrupted data."""
         # Create data with asterisk corruption pattern
-        corrupted_data = "type n_test from nonvisualobject\n**** CORRUPTED ****\nend type"
+        corrupted_data = (
+            "type n_test from nonvisualobject\n**** CORRUPTED ****\nend type"
+        )
 
         entries = [{"name": "n_corrupted", "data": corrupted_data}]
         pbd_path = self.create_mock_pbd_file(entries)
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 # Should still attempt extraction
                 assert result is True or result is False
@@ -233,27 +225,27 @@ class TestPBDExtraction:
             pbd_path.unlink()
 
     def test_extract_directory(self):
-
-
-
-
         """Test extracting all PBD/PBL files from directory."""
         with tempfile.TemporaryDirectory() as input_dir:
             input_path = Path(input_dir)
 
             # Create multiple PBD files
             for i in range(3):
-                entries = [{
-                    "name": f"n_test_{i}",
-                    "data": f"type n_test_{i} from nonvisualobject\nend type",
-                }]
+                entries = [
+                    {
+                        "name": f"n_test_{i}",
+                        "data": f"type n_test_{i} from nonvisualobject\nend type",
+                    }
+                ]
                 pbd_path = input_path / f"test_{i}.pbd"
                 self.create_mock_pbd_file(entries).rename(pbd_path)
 
             # Extract all
             with tempfile.TemporaryDirectory() as output_dir:
                 # Extract all PBL/PBD files from directory
-                extract_pbls(str(input_path), str(output_dir), enable_byte_recovery=False)
+                extract_pbls(
+                    str(input_path), str(output_dir), enable_byte_recovery=False
+                )
 
                 # Extraction should have created files
 
@@ -267,20 +259,12 @@ class TestBinaryUtils:
     """Test binary utility functions."""
 
     def test_read_uint32_le(self):
-
-
-
-
         """Test reading 32-bit little-endian integers."""
         data = struct.pack("<I", 0x12345678)
         value = binary_to_int(data)
         assert value == 0x12345678
 
     def test_read_string(self):
-
-
-
-
         """Test reading strings from binary data."""
         # Test decoding a simple string
         test_string = "Hello, PowerBuilder!"
@@ -290,15 +274,11 @@ class TestBinaryUtils:
         assert string_value == test_string
 
     def test_encoding_detection(self):
-
-
-
-
         """Test character encoding detection."""
         from src.extract.pbd.text import detect_encoding
 
         # Test UTF-8
-        utf8_data = "Hello, 世界!".encode("utf-8")
+        utf8_data = "Hello, 世界!".encode()
         encoding = detect_encoding(utf8_data)
         assert encoding in ["utf-8", "UTF-8"]
 
@@ -312,10 +292,6 @@ class TestErrorHandling:
     """Test error handling and edge cases."""
 
     def test_empty_pbd(self):
-
-
-
-
         """Test extracting empty PBD file."""
         # Create empty PBD
         temp_file = tempfile.NamedTemporaryFile(suffix=".pbd", delete=False)
@@ -325,17 +301,15 @@ class TestErrorHandling:
         try:
             with tempfile.TemporaryDirectory() as output_dir:
                 # Should handle gracefully
-                result = extract_with_recovery(str(temp_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(temp_path), str(output_dir), show_progress=False
+                )
                 # May return False for empty file
                 assert result is False or result is True
         finally:
             temp_path.unlink()
 
     def test_invalid_pbd(self):
-
-
-
-
         """Test handling invalid PBD file."""
         # Create file with invalid data
         temp_file = tempfile.NamedTemporaryFile(suffix=".pbd", delete=False)
@@ -346,27 +320,20 @@ class TestErrorHandling:
         try:
             with tempfile.TemporaryDirectory() as output_dir:
                 # Should handle error gracefully
-                result = extract_with_recovery(str(temp_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(temp_path), str(output_dir), show_progress=False
+                )
                 # May return False for invalid file
                 assert result is False or result is True
         finally:
             temp_path.unlink()
 
     def test_permission_error(self):
-
-
-
-
         """Test handling permission errors."""
         # This test would require OS-specific permission manipulation
         # For now, just test the structure
-        pass
 
     def test_large_file_handling(self):
-
-
-
-
         """Test extraction of large PBD files."""
         # Create a large mock entry
         large_data = "x" * (1024 * 1024)  # 1MB of data
@@ -376,7 +343,9 @@ class TestErrorHandling:
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 # Should handle large files
                 assert result is True or result is False
@@ -394,10 +363,6 @@ class TestDataWindowExtraction:
     """Test specific DataWindow extraction features."""
 
     def test_binary_blob_in_datawindow(self):
-
-
-
-
         """Test handling binary blobs in DataWindow definitions."""
         # DataWindow with embedded binary data
         dw_with_binary = """
@@ -416,7 +381,9 @@ class TestDataWindowExtraction:
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 # Should extract without corruption (in subdirectory)
                 pbd_subdir = Path(output_dir) / pbd_path.name
@@ -426,10 +393,6 @@ class TestDataWindowExtraction:
             pbd_path.unlink()
 
     def test_datawindow_with_computed_fields(self):
-
-
-
-
         """Test DataWindow with computed fields."""
         dw_computed = """
         release 12.5;
@@ -448,7 +411,9 @@ class TestDataWindowExtraction:
 
         try:
             with tempfile.TemporaryDirectory() as output_dir:
-                result = extract_with_recovery(str(pbd_path), str(output_dir), show_progress=False)
+                result = extract_with_recovery(
+                    str(pbd_path), str(output_dir), show_progress=False
+                )
 
                 pbd_subdir = Path(output_dir) / pbd_path.name
                 dw_file = pbd_subdir / "d_computed.srd"

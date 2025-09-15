@@ -7,19 +7,11 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.extract.pbd.library import Library
 from src.extract.pbd.data_block import get_binary_from_data
+from src.extract.pbd.library import Library
 
 
 def test_extract_pcode() -> None:
-
-
-
-
-
-
-
-
     """Extract P-code and show hex dump."""
     pbd_path = Path("data/input/pbd_files/dcm_accounting.pbd")
     object_name = "of_get_linked_acc.fun"

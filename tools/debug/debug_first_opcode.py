@@ -15,14 +15,6 @@ from src.decompile.opcodes import OPCODE_TABLE
 
 
 def debug_first_bytes(pcode_file: str) -> None:
-
-
-
-
-
-
-
-
     """Debug the first bytes of a P-code file."""
     with open(pcode_file, "rb") as f:
         data = f.read(100)  # First 100 bytes
@@ -34,8 +26,7 @@ def debug_first_bytes(pcode_file: str) -> None:
     for b in data:
         freq[b] = freq.get(b, 0) + 1
 
-    for _byte, _count in sorted(freq.items(), key=lambda x:
-        -x[1])[:10]:
+    for _byte, _count in sorted(freq.items(), key=lambda x: -x[1])[:10]:
         pass
 
     # Try to interpret as opcodes

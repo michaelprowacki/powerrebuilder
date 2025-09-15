@@ -16,8 +16,6 @@ class TestCustomWidgetGeneration:
 
     @pytest.fixture
     def mock_flutter_generator(self):
-
-
         """Create mock Flutter generator."""
         mock_gen = Mock()
         mock_gen.render_template = Mock(return_value="Generated widget code")
@@ -26,8 +24,6 @@ class TestCustomWidgetGeneration:
 
     @pytest.fixture
     def pipeline(self, mock_flutter_generator):
-
-
         """Create ConversionPipeline with mocked dependencies."""
         with tempfile.TemporaryDirectory() as temp_dir:
             pipeline = ConversionPipeline(Path(temp_dir))
@@ -35,10 +31,6 @@ class TestCustomWidgetGeneration:
             return pipeline
 
     def test_generate_datawindow_custom_widget(self, pipeline):
-
-
-
-
         """Test DataWindow custom widget generation."""
         control = {
             "type": "datawindow",
@@ -64,10 +56,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/employee_data_data_window.dart"
 
     def test_generate_tree_view_widget(self, pipeline):
-
-
-
-
         """Test TreeView custom widget generation."""
         control = {
             "type": "treeview",
@@ -97,10 +85,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/category_tree_tree_view.dart"
 
     def test_generate_chart_widget(self, pipeline):
-
-
-
-
         """Test Chart/Graph custom widget generation."""
         control = {
             "type": "graph",
@@ -126,10 +110,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/sales_chart_chart.dart"
 
     def test_generate_date_picker_widget(self, pipeline):
-
-
-
-
         """Test DatePicker custom widget generation."""
         control = {
             "type": "datepicker",
@@ -156,10 +136,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/birth_date_date_picker.dart"
 
     def test_generate_calendar_widget(self, pipeline):
-
-
-
-
         """Test Calendar custom widget generation."""
         control = {
             "type": "monthcalendar",
@@ -185,10 +161,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/event_calendar_calendar.dart"
 
     def test_generate_ink_canvas_widget(self, pipeline):
-
-
-
-
         """Test Ink canvas custom widget generation."""
         control = {
             "type": "inkpicture",
@@ -217,10 +189,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/signature_pad_ink_canvas.dart"
 
     def test_generate_ink_edit_widget(self, pipeline):
-
-
-
-
         """Test Ink edit custom widget generation."""
         control = {
             "type": "inkedit",
@@ -249,10 +217,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/handwriting_input_ink_edit.dart"
 
     def test_generate_animation_widget(self, pipeline):
-
-
-
-
         """Test Animation custom widget generation."""
         control = {
             "type": "animation",
@@ -282,10 +246,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/loading_animation_animation.dart"
 
     def test_generate_ole_placeholder_widget(self, pipeline):
-
-
-
-
         """Test OLE placeholder widget generation."""
         control = {
             "type": "ole",
@@ -315,10 +275,6 @@ class TestCustomWidgetGeneration:
         assert filename == "widgets/excel_viewer_ole_container.dart"
 
     def test_generate_custom_widget_main_dispatcher(self, pipeline):
-
-
-
-
         """Test main _generate_custom_widget dispatcher method."""
         # Test DataWindow
         control = {
@@ -339,15 +295,13 @@ class TestCustomWidgetGeneration:
 
         with patch("generate.converter_integration.logger") as mock_logger:
             pipeline._generate_custom_widget(control)
-            mock_logger.warning.assert_called_with("Unknown custom widget type: unknownwidget")
+            mock_logger.warning.assert_called_with(
+                "Unknown custom widget type: unknownwidget"
+            )
             # No template should be rendered for unknown type
             pipeline.flutter_generator.render_template.assert_not_called()
 
     def test_convert_window_with_custom_widgets(self, pipeline):
-
-
-
-
         """Test converting window with custom widgets."""
         # Create mock AST converter
         mock_ast_converter = Mock()
@@ -382,7 +336,9 @@ class TestCustomWidgetGeneration:
         mock_window_def.events = []
 
         mock_ast_converter.convert_window.return_value = mock_window_def
-        mock_ast_converter.ui_converter.generate_widget_tree.return_value = "Widget tree"
+        mock_ast_converter.ui_converter.generate_widget_tree.return_value = (
+            "Widget tree"
+        )
         mock_ast_converter.ui_converter.get_widget_imports.return_value = []
 
         pipeline.ast_converter = mock_ast_converter
@@ -394,7 +350,9 @@ class TestCustomWidgetGeneration:
         pipeline.convert_window(ast, "TestWindow")
 
         # Verify custom widgets were generated
-        assert pipeline.flutter_generator.render_template.call_count >= 3  # Window + 2 custom widgets
+        assert (
+            pipeline.flutter_generator.render_template.call_count >= 3
+        )  # Window + 2 custom widgets
 
         # Verify write_file was called for window and custom widgets
         assert pipeline.flutter_generator.write_file.call_count >= 3
@@ -404,10 +362,6 @@ class TestIntegrationWithUIConverter:
     """Test integration between converter_integration and ui_converter."""
 
     def test_custom_widget_detection(self):
-
-
-
-
         """Test that custom widgets are properly detected from UI converter mappings."""
         from src.generate.converters.flutter.widgets import UIConverter
 
@@ -420,19 +374,21 @@ class TestIntegrationWithUIConverter:
                 custom_controls.append(control_type)
 
         expected_custom = [
-            "datawindow", "treeview", "graph", "ole", 
-            "animation", "datepicker", "monthcalendar", 
-            "inkpicture", "inkedit",
+            "datawindow",
+            "treeview",
+            "graph",
+            "ole",
+            "animation",
+            "datepicker",
+            "monthcalendar",
+            "inkpicture",
+            "inkedit",
         ]
 
         for control in expected_custom:
             assert control in custom_controls
 
     def test_control_conversion_preserves_custom_flag(self):
-
-
-
-
         """Test that control conversion preserves custom widget flag."""
         from src.generate.converters.flutter.widgets import UIConverter
 

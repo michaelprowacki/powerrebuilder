@@ -6,7 +6,6 @@ Some opcodes like DBFETCH (0x0E) and DBINSERT (0x0F) have variant bytes that mod
 
 import logging
 import struct
-from typing import Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)

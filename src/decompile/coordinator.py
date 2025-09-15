@@ -9,32 +9,32 @@ CONSOLIDATION_MASTER_PLAN.md Phase 2.4 COMPLETED:
 
 CONSOLIDATED CLASSES (re-exported from unified_decompile.py):
 - ExtractedFileDecompiler
-- PowerBuilderDecompiler  
+- PowerBuilderDecompiler
 - DecompileCoordinator (MAIN CLASS used by main.py)
 """
 
 # Re-export all coordinator classes from unified_decompile.py
 from .unified_decompile import (
-    DecompileCoordinator,
-    ExtractedFileDecompiler, 
-    PowerBuilderDecompiler,
-    OutputFormat,
-    SUPPORTED_OUTPUT_FORMATS,
     OUTPUT_FORMAT_EXTENSIONS,
-    extract_database_schema,
+    SUPPORTED_OUTPUT_FORMATS,
+    DecompileCoordinator,
+    ExtractedFileDecompiler,
+    OutputFormat,
+    PowerBuilderDecompiler,
     decompile_directory,
+    extract_database_schema,
     main,
 )
 
 # Maintain backward compatibility
 __all__ = [
+    "OUTPUT_FORMAT_EXTENSIONS",
+    "SUPPORTED_OUTPUT_FORMATS",
     "DecompileCoordinator",
     "ExtractedFileDecompiler",
-    "PowerBuilderDecompiler", 
     "OutputFormat",
-    "SUPPORTED_OUTPUT_FORMATS",
-    "OUTPUT_FORMAT_EXTENSIONS", 
-    "extract_database_schema",
+    "PowerBuilderDecompiler",
     "decompile_directory",
+    "extract_database_schema",
     "main",
 ]

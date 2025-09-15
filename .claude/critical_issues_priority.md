@@ -3,7 +3,7 @@
 ## 🚨 Critical Issues (Must Fix)
 
 ### 1. Incomplete P-Code Decompilation
-**Impact:** Core functionality broken  
+**Impact:** Core functionality broken
 **Files:** `decompile/pcode_decoder.py`, `decompile/decompile_structured.py`
 
 **What's Missing:**
@@ -12,11 +12,11 @@
 - Pattern matching for high-level constructs
 - Method invocation handling
 
-**Fix Priority:** IMMEDIATE  
+**Fix Priority:** IMMEDIATE
 **Estimated Effort:** 2-3 weeks
 
 ### 2. Parser-Model Disconnection
-**Impact:** Parse phase output unusable  
+**Impact:** Parse phase output unusable
 **Files:** `parse/visitors/pb_transformer.py`
 
 **What's Missing:**
@@ -24,11 +24,11 @@
 - Grammar rules not mapped to AST nodes
 - No semantic validation
 
-**Fix Priority:** HIGH  
+**Fix Priority:** HIGH
 **Estimated Effort:** 1 week
 
 ### 3. Type Annotations Missing
-**Impact:** Type safety compromised, IDE support limited  
+**Impact:** Type safety compromised, IDE support limited
 **Files:** Throughout codebase
 
 **What's Missing:**
@@ -36,7 +36,7 @@
 - Class attributes untyped
 - Generic types not specified
 
-**Fix Priority:** HIGH  
+**Fix Priority:** HIGH
 **Estimated Effort:** 1 week (can be parallelized)
 
 ## 🔴 High Priority Issues
@@ -47,7 +47,7 @@
 # Current (BAD):
 def generate_models():
     input_path = "output/parsed"  # Hardcoded!
-    
+
 # Should be:
 def generate_models(input_path: Path, output_path: Path):
     # Use provided paths
@@ -159,9 +159,9 @@ VALID_BLOCK_SIZES = [BLOCK_SIZE_256, BLOCK_SIZE_512, BLOCK_SIZE_1024]
 
 ## Resource Allocation
 
-**Developer 1:** P-Code decompilation (full time)  
-**Developer 2:** Parser integration + Type annotations  
-**Developer 3:** Testing + Documentation  
+**Developer 1:** P-Code decompilation (full time)
+**Developer 2:** Parser integration + Type annotations
+**Developer 3:** Testing + Documentation
 
 ## Notes for Next Session
 

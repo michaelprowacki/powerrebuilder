@@ -74,17 +74,17 @@ performance:
   cache:
     enabled: true
     ttl: 86400  # 24 hours
-    
+
   # Parallel processing
   parallel:
     max_workers: 8
     batch_size: 10
-    
+
   # Memory management
   memory:
     max_heap: 2147483648  # 2GB
     streaming_threshold: 10485760  # 10MB
-    
+
   # I/O optimization
   io:
     buffer_size: 131072  # 128KB

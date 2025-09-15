@@ -3,8 +3,8 @@
 Restored from comprehensive opcode reference.
 """
 
-from typing import Any
 import functools
+from typing import Any
 
 # Opcode name mappings - lazy loaded
 _OPCODES_CACHE: dict[int, str] | None = None

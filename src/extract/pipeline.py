@@ -35,13 +35,16 @@ def create_coordinator_for_pipeline(
         Configured ExtractCoordinator
     """
     # Use the factory to create a coordinator with default components
-    return cast(ExtractCoordinator, ExtractCoordinatorFactory.create_simple(
-        input_path=input_path,
-        output_path=output_path,
-        enable_byte_recovery=enable_byte_recovery,
-        extract_resources=extract_resources,
-        show_progress=show_progress,
-    ))
+    return cast(
+        "ExtractCoordinator",
+        ExtractCoordinatorFactory.create_simple(
+            input_path=input_path,
+            output_path=output_path,
+            enable_byte_recovery=enable_byte_recovery,
+            extract_resources=extract_resources,
+            show_progress=show_progress,
+        ),
+    )
 
 
 # For backward compatibility with existing pipeline code
@@ -91,7 +94,7 @@ class LegacyExtractCoordinator:
         Returns:
             Extraction statistics
         """
-        return cast(ExtractionStatsDict, self._coordinator.process())
+        return cast("ExtractionStatsDict", self._coordinator.process())
 
     def process(self) -> ExtractionStatsDict:
         """Process extraction (delegates to new coordinator).
@@ -99,7 +102,7 @@ class LegacyExtractCoordinator:
         Returns:
             Extraction statistics
         """
-        return cast(ExtractionStatsDict, self._coordinator.process())
+        return cast("ExtractionStatsDict", self._coordinator.process())
 
     def extract_single_file(
         self, file_path: str | Path, output_dir: str | Path | None = None
@@ -113,7 +116,9 @@ class LegacyExtractCoordinator:
         Returns:
             True if successful
         """
-        return cast(bool, self._coordinator.extract_single_file(file_path, output_dir))
+        return cast(
+            "bool", self._coordinator.extract_single_file(file_path, output_dir)
+        )
 
     def get_statistics(self) -> ExtractionStatsDict:
         """Get extraction statistics.
@@ -121,7 +126,7 @@ class LegacyExtractCoordinator:
         Returns:
             Statistics dictionary
         """
-        return cast(ExtractionStatsDict, self._coordinator.get_statistics())
+        return cast("ExtractionStatsDict", self._coordinator.get_statistics())
 
     def validate_inputs(self) -> bool:
         """Validate inputs.
@@ -129,7 +134,7 @@ class LegacyExtractCoordinator:
         Returns:
             True if valid
         """
-        return cast(bool, self._coordinator.validate_inputs())
+        return cast("bool", self._coordinator.validate_inputs())
 
 
 # Example of how to update the main pipeline
@@ -184,6 +189,9 @@ def ExtractCoordinator(
             input_path=input_path, output_dir=output_dir, **kwargs
         )
     # New-style call or no parameters
-    return cast(ExtractCoordinator, create_extract_coordinator(
-        input_path=input_path, output_path=kwargs.get("output_path"), **kwargs
-    ))
+    return cast(
+        "ExtractCoordinator",
+        create_extract_coordinator(
+            input_path=input_path, output_path=kwargs.get("output_path"), **kwargs
+        ),
+    )

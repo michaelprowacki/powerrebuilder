@@ -6,44 +6,39 @@ This file consolidates transaction-related tests from:
 - test_distributed_transaction.py
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
+from src.model.distributed_transaction import (
+    TransactionPhase,
+)
 from src.model.transaction import (
-    # Core transaction classes
-    PBTransaction,
-    PBTransactionObject,
-    PBTransactionState,
-    PBTransactionStatement,
-    PBStatementType,
-    # Error handling
-    PBTransactionError,
-    PBTransactionErrorHandler,
-    PBErrorAction,
-    PBErrorSeverity,
-    PBTransactionErrorLog,
     # Distributed transactions
     PBDistributedTransaction,
-    PBDistributedTransactionManager,
     PBDistributedTransactionState,
-    PBTwoPhaseCommit,
-    PBTransactionCoordinator,
-    PBTransactionParticipant,
+    PBErrorAction,
+    PBErrorSeverity,
     # Savepoints
     PBSavepoint,
     PBSavepointManager,
+    PBStatementType,
+    # Core transaction classes
+    PBTransaction,
+    PBTransactionCoordinator,
+    # Error handling
+    PBTransactionError,
+    PBTransactionErrorHandler,
+    PBTransactionErrorLog,
+    PBTransactionObject,
+    PBTransactionParticipant,
+    PBTransactionState,
+    PBTransactionStatement,
+    PBTwoPhaseCommit,
+    SQLError,
     # SQL execution
     SQLExecutor,
     SQLResult,
-    SQLError,
-)
-from src.model.distributed_transaction import (
-    DistributedTransactionNode,
-    TransactionPhase,
-    NodeStatus,
-    TransactionLog,
-    TransactionMessage,
-    MessageType,
 )
 from src.parse.parser.specialized.transactions import TransactionParser
 
@@ -65,7 +60,7 @@ class TestTransactionObjects:
             autocommit=False,
             dbparm="ConnectString='DSN=MyDSN'",
         )
-        
+
         assert txn_obj.name == "sqlca"
         assert txn_obj.dbms == "ODBC"
         assert txn_obj.database == "MyDB"
@@ -75,7 +70,7 @@ class TestTransactionObjects:
     def test_transaction_object_defaults(self):
         """Test transaction object default values."""
         txn_obj = PBTransactionObject(name="sqlca")
-        
+
         assert txn_obj.name == "sqlca"
         assert txn_obj.dbms == ""
         assert txn_obj.database == ""
@@ -90,7 +85,7 @@ class TestTransactionObjects:
         sqlca = PBTransactionObject(name="sqlca", dbms="ODBC")
         sqlsa = PBTransactionObject(name="sqlsa", dbms="Oracle")
         sqlda = PBTransactionObject(name="sqlda", dbms="Sybase")
-        
+
         assert sqlca.name != sqlsa.name
         assert sqlsa.dbms != sqlda.dbms
         assert all(obj.sqlcode == 0 for obj in [sqlca, sqlsa, sqlda])
@@ -98,18 +93,18 @@ class TestTransactionObjects:
     def test_transaction_object_state(self):
         """Test transaction object state management."""
         txn_obj = PBTransactionObject(name="sqlca")
-        
+
         # Initial state
         assert txn_obj.sqlcode == 0
         assert txn_obj.sqlerrtext == ""
         assert txn_obj.sqlnrows == 0
-        
+
         # Simulate successful operation
         txn_obj.sqlcode = 0
         txn_obj.sqlnrows = 5
         assert txn_obj.sqlcode == 0
         assert txn_obj.sqlnrows == 5
-        
+
         # Simulate error
         txn_obj.sqlcode = -1
         txn_obj.sqlerrtext = "Connection failed"
@@ -128,21 +123,21 @@ class TestTransactionStatements:
             transaction_object="sqlca",
         )
         assert connect.statement_type == PBStatementType.CONNECT
-        
+
         # DISCONNECT
         disconnect = PBTransactionStatement(
             statement_type=PBStatementType.DISCONNECT,
             transaction_object="sqlca",
         )
         assert disconnect.statement_type == PBStatementType.DISCONNECT
-        
+
         # COMMIT
         commit = PBTransactionStatement(
             statement_type=PBStatementType.COMMIT,
             transaction_object="sqlca",
         )
         assert commit.statement_type == PBStatementType.COMMIT
-        
+
         # ROLLBACK
         rollback = PBTransactionStatement(
             statement_type=PBStatementType.ROLLBACK,
@@ -168,7 +163,7 @@ class TestTransactionStatements:
             transaction_object="sqlca",
         )
         assert valid_stmt.is_valid()
-        
+
         # Invalid statement (no transaction object)
         invalid_stmt = PBTransactionStatement(
             statement_type=PBStatementType.COMMIT,
@@ -184,16 +179,16 @@ class TestTransactionLifecycle:
         """Test basic transaction flow."""
         txn = PBTransaction(name="test_transaction")
         txn_obj = PBTransactionObject(name="sqlca", dbms="ODBC")
-        
+
         # Connect
         txn.begin(txn_obj)
         assert txn.state == PBTransactionState.ACTIVE
         assert txn.transaction_object == txn_obj
-        
+
         # Execute operations (simulated)
         txn.execute_statement("INSERT INTO test VALUES (1, 'test')")
         assert len(txn.statements) == 1
-        
+
         # Commit
         txn.commit()
         assert txn.state == PBTransactionState.COMMITTED
@@ -203,16 +198,16 @@ class TestTransactionLifecycle:
         """Test transaction rollback."""
         txn = PBTransaction(name="rollback_test")
         txn_obj = PBTransactionObject(name="sqlca")
-        
+
         # Begin transaction
         txn.begin(txn_obj)
         assert txn.state == PBTransactionState.ACTIVE
-        
+
         # Execute operations
         txn.execute_statement("UPDATE test SET value = 'new'")
         txn.execute_statement("DELETE FROM test WHERE id = 1")
         assert len(txn.statements) == 2
-        
+
         # Rollback
         txn.rollback()
         assert txn.state == PBTransactionState.ROLLED_BACK
@@ -222,22 +217,22 @@ class TestTransactionLifecycle:
         """Test nested transaction handling."""
         outer_txn = PBTransaction(name="outer")
         inner_txn = PBTransaction(name="inner", parent=outer_txn)
-        
+
         txn_obj = PBTransactionObject(name="sqlca")
-        
+
         # Begin outer transaction
         outer_txn.begin(txn_obj)
         assert outer_txn.state == PBTransactionState.ACTIVE
-        
+
         # Begin inner transaction
         inner_txn.begin(txn_obj)
         assert inner_txn.state == PBTransactionState.ACTIVE
         assert inner_txn.parent == outer_txn
-        
+
         # Commit inner
         inner_txn.commit()
         assert inner_txn.state == PBTransactionState.COMMITTED
-        
+
         # Commit outer
         outer_txn.commit()
         assert outer_txn.state == PBTransactionState.COMMITTED
@@ -255,7 +250,7 @@ class TestTransactionErrorHandling:
             source="CONNECT",
             timestamp=datetime.now(),
         )
-        
+
         assert error.code == -1
         assert error.message == "Connection failed"
         assert error.severity == PBErrorSeverity.FATAL
@@ -269,21 +264,21 @@ class TestTransactionErrorHandling:
             severity=PBErrorSeverity.INFO,
         )
         assert info.severity == PBErrorSeverity.INFO
-        
+
         warning = PBTransactionError(
             code=200,
             message="Warning message",
             severity=PBErrorSeverity.WARNING,
         )
         assert warning.severity == PBErrorSeverity.WARNING
-        
+
         error = PBTransactionError(
             code=-1,
             message="Error message",
             severity=PBErrorSeverity.ERROR,
         )
         assert error.severity == PBErrorSeverity.ERROR
-        
+
         fatal = PBTransactionError(
             code=-999,
             message="Fatal error",
@@ -294,7 +289,7 @@ class TestTransactionErrorHandling:
     def test_error_handler(self):
         """Test transaction error handler."""
         handler = PBTransactionErrorHandler()
-        
+
         # Register error actions
         handler.register_action(
             error_code=-1,
@@ -309,16 +304,16 @@ class TestTransactionErrorHandling:
             error_code=100,
             action=PBErrorAction.IGNORE,
         )
-        
+
         # Handle errors
         error1 = PBTransactionError(code=-1, message="Connection lost")
         action1 = handler.handle_error(error1)
         assert action1 == PBErrorAction.ROLLBACK
-        
+
         error2 = PBTransactionError(code=-2, message="Deadlock")
         action2 = handler.handle_error(error2)
         assert action2 == PBErrorAction.RETRY
-        
+
         error3 = PBTransactionError(code=100, message="Info")
         action3 = handler.handle_error(error3)
         assert action3 == PBErrorAction.IGNORE
@@ -326,7 +321,7 @@ class TestTransactionErrorHandling:
     def test_error_logging(self):
         """Test transaction error logging."""
         log = PBTransactionErrorLog()
-        
+
         # Log errors
         error1 = PBTransactionError(
             code=-1,
@@ -334,19 +329,19 @@ class TestTransactionErrorHandling:
             timestamp=datetime.now(),
         )
         log.log_error(error1)
-        
+
         error2 = PBTransactionError(
             code=-2,
             message="Timeout",
             timestamp=datetime.now(),
         )
         log.log_error(error2)
-        
+
         # Check log
         assert len(log.errors) == 2
         assert log.get_error_count() == 2
         assert log.get_errors_by_code(-1)[0].message == "Connection failed"
-        
+
         # Clear log
         log.clear()
         assert len(log.errors) == 0
@@ -362,7 +357,7 @@ class TestDistributedTransactions:
             coordinator_node="NODE1",
             participant_nodes=["NODE2", "NODE3", "NODE4"],
         )
-        
+
         assert dt.transaction_id == "DT001"
         assert dt.coordinator_node == "NODE1"
         assert len(dt.participant_nodes) == 3
@@ -371,36 +366,36 @@ class TestDistributedTransactions:
     def test_two_phase_commit(self):
         """Test two-phase commit protocol."""
         tpc = PBTwoPhaseCommit(transaction_id="TPC001")
-        
+
         # Add participants
         tpc.add_participant("NODE1")
         tpc.add_participant("NODE2")
         tpc.add_participant("NODE3")
-        
+
         assert len(tpc.participants) == 3
         assert tpc.phase == TransactionPhase.INITIAL
-        
+
         # Phase 1: Prepare
         tpc.start_prepare_phase()
         assert tpc.phase == TransactionPhase.PREPARING
-        
+
         # Participants vote
         tpc.record_vote("NODE1", True)
         tpc.record_vote("NODE2", True)
         tpc.record_vote("NODE3", True)
-        
+
         # Check if all prepared
         assert tpc.all_prepared()
-        
+
         # Phase 2: Commit
         tpc.start_commit_phase()
         assert tpc.phase == TransactionPhase.COMMITTING
-        
+
         # Participants acknowledge
         tpc.record_commit_ack("NODE1")
         tpc.record_commit_ack("NODE2")
         tpc.record_commit_ack("NODE3")
-        
+
         # Complete
         assert tpc.is_complete()
 
@@ -411,14 +406,14 @@ class TestDistributedTransactions:
             coordinator_node="COORD",
             participant_nodes=["P1", "P2", "P3"],
         )
-        
+
         # Start transaction
         dt.start()
         assert dt.state == PBDistributedTransactionState.ACTIVE
-        
+
         # Simulate failure on one node
         dt.record_node_failure("P2", "Network error")
-        
+
         # Rollback
         dt.rollback()
         assert dt.state == PBDistributedTransactionState.ROLLED_BACK
@@ -427,15 +422,15 @@ class TestDistributedTransactions:
     def test_transaction_coordinator(self):
         """Test transaction coordinator functionality."""
         coordinator = PBTransactionCoordinator(node_id="COORD1")
-        
+
         # Create distributed transaction
         dt = coordinator.create_distributed_transaction(
             participants=["NODE1", "NODE2"],
         )
-        
+
         assert dt.coordinator_node == "COORD1"
         assert len(dt.participant_nodes) == 2
-        
+
         # Execute transaction
         result = coordinator.execute_transaction(dt)
         assert result.transaction_id == dt.transaction_id
@@ -446,14 +441,14 @@ class TestDistributedTransactions:
             node_id="PART1",
             resource_manager="DB1",
         )
-        
+
         assert participant.node_id == "PART1"
         assert participant.resource_manager == "DB1"
-        
+
         # Prepare phase
         prepared = participant.prepare(transaction_id="TXN001")
         assert isinstance(prepared, bool)
-        
+
         # Commit phase
         if prepared:
             committed = participant.commit(transaction_id="TXN001")
@@ -470,7 +465,7 @@ class TestSavepoints:
             transaction_id="TXN001",
             sequence_number=1,
         )
-        
+
         assert sp.name == "SP1"
         assert sp.transaction_id == "TXN001"
         assert sp.sequence_number == 1
@@ -479,21 +474,21 @@ class TestSavepoints:
     def test_savepoint_manager(self):
         """Test savepoint manager."""
         manager = PBSavepointManager(transaction_id="TXN001")
-        
+
         # Create savepoints
         sp1 = manager.create_savepoint("SP1")
         sp2 = manager.create_savepoint("SP2")
         sp3 = manager.create_savepoint("SP3")
-        
+
         assert len(manager.savepoints) == 3
         assert sp1.sequence_number < sp2.sequence_number
         assert sp2.sequence_number < sp3.sequence_number
-        
+
         # Rollback to savepoint
         manager.rollback_to_savepoint("SP2")
         assert len(manager.savepoints) == 2
         assert manager.get_savepoint("SP3") is None
-        
+
         # Release savepoint
         manager.release_savepoint("SP1")
         assert len(manager.savepoints) == 1
@@ -502,16 +497,16 @@ class TestSavepoints:
     def test_nested_savepoints(self):
         """Test nested savepoint handling."""
         manager = PBSavepointManager(transaction_id="TXN002")
-        
+
         # Create nested savepoints
         sp_outer = manager.create_savepoint("OUTER")
         sp_inner1 = manager.create_savepoint("INNER1")
         sp_inner2 = manager.create_savepoint("INNER2")
-        
+
         # Verify nesting
         assert sp_outer.sequence_number < sp_inner1.sequence_number
         assert sp_inner1.sequence_number < sp_inner2.sequence_number
-        
+
         # Rollback to outer savepoint
         manager.rollback_to_savepoint("OUTER")
         assert len(manager.savepoints) == 1
@@ -525,21 +520,21 @@ class TestSQLExecution:
     def test_sql_executor(self):
         """Test SQL executor functionality."""
         executor = SQLExecutor(transaction_object="sqlca")
-        
+
         # Execute SELECT
         result = executor.execute_select(
             sql="SELECT * FROM employee WHERE dept_id = :dept",
             parameters={":dept": 100},
         )
         assert isinstance(result, SQLResult)
-        
+
         # Execute INSERT
         result = executor.execute_insert(
             sql="INSERT INTO employee (id, name) VALUES (:id, :name)",
             parameters={":id": 1, ":name": "John"},
         )
         assert isinstance(result, SQLResult)
-        
+
         # Execute UPDATE
         result = executor.execute_update(
             sql="UPDATE employee SET salary = :sal WHERE id = :id",
@@ -562,7 +557,7 @@ class TestSQLExecution:
         assert success_result.success is True
         assert success_result.rows_affected == 5
         assert len(success_result.data) == 2
-        
+
         # Error result
         error_result = SQLResult(
             success=False,
@@ -585,7 +580,7 @@ class TestSQLExecution:
             sql_state="42S22",
             source_sql="SELECT invalid_col FROM table",
         )
-        
+
         assert error.code == -206
         assert error.message == "Column not found"
         assert error.sql_state == "42S22"
@@ -598,12 +593,12 @@ class TestTransactionParser:
     def test_parse_connect_statement(self):
         """Test parsing CONNECT statement."""
         parser = TransactionParser()
-        
+
         # Simple CONNECT
         result = parser.parse("CONNECT;")
         assert result.statement_type == PBStatementType.CONNECT
         assert result.transaction_object == "sqlca"  # default
-        
+
         # CONNECT USING
         result = parser.parse("CONNECT USING my_trans;")
         assert result.statement_type == PBStatementType.CONNECT
@@ -612,11 +607,11 @@ class TestTransactionParser:
     def test_parse_disconnect_statement(self):
         """Test parsing DISCONNECT statement."""
         parser = TransactionParser()
-        
+
         # Simple DISCONNECT
         result = parser.parse("DISCONNECT;")
         assert result.statement_type == PBStatementType.DISCONNECT
-        
+
         # DISCONNECT USING
         result = parser.parse("DISCONNECT USING sqlsa;")
         assert result.transaction_object == "sqlsa"
@@ -624,19 +619,19 @@ class TestTransactionParser:
     def test_parse_commit_rollback(self):
         """Test parsing COMMIT and ROLLBACK statements."""
         parser = TransactionParser()
-        
+
         # COMMIT
         result = parser.parse("COMMIT;")
         assert result.statement_type == PBStatementType.COMMIT
-        
+
         # COMMIT USING
         result = parser.parse("COMMIT USING my_trans;")
         assert result.transaction_object == "my_trans"
-        
+
         # ROLLBACK
         result = parser.parse("ROLLBACK;")
         assert result.statement_type == PBStatementType.ROLLBACK
-        
+
         # ROLLBACK USING
         result = parser.parse("ROLLBACK USING sqlca;")
         assert result.transaction_object == "sqlca"
@@ -644,7 +639,7 @@ class TestTransactionParser:
     def test_parse_transaction_properties(self):
         """Test parsing transaction object property assignments."""
         parser = TransactionParser()
-        
+
         # Parse property assignments
         code = """
         sqlca.dbms = "ODBC"
@@ -652,7 +647,7 @@ class TestTransactionParser:
         sqlca.userid = "user1"
         sqlca.autocommit = false
         """
-        
+
         txn_obj = parser.parse_transaction_object(code)
         assert txn_obj.dbms == "ODBC"
         assert txn_obj.database == "MyDB"

@@ -16,8 +16,13 @@ from typing import Any
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", handlers=[
-        logging.StreamHandler(sys.stdout), logging.FileHandler("pipeline_test.log", mode="w"), ], )
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("pipeline_test.log", mode="w"),
+    ],
+)
 logger = logging.getLogger(__name__)
 
 
@@ -25,21 +30,18 @@ class PipelineTestRunner:
     """Runs comprehensive tests on the SIME Finch pipeline."""
 
     def __init__(self, test_name: str = "pipeline_test") -> None:
-
-
         self.test_name = test_name
         self.project_root = Path(__file__).parent.parent.parent
         self.test_output_dir = (
             self.project_root / "output" / f"test_{test_name}_{int(time.time())}"
         )
         self.results = {
-            "test_name": test_name, "start_time": time.time(), "stages": {}, }
+            "test_name": test_name,
+            "start_time": time.time(),
+            "stages": {},
+        }
 
     def setup(self) -> None:
-
-
-
-
         """Setup test environment."""
         logger.info(f"Setting up test environment in {self.test_output_dir}")
         self.test_output_dir.mkdir(parents=True, exist_ok=True)
@@ -51,23 +53,30 @@ class PipelineTestRunner:
         (self.test_output_dir / "generated").mkdir(exist_ok=True)
 
     def run_command(self, cmd: list[str], stage: str) -> dict[str, Any]:
-
-
-
-
         """Run a command and capture results."""
         logger.info(f"Running {stage}: {' '.join(cmd)}")
         start_time = time.time()
 
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, cwd=self.project_root, check=False, )
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                check=False,
+            )
 
             duration = time.time() - start_time
             success = result.returncode == 0
 
             stage_result = {
-                "command": " ".join(cmd), "success": success, "duration": duration, "stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode, }
+                "command": " ".join(cmd),
+                "success": success,
+                "duration": duration,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
+            }
 
             if success:
                 logger.info(f"✓ {stage} completed successfully in {duration:.2f}s")
@@ -80,27 +89,39 @@ class PipelineTestRunner:
         except Exception as e:
             logger.exception(f"✗ {stage} failed with exception: {e}")
             return {
-                "command": " ".join(cmd), "success": False, "duration": time.time() - start_time, "error": str(e), }
+                "command": " ".join(cmd),
+                "success": False,
+                "duration": time.time() - start_time,
+                "error": str(e),
+            }
 
     def test_extraction(self, input_files: list[Path]) -> dict[str, Any]:
-
-
-
-
         """Test extraction stage."""
         logger.info("=" * 60)
         logger.info("STAGE 1: EXTRACTION")
         logger.info("=" * 60)
 
         extract_results = {
-            "files": {}, "summary": {}, }
+            "files": {},
+            "summary": {},
+        }
 
         # Test individual file extraction
         for input_file in input_files[:3]:  # Test first 3 files
             logger.info(f"Testing extraction of {input_file.name}")
 
             cmd = [
-                "uv", "run", "python", "-m", "main", "extract", "files", str(input_file), str(self.test_output_dir / "extracted" / input_file.stem), "--debug", ]
+                "uv",
+                "run",
+                "python",
+                "-m",
+                "main",
+                "extract",
+                "files",
+                str(input_file),
+                str(self.test_output_dir / "extracted" / input_file.stem),
+                "--debug",
+            ]
 
             result = self.run_command(cmd, f"extract_{input_file.name}")
             extract_results["files"][input_file.name] = result
@@ -108,7 +129,18 @@ class PipelineTestRunner:
         # Test batch extraction with byte recovery
         logger.info("Testing batch extraction with byte recovery...")
         cmd = [
-            "uv", "run", "python", "-m", "main", "extract", "files", str(self.project_root / "input" / "pbd_files"), str(self.test_output_dir / "extracted"), "--debug", "--enable-byte-recovery", ]
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "main",
+            "extract",
+            "files",
+            str(self.project_root / "input" / "pbd_files"),
+            str(self.test_output_dir / "extracted"),
+            "--debug",
+            "--enable-byte-recovery",
+        ]
 
         extract_results["summary"] = self.run_command(cmd, "extract_batch")
 
@@ -120,17 +152,21 @@ class PipelineTestRunner:
         return extract_results
 
     def test_parsing(self) -> dict[str, Any]:
-
-
-
-
         """Test parsing stage."""
         logger.info("=" * 60)
         logger.info("STAGE 2: PARSING")
         logger.info("=" * 60)
 
         cmd = [
-            "uv", "run", "python", "-m", "main", "parse", str(self.test_output_dir / "extracted"), str(self.test_output_dir / "parsed"), ]
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "main",
+            "parse",
+            str(self.test_output_dir / "extracted"),
+            str(self.test_output_dir / "parsed"),
+        ]
 
         result = self.run_command(cmd, "parse")
 
@@ -145,17 +181,21 @@ class PipelineTestRunner:
         return result
 
     def test_decompilation(self) -> dict[str, Any]:
-
-
-
-
         """Test decompilation stage."""
         logger.info("=" * 60)
         logger.info("STAGE 3: DECOMPILATION")
         logger.info("=" * 60)
 
         cmd = [
-            "uv", "run", "python", "-m", "main", "decompile", str(self.test_output_dir / "extracted"), str(self.test_output_dir / "decompiled"), ]
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "main",
+            "decompile",
+            str(self.test_output_dir / "extracted"),
+            str(self.test_output_dir / "decompiled"),
+        ]
 
         result = self.run_command(cmd, "decompile")
 
@@ -167,25 +207,34 @@ class PipelineTestRunner:
         return result
 
     def test_generation(self) -> dict[str, Any]:
-
-
-
-
         """Test code generation stage."""
         logger.info("=" * 60)
         logger.info("STAGE 4: CODE GENERATION")
         logger.info("=" * 60)
 
         cmd = [
-            "uv", "run", "python", "-m", "main", "generate", "--parsed-dir", str(self.test_output_dir / "parsed"), "--decompiled-dir", str(self.test_output_dir / "decompiled"), ]
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "main",
+            "generate",
+            "--parsed-dir",
+            str(self.test_output_dir / "parsed"),
+            "--decompiled-dir",
+            str(self.test_output_dir / "decompiled"),
+        ]
 
         result = self.run_command(cmd, "generate")
 
         # Count generated files
         generated_files = {
-            "models": list((self.test_output_dir / "generated").rglob("*.py")), "flutter": list((self.test_output_dir / "generated").rglob("*.dart")), "services": list(
+            "models": list((self.test_output_dir / "generated").rglob("*.py")),
+            "flutter": list((self.test_output_dir / "generated").rglob("*.dart")),
+            "services": list(
                 (self.test_output_dir / "generated").rglob("*service*.py")
-            ), }
+            ),
+        }
 
         for file_type, files in generated_files.items():
             logger.info(f"Generated {len(files)} {file_type} files")
@@ -195,10 +244,6 @@ class PipelineTestRunner:
         return result
 
     def test_full_pipeline(self) -> dict[str, Any]:
-
-
-
-
         """Test the full pipeline with the 'all' command."""
         logger.info("=" * 60)
         logger.info("FULL PIPELINE TEST")
@@ -209,7 +254,19 @@ class PipelineTestRunner:
         full_test_dir.mkdir(exist_ok=True)
 
         cmd = [
-            "uv", "run", "python", "-m", "main", "all", "--pbl-input-dir", str(self.project_root / "input" / "pbd_files"), "--base-output-dir", str(full_test_dir), "--debug", "--enable-byte-recovery", ]
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "main",
+            "all",
+            "--pbl-input-dir",
+            str(self.project_root / "input" / "pbd_files"),
+            "--base-output-dir",
+            str(full_test_dir),
+            "--debug",
+            "--enable-byte-recovery",
+        ]
 
         result = self.run_command(cmd, "full_pipeline")
 
@@ -227,10 +284,6 @@ class PipelineTestRunner:
         return result
 
     def run_all_tests(self):
-
-
-
-
         """Run all pipeline tests."""
         self.setup()
 
@@ -277,10 +330,6 @@ class PipelineTestRunner:
         return self.results
 
     def cleanup(self, keep_output: bool = True) -> None:
-
-
-
-
         """Clean up test artifacts."""
         if not keep_output and self.test_output_dir.exists():
             logger.info(f"Cleaning up test directory: {self.test_output_dir}")
@@ -288,14 +337,6 @@ class PipelineTestRunner:
 
 
 def main() -> None:
-
-
-
-
-
-
-
-
     """Main entry point."""
     import argparse
 

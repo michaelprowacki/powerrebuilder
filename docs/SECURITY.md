@@ -181,7 +181,7 @@ security:
       - ".."
       - "~"
       - "$"
-    
+
   # Resource limits
   resource_limits:
     max_file_size: 104857600  # 100MB
@@ -189,7 +189,7 @@ security:
     max_memory: 536870912     # 512MB
     max_cpu_seconds: 300
     timeout: 600              # 10 minutes
-    
+
   # Input validation
   input_validation:
     enabled: true
@@ -200,13 +200,13 @@ security:
       - .srd
       - .sru
     max_filename_length: 255
-    
+
   # Decompression protection
   decompression:
     max_ratio: 100
     max_nested_depth: 5
     max_extracted_size: 1073741824  # 1GB
-    
+
   # Audit logging
   audit:
     enabled: true
@@ -279,18 +279,18 @@ def process_file(filename):
     # Validate filename
     if not is_valid_filename(filename):
         raise SecurityError("Invalid filename")
-    
+
     # Resolve to absolute path
     abs_path = os.path.abspath(filename)
-    
+
     # Check within allowed directory
     if not abs_path.startswith(ALLOWED_DIR):
         raise SecurityError("Path traversal detected")
-    
+
     # Check file exists and is regular file
     if not os.path.isfile(abs_path):
         raise SecurityError("Invalid file")
-    
+
     # Proceed with processing
     process_safe_file(abs_path)
 ```

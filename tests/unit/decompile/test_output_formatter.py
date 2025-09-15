@@ -12,16 +12,10 @@ class TestOutputFormatter:
 
     @pytest.fixture
     def formatter(self):
-
-
         """Create a fresh formatter instance."""
         return OutputFormatter()
 
     def test_format_empty_object(self, formatter):
-
-
-
-
         """Test formatting empty decoded object."""
         decoded_obj = DecodedObject(
             name="test.fun",
@@ -40,10 +34,6 @@ class TestOutputFormatter:
         assert "end function" in lines
 
     def test_format_function_with_statements(self, formatter):
-
-
-
-
         """Test formatting function with statements."""
         decoded_obj = DecodedObject(
             name="calculate.fun",
@@ -67,10 +57,6 @@ class TestOutputFormatter:
         assert "    return local_1 + local_2" in lines
 
     def test_format_label_no_indent(self, formatter):
-
-
-
-
         """Test that labels are not indented."""
         decoded_obj = DecodedObject(
             name="test.fun",
@@ -94,10 +80,6 @@ class TestOutputFormatter:
         assert label_line == "L_B2A0E:"  # No indentation
 
     def test_format_if_block(self, formatter):
-
-
-
-
         """Test formatting if-then-else block."""
         if_block = ControlBlock(BlockType.IF, 0x100, 0x200, [])
         if_block.metadata = {"condition": "local_1 > 0"}
@@ -121,10 +103,6 @@ class TestOutputFormatter:
         assert "end if" in lines[-1]
 
     def test_format_while_loop(self, formatter):
-
-
-
-
         """Test formatting while loop."""
         while_block = ControlBlock(BlockType.WHILE, 0x100, 0x200, [])
         while_block.metadata = {"condition": "counter < 10"}
@@ -140,10 +118,6 @@ class TestOutputFormatter:
         assert "loop" in lines[-1]
 
     def test_format_for_loop(self, formatter):
-
-
-
-
         """Test formatting for loop."""
         for_block = ControlBlock(BlockType.FOR, 0x100, 0x200, [])
         for_block.metadata = {
@@ -164,10 +138,6 @@ class TestOutputFormatter:
         assert "next" in lines[-1]
 
     def test_format_window_object(self, formatter):
-
-
-
-
         """Test formatting window object."""
         decoded_obj = DecodedObject(
             name="w_main.win",
@@ -190,10 +160,6 @@ class TestOutputFormatter:
         assert "end window" in lines
 
     def test_indent_management(self, formatter):
-
-
-
-
         """Test indentation level management."""
         # Initial indent
         assert formatter.indent_level == 0
@@ -208,10 +174,6 @@ class TestOutputFormatter:
         assert formatter._indent("   ") == "   "
 
     def test_format_try_block(self, formatter):
-
-
-
-
         """Test formatting try-catch block."""
         try_block = ControlBlock(BlockType.TRY, 0x100, 0x200, [])
 
@@ -241,10 +203,6 @@ class TestOutputFormatter:
         assert "end try" in lines[-1]
 
     def test_format_choose_case(self, formatter):
-
-
-
-
         """Test formatting choose case block."""
         choose_block = ControlBlock(BlockType.CHOOSE_CASE, 0x100, 0x200, [])
         choose_block.metadata = {"expression": "option"}

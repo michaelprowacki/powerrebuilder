@@ -3,18 +3,17 @@
 import tempfile
 from pathlib import Path
 
-from src.extract.pbd.extractor_binary import EnhancedImageExtractor, StringResourceExtractor
 from src.extract.pbd.catalog import ResourceCatalog
+from src.extract.pbd.extractor_binary import (
+    EnhancedImageExtractor,
+    StringResourceExtractor,
+)
 
 
 class TestStringResourceExtractor:
     """Test string resource extraction."""
 
     def test_extract_ascii_strings(self):
-
-
-
-
         """Test extraction of ASCII strings."""
         extractor = StringResourceExtractor()
 
@@ -27,10 +26,6 @@ class TestStringResourceExtractor:
         assert "This is a test" in strings
 
     def test_extract_unicode_strings(self):
-
-
-
-
         """Test extraction of Unicode strings."""
         extractor = StringResourceExtractor()
 
@@ -42,15 +37,11 @@ class TestStringResourceExtractor:
         assert "Hello World" in strings
 
     def test_filter_invalid_strings(self):
-
-
-
-
         """Test that invalid strings are filtered out."""
         extractor = StringResourceExtractor()
 
         # Create test data with noise
-        data = b"aa\x00\x00\xFF\xFF\xFF\x00\x00Valid String Here\x00\x001234567890\x00"
+        data = b"aa\x00\x00\xff\xff\xff\x00\x00Valid String Here\x00\x001234567890\x00"
 
         strings = extractor.extract_strings_from_data(data)
 
@@ -60,10 +51,6 @@ class TestStringResourceExtractor:
         assert "1234567890" not in strings  # All digits
 
     def test_extract_properties(self):
-
-
-
-
         """Test property extraction."""
         extractor = StringResourceExtractor()
 
@@ -78,10 +65,6 @@ class TestStringResourceExtractor:
         assert properties["visible"] == "true"
 
     def test_extract_string_table(self):
-
-
-
-
         """Test string table extraction."""
         extractor = StringResourceExtractor()
 
@@ -100,10 +83,6 @@ class TestEnhancedImageExtractor:
     """Test enhanced image extraction."""
 
     def test_find_bmp_image(self):
-
-
-
-
         """Test BMP image detection and extraction."""
         extractor = EnhancedImageExtractor()
 
@@ -118,7 +97,7 @@ class TestEnhancedImageExtractor:
         bmp_data += b"\x01\x00"  # Planes
         bmp_data += b"\x18\x00"  # Bits per pixel (24)
         bmp_data += b"\x00" * 24  # Rest of header
-        bmp_data += b"\xFF" * 16  # Pixel data
+        bmp_data += b"\xff" * 16  # Pixel data
 
         # Embed in larger data
         test_data = b"\x00" * 100 + bmp_data + b"\x00" * 100
@@ -132,22 +111,18 @@ class TestEnhancedImageExtractor:
         assert images[0]["metadata"]["height"] == 2
 
     def test_find_png_image(self):
-
-
-
-
         """Test PNG image detection."""
         extractor = EnhancedImageExtractor()
 
         # Create minimal PNG
         png_data = b"\x89PNG\r\n\x1a\n"  # PNG signature
-        png_data += b"\x00\x00\x00\x0D"  # IHDR length
+        png_data += b"\x00\x00\x00\x0d"  # IHDR length
         png_data += b"IHDR"  # IHDR chunk
         png_data += b"\x00\x00\x00\x10"  # Width (16)
         png_data += b"\x00\x00\x00\x10"  # Height (16)
         png_data += b"\x08\x02\x00\x00\x00"  # Bit depth, color type, etc
         png_data += b"\x90\x91\x68\x36"  # CRC
-        png_data += b"\x00\x00\x00\x00IEND\xAE\x42\x60\x82"  # IEND chunk
+        png_data += b"\x00\x00\x00\x00IEND\xae\x42\x60\x82"  # IEND chunk
 
         images = extractor.find_images_in_data(png_data, "test.sru")
 
@@ -157,10 +132,6 @@ class TestEnhancedImageExtractor:
         assert images[0]["metadata"]["height"] == 16
 
     def test_multiple_images(self):
-
-
-
-
         """Test extraction of multiple images."""
         extractor = EnhancedImageExtractor()
 
@@ -177,10 +148,6 @@ class TestEnhancedImageExtractor:
         assert images[1]["format"] == "bmp"
 
     def test_save_extracted_images(self):
-
-
-
-
         """Test saving extracted images."""
         extractor = EnhancedImageExtractor()
 
@@ -208,10 +175,6 @@ class TestResourceCatalog:
     """Test resource catalog functionality."""
 
     def test_add_string_resource(self):
-
-
-
-
         """Test adding string resources."""
         catalog = ResourceCatalog()
 
@@ -228,10 +191,6 @@ class TestResourceCatalog:
         assert len(catalog.resources["strings"][resource_id]["sources"]) == 2
 
     def test_add_image_resource(self):
-
-
-
-
         """Test adding image resources."""
         catalog = ResourceCatalog()
 
@@ -248,16 +207,14 @@ class TestResourceCatalog:
         assert catalog.resources["images"][resource_id]["format"] == "png"
 
     def test_cross_references(self):
-
-
-
-
         """Test resource cross-referencing."""
         catalog = ResourceCatalog()
 
         # Add resources
         string_id = catalog.add_string_resource("window.srw", "Window Title")
-        image_id = catalog.add_image_resource("window.srw", {"format": "ico", "size": 256})
+        image_id = catalog.add_image_resource(
+            "window.srw", {"format": "ico", "size": 256}
+        )
 
         # Check cross-references
         assert "window.srw" in catalog.find_resource_usage(string_id)
@@ -268,10 +225,6 @@ class TestResourceCatalog:
         assert image_id in resources["images"]
 
     def test_find_common_resources(self):
-
-
-
-
         """Test finding common resources."""
         catalog = ResourceCatalog()
 
@@ -293,10 +246,6 @@ class TestResourceCatalog:
         assert resource["value"] == "Common String"
 
     def test_catalog_persistence(self):
-
-
-
-
         """Test saving and loading catalog."""
         with tempfile.TemporaryDirectory() as tmpdir:
             catalog_path = Path(tmpdir) / "catalog.json"
@@ -317,10 +266,6 @@ class TestResourceCatalog:
             assert catalog2.find_object_resources("test.pbl")
 
     def test_generate_statistics(self):
-
-
-
-
         """Test statistics generation."""
         catalog = ResourceCatalog()
 

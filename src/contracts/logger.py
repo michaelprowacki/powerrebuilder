@@ -22,7 +22,9 @@ class StandardLogger(ILogger):
         self._logger = logging.getLogger(name)
         self._context: dict[str, Any] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+    def _log_with_context(
+        self, level: int, msg: str, *args: Any, **kwargs: Any
+    ) -> None:
         """Log message with context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)

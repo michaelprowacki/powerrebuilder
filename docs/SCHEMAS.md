@@ -94,7 +94,7 @@ ControlNode: ASTNode & {
     events: [...EventNode]
 }
 
-ControlType: "CommandButton" | "DataWindow" | "EditMask" | "StaticText" | 
+ControlType: "CommandButton" | "DataWindow" | "EditMask" | "StaticText" |
              "CheckBox" | "RadioButton" | "ListBox" | "DropDownListBox" |
              "Picture" | "GroupBox" | "Line" | "Rectangle"
 ```
@@ -168,7 +168,7 @@ ColumnSchema: {
 }
 
 SQLDataType: {
-    type: "VARCHAR" | "INTEGER" | "DECIMAL" | "DATE" | "TIMESTAMP" | 
+    type: "VARCHAR" | "INTEGER" | "DECIMAL" | "DATE" | "TIMESTAMP" |
           "BOOLEAN" | "TEXT" | "BLOB"
     length?: number
     precision?: number
@@ -247,7 +247,7 @@ ObjectModel: {
     events: [...EventModel]
 }
 
-ObjectType: "window" | "userobject" | "menu" | "datawindow" | 
+ObjectType: "window" | "userobject" | "menu" | "datawindow" |
             "application" | "function" | "structure"
 ```
 

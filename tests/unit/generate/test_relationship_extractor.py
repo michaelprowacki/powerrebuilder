@@ -17,10 +17,6 @@ class TestRelationshipExtractor:
     """Test relationship extraction functionality."""
 
     def test_simple_join_extraction(self):
-
-
-
-
         """Test extracting relationship from simple JOIN."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -47,10 +43,6 @@ class TestRelationshipExtractor:
         assert rel.column_mappings[0].target_column == "customer_id"
 
     def test_multiple_join_extraction(self):
-
-
-
-
         """Test extracting relationships from multiple JOINs."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -69,7 +61,9 @@ class TestRelationshipExtractor:
         relationships = extractor.extract_from_select(stmt)
 
         # Should extract 3 relationships
-        assert len(relationships) >= 2  # At least customer->order and order->order_items
+        assert (
+            len(relationships) >= 2
+        )  # At least customer->order and order->order_items
 
         # Check for left join relationship
         left_joins = [r for r in relationships if r.join_type == JoinType.LEFT]
@@ -77,10 +71,6 @@ class TestRelationshipExtractor:
         assert left_joins[0].is_optional is True
 
     def test_composite_key_join(self):
-
-
-
-
         """Test extracting relationship with composite key."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -88,7 +78,7 @@ class TestRelationshipExtractor:
         sql = """
         SELECT *
         FROM order_details od
-        INNER JOIN price_history ph 
+        INNER JOIN price_history ph
             ON od.product_id = ph.product_id
             AND od.order_date = ph.effective_date
         """
@@ -105,15 +95,13 @@ class TestRelationshipExtractor:
         assert len(rel.column_mappings) == 2
 
         # Check both mappings exist
-        mapping_strs = [f"{m.source_column}->{m.target_column}" for m in rel.column_mappings]
+        mapping_strs = [
+            f"{m.source_column}->{m.target_column}" for m in rel.column_mappings
+        ]
         assert "product_id->product_id" in mapping_strs
         assert "order_date->effective_date" in mapping_strs
 
     def test_implicit_join_extraction(self):
-
-
-
-
         """Test extracting relationships from WHERE clause (implicit join)."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -137,10 +125,6 @@ class TestRelationshipExtractor:
         assert len(rel.column_mappings) == 1
 
     def test_relationship_type_detection(self):
-
-
-
-
         """Test relationship type detection based on column names."""
         extractor = RelationshipExtractor()
 
@@ -157,10 +141,6 @@ class TestRelationshipExtractor:
         assert not extractor._is_primary_key("description")
 
     def test_relationship_deduplication(self):
-
-
-
-
         """Test that duplicate relationships are removed."""
         extractor = RelationshipExtractor()
 
@@ -195,10 +175,6 @@ class TestRelationshipExtractor:
         assert len(deduplicated) == 1
 
     def test_generate_repository_methods(self):
-
-
-
-
         """Test repository method generation for relationships."""
         extractor = RelationshipExtractor()
 
@@ -247,10 +223,6 @@ class TestRelationshipExtractor:
         assert any("getCategories" in m for m in product_methods)
 
     def test_complex_sql_with_subqueries(self):
-
-
-
-
         """Test handling complex SQL with subqueries."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -277,10 +249,6 @@ class TestRelationshipExtractor:
             pass
 
     def test_relationship_to_dict(self):
-
-
-
-
         """Test relationship serialization to dictionary."""
         mapping = ColumnMapping(
             source_table="customers",
@@ -316,16 +284,12 @@ class TestDataWindowIntegration:
     """Test relationship extraction integration with DataWindowConverter."""
 
     def test_datawindow_with_relationships(self):
-
-
-
-
         """Test DataWindow conversion with relationship extraction."""
         from src.generate.converters.flutter.datawindows import DataWindowConverter
 
         converter = DataWindowConverter()
 
-        dw_syntax = '''
+        dw_syntax = """
         datawindow(
             processing=0
         )
@@ -333,7 +297,7 @@ class TestDataWindowIntegration:
                  FROM customers
                  INNER JOIN orders ON customers.id = orders.customer_id
                  WHERE orders.status = 'active'"
-        '''
+        """
 
         definition = converter.convert_datawindow(dw_syntax, "d_customer_orders")
 

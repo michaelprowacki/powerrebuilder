@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test special opcode formatting for decompiled code."""
 
-
 from src.decompile.core.opcode_formatter import SpecialOpcodeFormatter
 
 
@@ -9,10 +8,6 @@ class TestSpecialOpcodeFormatter:
     """Test the special opcode formatter."""
 
     def test_database_operations(self):
-
-
-
-
         """Test formatting of database operations."""
         formatter = SpecialOpcodeFormatter(
             string_table={
@@ -59,10 +54,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "ROLLBACK"
 
     def test_control_flow_operations(self):
-
-
-
-
         """Test formatting of control flow operations."""
         formatter = SpecialOpcodeFormatter()
 
@@ -83,10 +74,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "gosub L_EF01"
 
     def test_function_calls(self):
-
-
-
-
         """Test formatting of function calls."""
         formatter = SpecialOpcodeFormatter(
             function_table={
@@ -113,10 +100,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "calculate_total() /* 3 args */ /* method function */"
 
     def test_array_operations(self):
-
-
-
-
         """Test formatting of array operations."""
         formatter = SpecialOpcodeFormatter()
 
@@ -137,10 +120,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "UpperBound(array, dimension)"
 
     def test_exception_handling(self):
-
-
-
-
         """Test formatting of exception handling operations."""
         formatter = SpecialOpcodeFormatter()
 
@@ -165,10 +144,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "THROW"
 
     def test_event_calls(self):
-
-
-
-
         """Test formatting of event calls."""
         formatter = SpecialOpcodeFormatter(
             function_table={
@@ -186,10 +161,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "TriggerEvent()"
 
     def test_object_creation(self):
-
-
-
-
         """Test formatting of object creation operations."""
         formatter = SpecialOpcodeFormatter()
 
@@ -206,10 +177,6 @@ class TestSpecialOpcodeFormatter:
         assert result == "CREATE USING class_name"
 
     def test_unknown_opcodes(self):
-
-
-
-
         """Test that unknown opcodes return None."""
         formatter = SpecialOpcodeFormatter()
 

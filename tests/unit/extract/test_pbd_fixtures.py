@@ -16,8 +16,8 @@ import pytest
 from src.core.exceptions import PbdError
 from src.extract.extract_coordinator import extract_with_recovery
 from src.extract.pbd.constants import BLOCK_SIZE
-from src.extract.pbd.structures import extract_pbl_header
 from src.extract.pbd.node import extract_nods
+from src.extract.pbd.structures import extract_pbl_header
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def temp_output_dir():
-
-
     """Create a temporary directory for extraction output."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -37,8 +35,6 @@ def temp_output_dir():
 
 @pytest.fixture
 def pbd_fixtures_dir():
-
-
     """Get the path to the PBD fixtures directory."""
     # Path is relative to the test file
     fixtures_dir = Path(__file__).parent / "fixtures" / "pbd_files"
@@ -48,12 +44,6 @@ def pbd_fixtures_dir():
 
 
 def test_fixture_dir_exists(pbd_fixtures_dir):
-
-
-
-
-
-
     """Verify that PBD fixtures directory exists and contains files."""
     assert pbd_fixtures_dir.exists(), (
         f"PBD fixtures directory not found: {pbd_fixtures_dir}"
@@ -68,12 +58,6 @@ def test_fixture_dir_exists(pbd_fixtures_dir):
 
 
 def test_pbd_header_parsing(pbd_fixtures_dir):
-
-
-
-
-
-
     """Test that PBD headers can be correctly parsed from test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 
@@ -81,7 +65,9 @@ def test_pbd_header_parsing(pbd_fixtures_dir):
         logger.info(f"Testing header parsing for {pbd_file.name}")
         try:
             with open(pbd_file, "rb") as f:
-                header = extract_pbl_header(f, BLOCK_SIZE, file_path_for_error_log=str(pbd_file))
+                header = extract_pbl_header(
+                    f, BLOCK_SIZE, file_path_for_error_log=str(pbd_file)
+                )
 
             # Verify header attributes
             assert header is not None, f"Failed to parse header for {pbd_file.name}"
@@ -108,12 +94,6 @@ def test_pbd_header_parsing(pbd_fixtures_dir):
 
 
 def test_pbd_node_parsing(pbd_fixtures_dir):
-
-
-
-
-
-
     """Test that PBD nodes can be correctly parsed from test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 
@@ -121,11 +101,16 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
         logger.info(f"Testing node parsing for {pbd_file.name}")
         try:
             with open(pbd_file, "rb") as f:
-                header = extract_pbl_header(f, BLOCK_SIZE, file_path_for_error_log=str(pbd_file))
-                
+                header = extract_pbl_header(
+                    f, BLOCK_SIZE, file_path_for_error_log=str(pbd_file)
+                )
+
                 # Keep file handle open for extract_nods
                 nodes = extract_nods(
-                    f, header.is_unicode, header.first_nod_offset, BLOCK_SIZE,
+                    f,
+                    header.is_unicode,
+                    header.first_nod_offset,
+                    BLOCK_SIZE,
                 )
 
             # Verify nodes
@@ -157,12 +142,6 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
 
 
 def test_pbd_extraction(pbd_fixtures_dir, temp_output_dir):
-
-
-
-
-
-
     """Test end-to-end PBD extraction for test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 
@@ -176,7 +155,9 @@ def test_pbd_extraction(pbd_fixtures_dir, temp_output_dir):
 
             # Extract the PBD
             result = extract_with_recovery(
-                str(pbd_file), temp_output_dir, show_progress=False,
+                str(pbd_file),
+                temp_output_dir,
+                show_progress=False,
             )
 
             # Verify extraction

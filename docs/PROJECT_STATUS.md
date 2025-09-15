@@ -74,7 +74,7 @@ PowerRebuilder is a functional reverse engineering toolkit with a complete 5-sta
 ## Performance Metrics
 
 - **Small Projects (<100 files)**: ~1-2 minutes
-- **Medium Projects (100-1000 files)**: ~5-10 minutes  
+- **Medium Projects (100-1000 files)**: ~5-10 minutes
 - **Large Projects (1000+ files)**: Use `--parallel --workers 8`
 - **Memory Usage**: ~100MB per 1000 files
 

@@ -14,19 +14,11 @@ from src.parse.parser.specialized.pseudocode import PowerBuilderPseudocodeParser
 
 @pytest.fixture
 def parser():
-
-
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
 
 def test_factorial_example(parser):
-
-
-
-
-
-
     """Test factorial function example."""
     code = """
     // Declaration and implementation of function calculating factorial of given number
@@ -63,12 +55,6 @@ def test_factorial_example(parser):
 
 
 def test_nested_loops_example(parser):
-
-
-
-
-
-
     """Test nested loops example."""
     code = """
     INPUT NumRows
@@ -90,12 +76,6 @@ def test_nested_loops_example(parser):
 
 
 def test_calculator_example(parser):
-
-
-
-
-
-
     """Test calculator example."""
     code = """
     OUTPUT "Enter a number: "
@@ -150,12 +130,6 @@ def test_calculator_example(parser):
 
 
 def test_prime_sieve_example(parser):
-
-
-
-
-
-
     """Test prime sieve example."""
     code = """
     DECLARE Limit: INTEGER
@@ -199,12 +173,6 @@ def test_prime_sieve_example(parser):
 
 
 def test_file_copy_example(parser):
-
-
-
-
-
-
     """Test file copy example."""
     code = """
     OPENFILE "inp.txt" FOR READ
@@ -232,12 +200,6 @@ def test_file_copy_example(parser):
 
 
 def test_syntax_error_example(parser):
-
-
-
-
-
-
     """Test syntax error handling example."""
     code = """
     // Handling error in for loop
@@ -255,12 +217,6 @@ def test_syntax_error_example(parser):
 
 
 def test_array_example(parser):
-
-
-
-
-
-
     """Test array manipulation example."""
     code = """
     DECLARE numbers: ARRAY[5] OF INTEGER
@@ -289,12 +245,6 @@ def test_array_example(parser):
 
 
 def test_file_example(parser):
-
-
-
-
-
-
     """Test file handling example."""
     code = """
     OPENFILE data FOR READ SHARING READONLY
@@ -317,12 +267,6 @@ def test_file_example(parser):
 
 
 def test_error_handling_example(parser):
-
-
-
-
-
-
     """Test error handling example."""
     code = """
     FUNCTION ReadNumber() RETURNS INTEGER THROWS ValueError
@@ -356,12 +300,6 @@ def test_error_handling_example(parser):
 
 
 def test_case_example(parser):
-
-
-
-
-
-
     """Test case statement example."""
     code = """
     CASE grade OF
@@ -389,12 +327,6 @@ def test_case_example(parser):
 
 
 def test_repeat_until_example(parser):
-
-
-
-
-
-
     """Test repeat until loop example."""
     code = """
     DECLARE num: INTEGER
@@ -418,12 +350,6 @@ def test_repeat_until_example(parser):
 
 
 def test_function_with_multiple_params(parser):
-
-
-
-
-
-
     """Test function with multiple parameters."""
     code = """
     FUNCTION Add(a:INTEGER, b:INTEGER) RETURNS INTEGER
@@ -445,12 +371,6 @@ def test_function_with_multiple_params(parser):
 
 
 def test_array_operations(parser):
-
-
-
-
-
-
     """Test array operations."""
     code = """
     DECLARE matrix: ARRAY[3] OF ARRAY[3] OF INTEGER
@@ -474,12 +394,6 @@ def test_array_operations(parser):
 
 
 def test_file_operations(parser):
-
-
-
-
-
-
     """Test file operations."""
     code = """
     OPENFILE data FOR WRITE
@@ -506,12 +420,6 @@ def test_file_operations(parser):
 
 
 def test_builtin_functions(parser):
-
-
-
-
-
-
     """Test built-in functions."""
     code = """
     DECLARE str: STRING

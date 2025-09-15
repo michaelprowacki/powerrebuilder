@@ -346,7 +346,7 @@ class TestDecompileIntegration:
 
         assert isinstance(output, list)
         # Should include error information
-        assert any("error" in line.lower() or "failed" in line.lower() 
+        assert any("error" in line.lower() or "failed" in line.lower()
                   for line in output)
 
 

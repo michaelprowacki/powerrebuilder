@@ -2,33 +2,25 @@
 
 import pytest
 
-from src.generate.converters.flutter.menus import MenuConverter, MenuDefinition, MenuItem
+from src.generate.converters.flutter.menus import (
+    MenuConverter,
+    MenuDefinition,
+    MenuItem,
+)
 
 
 class TestMenuConverter:
     """Test cases for PowerBuilder to Flutter/Python menu conversion."""
 
     def setup_method(self):
-
-
-
-
         """Set up test instances."""
         self.converter = MenuConverter()
 
     def test_initialization(self):
-
-
-
-
         """Test converter initialization."""
         assert self.converter is not None
 
     def test_parse_simple_menu(self):
-
-
-
-
         """Test parsing a simple menu definition."""
         menu_syntax = """
             forward
@@ -71,10 +63,6 @@ class TestMenuConverter:
         assert file_menu.text == "&File"
 
     def test_parse_menu_item_properties(self):
-
-
-
-
         """Test parsing menu item properties."""
         menu_syntax = """
             type m_save from menu
@@ -106,10 +94,6 @@ class TestMenuConverter:
         assert item.on_click == "save_document()"
 
     def test_parse_nested_menu(self):
-
-
-
-
         """Test parsing nested menu structure."""
         menu_syntax = """
             type m_edit from menu
@@ -149,10 +133,6 @@ class TestMenuConverter:
         assert len(edit_menu.children) >= 2  # At least cut and copy
 
     def test_menu_item_to_dict(self):
-
-
-
-
         """Test MenuItem to_dict conversion."""
         item = MenuItem(
             name="m_save",
@@ -183,10 +163,6 @@ class TestMenuConverter:
         assert item_dict["python_shortcut"] == "<Control-S>"
 
     def test_shortcut_conversion_flutter(self):
-
-
-
-
         """Test PowerBuilder to Flutter shortcut conversion."""
         test_cases = [
             ("Ctrl+S", {"modifiers": ["control"], "key": "s"}),
@@ -202,10 +178,6 @@ class TestMenuConverter:
             assert result == expected
 
     def test_shortcut_conversion_python(self):
-
-
-
-
         """Test PowerBuilder to Python/Tkinter shortcut conversion."""
         test_cases = [
             ("Ctrl+S", "<Control-S>"),
@@ -221,10 +193,6 @@ class TestMenuConverter:
             assert result == expected
 
     def test_convert_to_flutter(self):
-
-
-
-
         """Test converting menu to Flutter format."""
         menu_def = MenuDefinition(name="m_main")
 
@@ -233,9 +201,21 @@ class TestMenuConverter:
             name="m_file",
             text="&File",
             children=[
-                MenuItem(name="m_new", text="&New", shortcut="Ctrl+N", on_click="new_file()"),
-                MenuItem(name="m_open", text="&Open", shortcut="Ctrl+O", on_click="open_file()"),
-                MenuItem(name="m_save", text="&Save", shortcut="Ctrl+S", on_click="save_file()"),
+                MenuItem(
+                    name="m_new", text="&New", shortcut="Ctrl+N", on_click="new_file()"
+                ),
+                MenuItem(
+                    name="m_open",
+                    text="&Open",
+                    shortcut="Ctrl+O",
+                    on_click="open_file()",
+                ),
+                MenuItem(
+                    name="m_save",
+                    text="&Save",
+                    shortcut="Ctrl+S",
+                    on_click="save_file()",
+                ),
                 MenuItem(name="m_separator", text="-"),
                 MenuItem(name="m_exit", text="E&xit", on_click="exit_app()"),
             ],
@@ -251,10 +231,6 @@ class TestMenuConverter:
         assert flutter_data["menu_bar"][0]["has_children"] is True
 
     def test_convert_to_python(self):
-
-
-
-
         """Test converting menu to Python format."""
         menu_def = MenuDefinition(name="m_main")
 
@@ -277,10 +253,6 @@ class TestMenuConverter:
         assert len(python_data["menu_bar"]) == 1
 
     def test_separator_handling(self):
-
-
-
-
         """Test handling of menu separators."""
         menu_syntax = """
             type m_separator1 from menu
@@ -298,10 +270,6 @@ class TestMenuConverter:
         assert item.name == "m_separator1"
 
     def test_menu_with_icons(self):
-
-
-
-
         """Test parsing menu items with icons."""
         menu_syntax = """
             type m_new from menu
@@ -320,10 +288,6 @@ class TestMenuConverter:
         assert item.icon == "new_document.ico"
 
     def test_context_menu_parsing(self):
-
-
-
-
         """Test parsing context menus."""
         menu_syntax = """
             global type m_context from menu
@@ -344,10 +308,6 @@ class TestMenuConverter:
         assert menu_def.name == "m_context"
 
     def test_menu_event_handlers(self):
-
-
-
-
         """Test parsing menu event handlers."""
         menu_syntax = """
             event clicked()
@@ -369,10 +329,6 @@ class TestMenuConverter:
         assert "w_main.set_status" in events["selected"]
 
     def test_complex_menu_structure(self):
-
-
-
-
         """Test parsing complex menu with multiple levels."""
         menu_def = MenuDefinition(name="m_complex")
 
@@ -389,7 +345,9 @@ class TestMenuConverter:
                     text="&Zoom",
                     children=[
                         MenuItem(name="m_zoom_in", text="Zoom &In", shortcut="Ctrl++"),
-                        MenuItem(name="m_zoom_out", text="Zoom &Out", shortcut="Ctrl+-"),
+                        MenuItem(
+                            name="m_zoom_out", text="Zoom &Out", shortcut="Ctrl+-"
+                        ),
                         MenuItem(name="m_zoom_100", text="&100%", shortcut="Ctrl+0"),
                     ],
                 ),
@@ -404,17 +362,14 @@ class TestMenuConverter:
         assert view_menu_data["has_children"] is True
 
         # Find zoom submenu
-        zoom_menu = next((c for c in view_menu_data["children"] 
-                         if c["name"] == "m_zoom"), None)
+        zoom_menu = next(
+            (c for c in view_menu_data["children"] if c["name"] == "m_zoom"), None
+        )
         assert zoom_menu is not None
         assert zoom_menu["has_children"] is True
         assert len(zoom_menu["children"]) == 3
 
     def test_empty_menu(self):
-
-
-
-
         """Test handling empty menu definition."""
         menu_syntax = """
             global type m_empty from menu
@@ -429,10 +384,6 @@ class TestMenuConverter:
         assert len(menu_def.menu_bar) == 0
 
     def test_menu_text_with_mnemonics(self):
-
-
-
-
         """Test handling menu text with mnemonics."""
         test_cases = [
             ("&File", "File", "F"),

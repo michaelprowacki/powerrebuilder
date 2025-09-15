@@ -4,12 +4,6 @@ from src.parse.transformer import PBTransformer
 
 
 def test_user_object_parsing():
-
-
-
-
-
-
     """Test parsing user object definitions."""
     test_input = """
     type u_customer from userobject

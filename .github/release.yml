@@ -9,66 +9,66 @@ changelog:
     authors:
       - dependabot
       - github-actions[bot]
-  
+
   categories:
     - title: 🚀 Features
       labels:
         - feature
         - enhancement
         - feat
-    
+
     - title: 🐛 Bug Fixes
       labels:
         - fix
         - bug
         - bugfix
-    
+
     - title: ⚡ Performance Improvements
       labels:
         - performance
         - perf
         - optimization
-    
+
     - title: 📚 Documentation
       labels:
         - documentation
         - docs
-    
+
     - title: 🔧 Maintenance
       labels:
         - chore
         - maintenance
         - refactor
         - refactoring
-    
+
     - title: 🔒 Security
       labels:
         - security
         - vulnerability
-    
+
     - title: ⬆️ Dependencies
       labels:
         - dependencies
         - deps
-    
+
     - title: 🧪 Testing
       labels:
         - test
         - tests
         - testing
-    
+
     - title: 🏗️ CI/CD
       labels:
         - ci
         - cd
         - ci/cd
         - automation
-    
+
     - title: 💥 Breaking Changes
       labels:
         - breaking-change
         - breaking
-    
+
     - title: 🔄 Pipeline Components
       labels:
         - extract

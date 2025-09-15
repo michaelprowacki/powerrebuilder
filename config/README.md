@@ -19,10 +19,10 @@ These configuration files are used by various tools and components of the PowerR
 
 ## Important Note
 
-Tool configuration files (like pyproject.toml, mypy.ini, .pre-commit-config.yaml, etc.) 
+Tool configuration files (like pyproject.toml, mypy.ini, .pre-commit-config.yaml, etc.)
 remain in the project root directory as most tools expect them there by convention.
 
-This config/ directory is specifically for application runtime configuration, not 
+This config/ directory is specifically for application runtime configuration, not
 development tool configuration.
 
 ## Adding New Configuration

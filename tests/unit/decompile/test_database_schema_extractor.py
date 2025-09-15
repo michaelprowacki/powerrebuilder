@@ -4,13 +4,13 @@ import json
 import tempfile
 from pathlib import Path
 
+from src.decompile.analyzers.schema_generator import (
+    SchemaDocumentationGenerator,
+)
 from src.decompile.extractors.logic import BusinessLogicMapper
 from src.decompile.extractors.schema_extractor import (
     DatabaseSchemaExtractor,
     TableInfo,
-)
-from src.decompile.analyzers.schema_generator import (
-    SchemaDocumentationGenerator,
 )
 
 
@@ -18,10 +18,6 @@ class TestDatabaseSchemaExtractor:
     """Test database schema extraction."""
 
     def test_extract_table_from_select(self):
-
-
-
-
         """Test extracting table names from SELECT statements."""
         extractor = DatabaseSchemaExtractor()
 
@@ -35,10 +31,6 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["users"].operations["SELECT"] == 1
 
     def test_extract_table_from_insert(self):
-
-
-
-
         """Test extracting table names from INSERT statements."""
         extractor = DatabaseSchemaExtractor()
 
@@ -51,10 +43,6 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["customers"].operations["INSERT"] == 1
 
     def test_extract_table_from_update(self):
-
-
-
-
         """Test extracting table names from UPDATE statements."""
         extractor = DatabaseSchemaExtractor()
 
@@ -66,10 +54,6 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["orders"].operations["UPDATE"] == 1
 
     def test_extract_table_from_delete(self):
-
-
-
-
         """Test extracting table names from DELETE statements."""
         extractor = DatabaseSchemaExtractor()
 
@@ -80,16 +64,12 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["logs"].operations["DELETE"] == 1
 
     def test_extract_join_relationships(self):
-
-
-
-
         """Test extracting relationships from JOIN clauses."""
         extractor = DatabaseSchemaExtractor()
 
         sql = """
-        SELECT o.id, o.order_date, c.name 
-        FROM orders o 
+        SELECT o.id, o.order_date, c.name
+        FROM orders o
         JOIN customers c ON o.customer_id = c.id
         """
         extractor._process_sql_statement(sql, "test_window", None, 1)
@@ -98,21 +78,17 @@ class TestDatabaseSchemaExtractor:
         assert "customers" in extractor.tables
 
     def test_extract_from_datawindow(self):
-
-
-
-
         """Test extracting schema from DataWindow syntax."""
         extractor = DatabaseSchemaExtractor()
 
         # Create test DataWindow content
-        dw_content = '''
+        dw_content = """
         retrieve="SELECT employee.id, employee.name, department.name as dept_name
                   FROM employee, department
                   WHERE employee.dept_id = department.id"
 
         table(column=(name=employee.id) column=(name=employee.name) column=(name=department.name))
-        '''
+        """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".srd", delete=False) as f:
             f.write(dw_content)
@@ -130,10 +106,6 @@ class TestDatabaseSchemaExtractor:
             temp_file.unlink()
 
     def test_foreign_key_detection(self):
-
-
-
-
         """Test detection of foreign key relationships."""
         extractor = DatabaseSchemaExtractor()
 
@@ -157,19 +129,15 @@ class TestDatabaseSchemaExtractor:
         assert rel.to_column == "id"
 
     def test_transaction_config_extraction(self):
-
-
-
-
         """Test extraction of transaction configurations."""
         extractor = DatabaseSchemaExtractor()
 
-        pb_content = '''
+        pb_content = """
         transaction sqlca
         SQLCA.DBMS = "ODBC"
         SQLCA.Database = "mydb"
         SQLCA.ServerName = "localhost"
-        '''
+        """
 
         extractor._extract_transaction_config(pb_content, "test_app")
 
@@ -180,10 +148,6 @@ class TestDatabaseSchemaExtractor:
         assert trans["properties"]["ServerName"] == "localhost"
 
     def test_full_project_extraction(self):
-
-
-
-
         """Test extracting schema from a complete project structure."""
         # Create test project structure
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -193,19 +157,19 @@ class TestDatabaseSchemaExtractor:
             window_dir = project_path / "windows"
             window_dir.mkdir()
 
-            window_content = '''
+            window_content = """
             global type w_customer from window
             end type
 
             event open()
-                SELECT id, name, email 
+                SELECT id, name, email
                 INTO :li_id, :ls_name, :ls_email
                 FROM customers
                 WHERE id = :al_customer_id;
 
                 dw_orders.Retrieve(al_customer_id)
             end event
-            '''
+            """
 
             (window_dir / "w_customer.srw").write_text(window_content)
 
@@ -213,11 +177,11 @@ class TestDatabaseSchemaExtractor:
             dw_dir = project_path / "datawindows"
             dw_dir.mkdir()
 
-            dw_content = '''
+            dw_content = """
             retrieve="SELECT order_id, order_date, total_amount
                       FROM orders
                       WHERE customer_id = :customer_id"
-            '''
+            """
 
             (dw_dir / "d_orders.srd").write_text(dw_content)
 
@@ -246,14 +210,10 @@ class TestBusinessLogicMapper:
     """Test business logic mapping functionality."""
 
     def test_function_extraction(self):
-
-
-
-
         """Test extracting functions and their database operations."""
         mapper = BusinessLogicMapper()
 
-        pb_content = '''
+        pb_content = """
         public function integer retrieve_customer(long al_id)
             string ls_name, ls_email
 
@@ -268,7 +228,7 @@ class TestBusinessLogicMapper:
                 return -1
             end if
         end function
-        '''
+        """
 
         mapper._extract_functions(pb_content, "n_customer", "UserObject")
 
@@ -280,14 +240,10 @@ class TestBusinessLogicMapper:
         assert "customers" in func.accessed_tables
 
     def test_ui_element_extraction(self):
-
-
-
-
         """Test extracting UI elements and their data bindings."""
         mapper = BusinessLogicMapper()
 
-        window_content = '''
+        window_content = """
         global type w_order_entry from window
         type dw_customer from datawindow within w_order_entry
         type dw_orders from datawindow within w_order_entry
@@ -301,7 +257,7 @@ class TestBusinessLogicMapper:
             dw_customer.Update()
             dw_orders.Update()
         end event
-        '''
+        """
 
         mapper._extract_window_controls(window_content, "w_order_entry")
 
@@ -315,10 +271,6 @@ class TestBusinessLogicMapper:
         assert dw_customer.type == "DataWindow"
 
     def test_data_flow_analysis(self):
-
-
-
-
         """Test analyzing data flows between components."""
         mapper = BusinessLogicMapper()
 
@@ -348,10 +300,6 @@ class TestSchemaDocumentationGenerator:
     """Test documentation generation."""
 
     def test_markdown_generation(self):
-
-
-
-
         """Test generating markdown documentation."""
         generator = SchemaDocumentationGenerator()
 
@@ -404,10 +352,6 @@ class TestSchemaDocumentationGenerator:
         assert "- **SELECT**: 5 occurrences" in doc
 
     def test_html_generation(self):
-
-
-
-
         """Test generating HTML documentation."""
         generator = SchemaDocumentationGenerator()
 
@@ -428,10 +372,6 @@ class TestSchemaDocumentationGenerator:
         assert "<style>" in doc
 
     def test_json_generation(self):
-
-
-
-
         """Test generating JSON documentation."""
         generator = SchemaDocumentationGenerator()
 

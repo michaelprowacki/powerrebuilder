@@ -8,8 +8,6 @@ from lark import Lark
 
 @pytest.fixture
 def pb_parser():
-
-
     """Create a parser for the PowerBuilder grammar."""
     grammar_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -28,10 +26,6 @@ class TestPowerBuilderGrammar:
     """Tests for the PowerBuilder grammar."""
 
     def test_variable_declaration(self, pb_parser):
-
-
-
-
         """Test variable declarations."""
         code = "x: integer;"
         tree = pb_parser.parse(code)
@@ -46,10 +40,6 @@ class TestPowerBuilderGrammar:
         assert tree is not None
 
     def test_assignment(self, pb_parser):
-
-
-
-
         """Test assignment statements."""
         code = "x = 10;"
         tree = pb_parser.parse(code)
@@ -64,10 +54,6 @@ class TestPowerBuilderGrammar:
         assert tree is not None
 
     def test_if_statement(self, pb_parser):
-
-
-
-
         """Test if statements."""
         code = """
         if x > 5 then
@@ -88,10 +74,6 @@ class TestPowerBuilderGrammar:
         assert tree is not None
 
     def test_for_loop(self, pb_parser):
-
-
-
-
         """Test for loops."""
         code = """
         for i = 1 to 10
@@ -110,10 +92,6 @@ class TestPowerBuilderGrammar:
         assert tree is not None
 
     def test_function_declaration(self, pb_parser):
-
-
-
-
         """Test function declarations."""
         code = """
         function integer calculate_sum(a: integer, b: integer)
@@ -133,10 +111,6 @@ class TestPowerBuilderGrammar:
         assert tree is not None
 
     def test_comments(self, pb_parser):
-
-
-
-
         """Test comments."""
         code = """
         // This is a comment

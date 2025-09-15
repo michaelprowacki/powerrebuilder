@@ -3,7 +3,7 @@
 ## Summary
 
 - **Total PBD/PBL files found**: 1,450 files
-- **Locations**: 
+- **Locations**:
   - Test fixtures: `/tests/fixtures/pbd_files/`
   - Reference examples: `/reference/pb_code_examples/`
 - **PowerBuilder versions represented**: 6.0 through 22.0

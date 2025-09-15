@@ -12,10 +12,6 @@ class TestDataWindowExtractionManager:
     """Test the DataWindow extraction manager."""
 
     def test_init_with_enhanced(self):
-
-
-
-
         """Test initialization with enhanced extraction enabled."""
         manager = DataWindowExtractionManager(use_enhanced=True)
 
@@ -24,10 +20,6 @@ class TestDataWindowExtractionManager:
         assert manager.enhanced_extractor is not None
 
     def test_init_without_enhanced(self):
-
-
-
-
         """Test initialization with enhanced extraction disabled."""
         manager = DataWindowExtractionManager(use_enhanced=False)
 
@@ -37,8 +29,6 @@ class TestDataWindowExtractionManager:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_extract_syntax_enhanced_success(self, mock_detector):
-
-
         """Test successful extraction using enhanced extractor."""
         manager = DataWindowExtractionManager(use_enhanced=True)
 
@@ -52,7 +42,10 @@ class TestDataWindowExtractionManager:
 
         # Mock enhanced extractor success
         manager.enhanced_extractor = Mock()
-        manager.enhanced_extractor.extract_syntax.return_value = ("release 10; datawindow()", True)
+        manager.enhanced_extractor.extract_syntax.return_value = (
+            "release 10; datawindow()",
+            True,
+        )
 
         data = b"test data"
         syntax, success, method = manager.extract_syntax(data, "d_test.srd")
@@ -64,8 +57,6 @@ class TestDataWindowExtractionManager:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_extract_syntax_fallback_to_standard(self, mock_detector):
-
-
         """Test fallback to standard extraction when enhanced fails."""
         manager = DataWindowExtractionManager(use_enhanced=True)
 
@@ -96,8 +87,6 @@ class TestDataWindowExtractionManager:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_extract_syntax_both_fail(self, mock_detector):
-
-
         """Test when both extractors fail."""
         manager = DataWindowExtractionManager(use_enhanced=True)
 
@@ -125,8 +114,6 @@ class TestDataWindowExtractionManager:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_extract_syntax_standard_only(self, mock_detector):
-
-
         """Test extraction with enhanced disabled."""
         manager = DataWindowExtractionManager(use_enhanced=False)
 
@@ -151,10 +138,6 @@ class TestDataWindowExtractionManager:
         assert manager.enhanced_extractor is None  # Not created
 
     def test_extract_from_pbd_object_with_dat_header(self):
-
-
-
-
         """Test extraction from PBD object with DAT header."""
         manager = DataWindowExtractionManager()
 
@@ -171,10 +154,6 @@ class TestDataWindowExtractionManager:
             mock_extract.assert_called_once()
 
     def test_extract_from_pbd_object_with_unicode_dat_header(self):
-
-
-
-
         """Test extraction from PBD object with Unicode DAT header."""
         manager = DataWindowExtractionManager()
 
@@ -191,10 +170,6 @@ class TestDataWindowExtractionManager:
             mock_extract.assert_called_once()
 
     def test_extract_from_pbd_object_no_dat_header(self):
-
-
-
-
         """Test extraction from PBD object without DAT header."""
         manager = DataWindowExtractionManager()
 
@@ -206,10 +181,6 @@ class TestDataWindowExtractionManager:
         assert syntax is None
 
     def test_validate_extraction_output_valid(self):
-
-
-
-
         """Test validation of valid extraction output."""
         manager = DataWindowExtractionManager()
 
@@ -226,10 +197,6 @@ table(column=(type=number name=id))
         assert "datawindow(" in cleaned
 
     def test_validate_extraction_output_invalid(self):
-
-
-
-
         """Test validation of invalid extraction output."""
         manager = DataWindowExtractionManager()
 
@@ -242,10 +209,6 @@ table(column=(type=number name=id))
         assert cleaned == ""
 
     def test_validate_extraction_output_none(self):
-
-
-
-
         """Test validation with None input."""
         manager = DataWindowExtractionManager()
 
@@ -255,10 +218,6 @@ table(column=(type=number name=id))
         assert cleaned == ""
 
     def test_get_extraction_statistics(self):
-
-
-
-
         """Test getting extraction statistics."""
         manager = DataWindowExtractionManager()
 
@@ -287,8 +246,6 @@ class TestExtractionMethodSelection:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_binary_file_detection(self, mock_detector):
-
-
         """Test handling of binary files."""
         manager = DataWindowExtractionManager()
 
@@ -310,10 +267,8 @@ class TestExtractionMethodSelection:
         assert success is True
         assert method == "enhanced_binary"
 
-    @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")  
+    @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_text_file_detection(self, mock_detector):
-
-
         """Test handling of text files."""
         manager = DataWindowExtractionManager()
 
@@ -337,8 +292,6 @@ class TestExtractionMethodSelection:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_mixed_content_detection(self, mock_detector):
-
-
         """Test handling of mixed binary/text content."""
         manager = DataWindowExtractionManager()
 
@@ -366,8 +319,6 @@ class TestErrorHandling:
 
     @patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector")
     def test_detector_exception_handling(self, mock_detector):
-
-
         """Test handling of exceptions from object type detector."""
         manager = DataWindowExtractionManager()
 
@@ -386,22 +337,22 @@ class TestErrorHandling:
             pass
 
     def test_enhanced_extractor_exception(self):
-
-
-
-
         """Test handling of exceptions from enhanced extractor."""
         manager = DataWindowExtractionManager()
 
         # Mock enhanced extractor raising exception
         manager.enhanced_extractor = Mock()
-        manager.enhanced_extractor.extract_syntax.side_effect = Exception("Enhanced failed")
+        manager.enhanced_extractor.extract_syntax.side_effect = Exception(
+            "Enhanced failed"
+        )
 
         # Mock standard extractor working
         manager.standard_extractor = Mock()
         manager.standard_extractor.extract_syntax.return_value = "fallback syntax"
 
-        with patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector") as mock_detector:
+        with patch(
+            "decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector"
+        ) as mock_detector:
             mock_detector.analyze_file_content.return_value = {
                 "null_percentage": 0.0,
                 "is_binary": False,
@@ -422,14 +373,12 @@ class TestErrorHandling:
                 pass
 
     def test_empty_data_handling(self):
-
-
-
-
         """Test handling of empty data."""
         manager = DataWindowExtractionManager()
 
-        with patch("decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector") as mock_detector:
+        with patch(
+            "decompile.analysis.enhanced_datawindow_integration.ObjectTypeDetector"
+        ) as mock_detector:
             mock_detector.analyze_file_content.return_value = {
                 "null_percentage": 0.0,
                 "is_binary": False,
@@ -443,10 +392,6 @@ class TestErrorHandling:
             assert syntax is None
 
     def test_none_data_handling(self):
-
-
-
-
         """Test handling of None data."""
         manager = DataWindowExtractionManager()
 

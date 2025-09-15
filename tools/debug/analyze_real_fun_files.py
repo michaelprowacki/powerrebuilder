@@ -15,14 +15,6 @@ from src.extract.utils.version import PowerBuilderVersion
 
 
 def analyze_fun_file(file_path: Path) -> None:
-
-
-
-
-
-
-
-
     """Comprehensive analysis of a .fun file."""
     with open(file_path, "rb") as f:
         data = f.read()
@@ -75,7 +67,6 @@ def analyze_fun_file(file_path: Path) -> None:
                     pass
             except Exception:
                 logger.debug("Generic exception caught")
-                pass
         else:
             pass
 
@@ -110,11 +101,6 @@ def analyze_fun_file(file_path: Path) -> None:
 
 
 def main() -> None:
-
-
-
-
-
     if len(sys.argv) < 2:
         sys.exit(1)
 

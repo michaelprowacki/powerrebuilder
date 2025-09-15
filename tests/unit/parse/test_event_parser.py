@@ -5,12 +5,6 @@ from src.parse.parser.specialized.transactions import TransactionParser
 
 
 def test_simple_event():
-
-
-
-
-
-
     """Test parsing of simple event declaration."""
     code = """
     event void clicked();
@@ -26,12 +20,6 @@ def test_simple_event():
 
 
 def test_event_with_parameters():
-
-
-
-
-
-
     """Test parsing of event with parameters."""
     code = """
     event integer itemchanged(integer row, string column);
@@ -52,12 +40,6 @@ def test_event_with_parameters():
 
 
 def test_trigger_definition():
-
-
-
-
-
-
     """Test parsing of trigger definition."""
     code = """
     on clicked;
@@ -72,12 +54,6 @@ def test_trigger_definition():
 
 
 def test_object_trigger():
-
-
-
-
-
-
     """Test parsing of object-specific trigger."""
     code = """
     on cb_save.clicked;
@@ -92,12 +68,6 @@ def test_object_trigger():
 
 
 def test_event_with_custom_type():
-
-
-
-
-
-
     """Test parsing of event with custom type."""
     code = """
     event window.response ue_response();
@@ -113,12 +83,6 @@ def test_event_with_custom_type():
 
 
 def test_event_with_super_call():
-
-
-
-
-
-
     """Test parsing of event with super call."""
     code = """
     event integer ue_save();
@@ -135,12 +99,6 @@ def test_event_with_super_call():
 
 
 def test_event_attribute():
-
-
-
-
-
-
     """Test parsing of event attribute."""
     code = """event integer itemchanged"""
     parser = TransactionParser()
@@ -151,12 +109,6 @@ def test_event_attribute():
 
 
 def test_event_reference():
-
-
-
-
-
-
     """Test parsing of event reference name."""
     code = """dw_1::itemchanged"""
     parser = TransactionParser()

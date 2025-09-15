@@ -23,8 +23,6 @@ logging.basicConfig(level=logging.INFO)
 
 @pytest.fixture
 def temp_dir():
-
-
     """Create a temporary directory for test outputs."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -34,8 +32,6 @@ def temp_dir():
 
 @pytest.fixture
 def sample_input_dir(temp_dir):
-
-
     """Create a sample input directory with test files."""
     input_dir = Path(temp_dir) / "input"
     input_dir.mkdir()
@@ -49,12 +45,6 @@ def sample_input_dir(temp_dir):
 
 
 def test_is_source_file():
-
-
-
-
-
-
     """Test the is_source_file function."""
     # Test source files
     for ext in SOURCE_EXTENSIONS:
@@ -66,12 +56,6 @@ def test_is_source_file():
 
 
 def test_is_resource_file():
-
-
-
-
-
-
     """Test the is_resource_file function."""
     # Test resource files
     for ext in RESOURCE_EXTENSIONS:
@@ -83,12 +67,6 @@ def test_is_resource_file():
 
 
 def test_get_mime_type():
-
-
-
-
-
-
     """Test the get_mime_type function."""
     # Test common image types
     assert get_mime_type("test.jpg") == "image/jpeg"
@@ -104,15 +82,11 @@ from src.common.utils.recovery import retry
 
 
 def test_retry_operation():
-
-
-
-
     """Test the retry decorator function."""
+
     # Test successful operation
     @retry(max_attempts=1)
     def successful_func() -> str:
-
         return "success"
 
     result = successful_func()
@@ -123,7 +97,6 @@ def test_retry_operation():
 
     @retry(max_attempts=4, backoff_factor=1.0, exceptions=(ValueError,))
     def failing_func() -> str:
-
         fail_count[0] += 1
         if fail_count[0] < 3:
             raise ValueError("Intentional failure")
@@ -138,7 +111,6 @@ def test_retry_operation():
 
     @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
     def always_fails():
-
         raise ValueError("Always fails")
 
     with pytest.raises(RetryError):
@@ -146,12 +118,6 @@ def test_retry_operation():
 
 
 def test_basic_extraction(sample_input_dir, temp_dir):
-
-
-
-
-
-
     """Test basic extraction functionality with sample files."""
     output_dir = Path(temp_dir) / "output"
 
@@ -177,12 +143,6 @@ def test_basic_extraction(sample_input_dir, temp_dir):
 
 
 def test_corrupted_file_recovery():
-
-
-
-
-
-
     """Test recovery capabilities with intentionally corrupted data."""
     # Create a simple simulated error case to test the recovery logic
 
@@ -191,7 +151,6 @@ def test_corrupted_file_recovery():
 
     # Create a function that simulates error recovery
     def mock_recovery_attempt(filename, output_dir, unicode=False) -> bool | None:
-
         try:
             # First phase will fail
             msg = "Primary extraction error"
@@ -208,16 +167,16 @@ def test_corrupted_file_recovery():
 
     sig = inspect.signature(extract_with_recovery)
     params = list(sig.parameters.keys())
-    
+
     # Check required parameters
     assert "f" in params
     assert "output_path" in params
-    
+
     # Check optional parameters
     assert "show_progress" in params
     assert "enable_byte_recovery" in params
     assert "extract_resources" in params
-    
+
     # The function should handle corruption gracefully
     # We already tested this by calling it with corrupted data above
 

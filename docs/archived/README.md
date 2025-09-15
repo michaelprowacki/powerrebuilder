@@ -8,7 +8,7 @@ This directory contains documentation that has been archived due to outdated or 
 - **Reason**: References dependency injection system that was completely removed from codebase
 - **Replacement**: Direct imports are now used throughout the codebase
 
-### DEVELOPMENT.md  
+### DEVELOPMENT.md
 - **Reason**: Extensive references to Makefile (doesn't exist) and outdated commands
 - **Replacement**: Use [../CLAUDE.md](../CLAUDE.md) for accurate development commands
 
@@ -27,7 +27,7 @@ This directory contains documentation that has been archived due to outdated or 
 ## Key Changes in Current Codebase
 
 1. **No Dependency Injection**: All DI code was removed, direct imports used instead
-2. **No Makefile**: Project uses `uv` package manager with `uv run` commands  
+2. **No Makefile**: Project uses `uv` package manager with `uv run` commands
 3. **Sequential Pipeline**: Extract → Decompile → Parse → Model → Generate (in order)
 4. **Model Stage**: Uses services pattern, not separate coordinator class
 

@@ -24,7 +24,7 @@ This document consolidates all implementation plans, roadmaps, and progress trac
 ### Pipeline Status
 ```
 Extract: ✅ 95% Complete - Successfully extracts PBL/PBD files
-Parse:   🔄 75% Complete - Core parsing works, some edge cases remain  
+Parse:   🔄 75% Complete - Core parsing works, some edge cases remain
 Model:   🔄 60% Complete - Basic model building, validation in progress
 Decompile: 🔄 40% Complete - P-code decoder works, control flow needs work
 Generate: 🔄 30% Complete - Templates ready, AST extraction needed
@@ -329,10 +329,10 @@ P-code Binary → Decoder → Instructions → Control Flow → Expressions → 
 # Every new feature needs:
 def test_feature_unit():
     """Unit test for isolated functionality"""
-    
+
 def test_feature_integration():
     """Integration test with other modules"""
-    
+
 def test_feature_e2e():
     """End-to-end test through full pipeline"""
 ```

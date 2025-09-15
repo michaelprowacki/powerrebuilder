@@ -6,20 +6,12 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from src.decompile.pcode.detector import EnhancedPCodeDetector
 from src.decompile.pcode.decoder import PCodeDecoderV2
+from src.decompile.pcode.detector import EnhancedPCodeDetector
 from src.extract.utils.version import PowerBuilderVersion
 
 
 def test_pcode_detection(file_path: Path) -> None:
-
-
-
-
-
-
-
-
     """Test P-code detection and decoding."""
     with open(file_path, "rb") as f:
         data = f.read()

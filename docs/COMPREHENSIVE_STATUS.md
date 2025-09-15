@@ -107,22 +107,22 @@ from pathlib import Path
 
 class AsyncPipelineProcessor:
     """Modern async pipeline processor"""
-    
+
     async def process_stage_async(self, files: List[Path], stage_func):
         """Process files asynchronously within a stage"""
         tasks = [self._process_file(f, stage_func) for f in files]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return [r for r in results if not isinstance(r, Exception)]
-    
+
     async def _process_file(self, file_path: Path, stage_func):
         """Process single file with async I/O"""
         async with aiofiles.open(file_path, 'rb') as f:
             content = await f.read()
-        
+
         # CPU-bound work in thread pool
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, stage_func, content)
-        
+
         return result
 ```
 
@@ -133,7 +133,7 @@ import ray
 @ray.remote
 class StageWorker:
     """Distributed worker for pipeline stages"""
-    
+
     def process_batch(self, files: List[str], stage: str):
         # Process files for specific stage
         return processed_results

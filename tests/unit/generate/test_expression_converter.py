@@ -9,18 +9,10 @@ class TestExpressionConverter:
     """Test cases for PowerBuilder to Dart expression conversion."""
 
     def setup_method(self):
-
-
-
-
         """Set up test instances."""
         self.converter = ExpressionConverter()
 
     def test_initialization(self):
-
-
-
-
         """Test converter initialization."""
         assert self.converter is not None
         assert self.converter.type_converter is not None
@@ -28,10 +20,6 @@ class TestExpressionConverter:
         assert len(self.converter.function_map) > 0
 
     def test_operator_conversion(self):
-
-
-
-
         """Test operator conversion from PowerBuilder to Dart."""
         test_cases = [
             ("a = b", "a == b"),
@@ -49,10 +37,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_null_handling_conversion(self):
-
-
-
-
         """Test null handling conversion."""
         test_cases = [
             ("IsNull(myVar)", "myVar == null"),
@@ -67,10 +51,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_string_function_conversion(self):
-
-
-
-
         """Test string function conversion."""
         test_cases = [
             ("len(myString)", "myString.length"),
@@ -88,10 +68,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_numeric_function_conversion(self):
-
-
-
-
         """Test numeric function conversion."""
         test_cases = [
             ("abs(-5)", "abs(-5)"),
@@ -105,10 +81,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_date_function_conversion(self):
-
-
-
-
         """Test date/time function conversion."""
         test_cases = [
             ("today()", "DateTime.now()"),
@@ -120,10 +92,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_array_access_conversion(self):
-
-
-
-
         """Test array access conversion (1-based to 0-based)."""
         test_cases = [
             ("array[1]", "array[0]"),
@@ -138,10 +106,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_property_access_conversion(self):
-
-
-
-
         """Test property access conversion."""
         test_cases = [
             ("object::property", "object.property"),
@@ -157,10 +121,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_camel_case_conversion(self):
-
-
-
-
         """Test snake_case to camelCase conversion."""
         test_cases = [
             ("my_variable", "myVariable"),
@@ -176,10 +136,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_complex_expression_conversion(self):
-
-
-
-
         """Test conversion of complex expressions."""
         # Test compound expression
         pb_expr = "len(trim(name)) > 0 and not IsNull(id)"
@@ -198,10 +154,6 @@ class TestExpressionConverter:
         assert "==" in result
 
     def test_assignment_conversion(self):
-
-
-
-
         """Test assignment statement conversion."""
         test_cases = [
             ("x = 10", "x = 10;"),
@@ -215,10 +167,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_conditional_conversion(self):
-
-
-
-
         """Test IF statement conversion."""
         test_cases = [
             ("IF x > 0 THEN", "if (x > 0) {"),
@@ -233,10 +181,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_blob_expression_conversion(self):
-
-
-
-
         """Test blob expression conversion."""
         test_cases = [
             ("Blob(myString)", "Uint8List.fromList(myString.codeUnits)"),
@@ -253,10 +197,6 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_blob_string_with_encoding(self):
-
-
-
-
         """Test blob to string conversion with encoding."""
         test_cases = [
             ('String(data, "UTF-8")', "utf8.decode(data)"),
@@ -270,30 +210,18 @@ class TestExpressionConverter:
             assert result == expected
 
     def test_blob_concatenation(self):
-
-
-
-
         """Test blob concatenation conversion."""
         pb_expr = "blob1 + blob2"
         result = self.converter.convert_blob_expression(pb_expr)
         assert "Uint8List.fromList([...blob1, ...blob2])" in result
 
     def test_blob_comparison(self):
-
-
-
-
         """Test blob comparison conversion."""
         pb_expr = "blob1 == blob2"
         result = self.converter.convert_blob_expression(pb_expr)
         assert "listEquals(blob1, blob2)" in result
 
     def test_blobedit_conversion(self):
-
-
-
-
         """Test BlobEdit conversion."""
         pb_expr = "BlobEdit(data, 5, 255)"
         result = self.converter.convert_blob_expression(pb_expr)
@@ -301,10 +229,6 @@ class TestExpressionConverter:
         assert "_temp[5 - 1] = 255" in result
 
     def test_required_imports(self):
-
-
-
-
         """Test getting required imports for expressions."""
         # Test math import
         expr = "pow(x, 2) + abs(y)"
@@ -327,10 +251,6 @@ class TestExpressionConverter:
         assert any("dart:convert" in imp for imp in imports)
 
     def test_required_blob_helpers(self):
-
-
-
-
         """Test getting required blob helper functions."""
         helpers = self.converter.get_required_blob_helpers()
 
@@ -339,10 +259,6 @@ class TestExpressionConverter:
         assert any("_blobEquals" in helper for helper in helpers)
 
     def test_expression_with_context(self):
-
-
-
-
         """Test expression conversion with context."""
         context = {
             "variables": {
@@ -359,10 +275,6 @@ class TestExpressionConverter:
         assert "employee_name == null" in result
 
     def test_special_characters_in_strings(self):
-
-
-
-
         """Test handling of special characters in string literals."""
         # Test that string literals are preserved
         pb_expr = 'name = "John\'s Data"'
@@ -370,10 +282,6 @@ class TestExpressionConverter:
         assert '"John\'s Data"' in result
 
     def test_multiple_operator_conversion(self):
-
-
-
-
         """Test multiple operators in one expression."""
         pb_expr = "a = b and c <> d or e mod 2 = 0"
         result = self.converter.convert_expression(pb_expr)
@@ -385,10 +293,6 @@ class TestExpressionConverter:
         assert "%" in result
 
     def test_case_insensitive_functions(self):
-
-
-
-
         """Test case-insensitive function name handling."""
         test_cases = [
             ("LEN(text)", "text.length"),
@@ -402,19 +306,11 @@ class TestExpressionConverter:
             assert expected in result
 
     def test_empty_expression(self):
-
-
-
-
         """Test handling of empty expressions."""
         assert self.converter.convert_expression("") == ""
         assert self.converter.convert_expression(None) == ""
 
     def test_mid_function_conversion(self):
-
-
-
-
         """Test MID function conversion to substring."""
         # MID function needs special handling as it uses 1-based indexing
         pb_expr = "mid(text, 5, 3)"

@@ -22,12 +22,6 @@ from src.parse.parser.specialized.sql import SQLParser  # New SQL specific parse
 
 
 def test_simple_select():
-
-
-
-
-
-
     """Test parsing of simple SELECT statement."""
     sql = "SELECT * FROM customers;"
     parser = SQLParser()  # Use SQLParser
@@ -49,11 +43,8 @@ def test_simple_select():
     assert isinstance(result_stmt.from_clause.tables[0], TableReference)
     assert result_stmt.from_clause.tables[0].table_name == "customers"
 
+
 def test_complex_select():
-
-
-
-
     """Test parsing of complex SELECT with joins and conditions."""
     sql = """
     SELECT c.customer_id, c.name, o.order_date
@@ -70,7 +61,10 @@ def test_complex_select():
     assert isinstance(result_stmt, SelectStatement)
     assert len(result_stmt.result_columns) == 3
     assert isinstance(result_stmt.from_clause.joins[0], JoinClause)
-    assert result_stmt.from_clause.joins[0].join_operator.upper() in ["JOIN", "INNER JOIN"]
+    assert result_stmt.from_clause.joins[0].join_operator.upper() in [
+        "JOIN",
+        "INNER JOIN",
+    ]
     assert result_stmt.order_by_clause is not None
     assert isinstance(result_stmt.order_by_clause.terms[0], OrderingTerm)
     # Check direction only if it's not None
@@ -78,11 +72,8 @@ def test_complex_select():
         assert result_stmt.order_by_clause.terms[0].direction.upper() == "DESC"
     assert result_stmt.where_clause is not None
 
+
 def test_insert():
-
-
-
-
     """Test parsing of INSERT statement."""
     sql = """
     INSERT INTO customers (name, address)
@@ -97,15 +88,20 @@ def test_insert():
     assert result_stmt.table.table_name == "customers"
     assert len(result_stmt.columns) == 2
     # Assuming columns are strings or ColumnReference nodes
-    assert isinstance(result_stmt.columns[0], ColumnReference) or isinstance(result_stmt.columns[0], str)
-    assert (result_stmt.columns[0].column_name if isinstance(result_stmt.columns[0], ColumnReference) else result_stmt.columns[0]) == "name"
-    assert len(result_stmt.values[0]) == 2  # values is typically a list of lists for multi-row inserts
+    assert isinstance(result_stmt.columns[0], ColumnReference) or isinstance(
+        result_stmt.columns[0], str
+    )
+    assert (
+        result_stmt.columns[0].column_name
+        if isinstance(result_stmt.columns[0], ColumnReference)
+        else result_stmt.columns[0]
+    ) == "name"
+    assert (
+        len(result_stmt.values[0]) == 2
+    )  # values is typically a list of lists for multi-row inserts
+
 
 def test_update():
-
-
-
-
     """Test parsing of UPDATE statement."""
     sql = """
     UPDATE customers
@@ -124,11 +120,8 @@ def test_update():
     assert isinstance(result_stmt.assignments[0], Assignment)
     assert result_stmt.where_clause is not None
 
+
 def test_delete():
-
-
-
-
     """Test parsing of DELETE statement."""
     sql = "DELETE FROM customers WHERE status = 'inactive';"
     parser = SQLParser()  # Use SQLParser
@@ -140,17 +133,15 @@ def test_delete():
     assert result_stmt.table.table_name == "customers"
     assert result_stmt.where_clause is not None
 
+
 # For transaction and cursor, we assume parse_sql might return PBTransactionStatement
 # if it has special handling for these PowerBuilder-specific SQL commands.
 # If parse_sql is intended to *only* produce the new SQL AST, these tests would need
 # to expect specific AST nodes like DeclareCursorStatement, OpenCursorStatement etc.
 # or they would be invalid for a pure SQL AST parser.
 
+
 def test_transaction():
-
-
-
-
     """Test parsing of transaction statements."""
     statements = [
         "CONNECT USING transaction_object;",
@@ -173,11 +164,8 @@ def test_transaction():
         assert isinstance(current_stmt, PBTransactionStatement)
         assert current_stmt.transaction_object == "transaction_object"
 
+
 def test_cursor():
-
-
-
-
     """Test parsing of cursor operations."""
     statements = [
         "DECLARE cur_customers CURSOR FOR SELECT * FROM customers;",

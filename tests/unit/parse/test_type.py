@@ -2,19 +2,11 @@
 
 import pytest
 
-from src.core.exceptions import TypeValidationError
 from src.common.types import validate_simple_type as validate_type
+from src.core.exceptions import TypeValidationError
 
 
 def test_type_validation() -> None:
-
-
-
-
-
-
-
-
     """Test type validation."""
     # Test valid types
     assert validate_type({"name": "integer", "is_array": False, "array_bounds": None})

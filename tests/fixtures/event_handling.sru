@@ -70,15 +70,15 @@ choose case Lower(as_command)
     case "save"
         of_update_status("Processing save command...")
         li_return = 1
-        
+
     case "validate"
         of_update_status("Processing validation...")
         li_return = 2
-        
+
     case "cancel"
         of_update_status("Processing cancel...")
         li_return = -1
-        
+
     case else
         of_update_status("Unknown command: " + as_command)
         li_return = 0
@@ -122,16 +122,16 @@ choose case Lower(as_event_name)
     case "custom"
         this.Event ue_custom("Triggered dynamically")
         li_return = 1
-        
+
     case "validate"
         string ls_value = "test"
         boolean lb_cancel = false
         this.Event ue_validate(ls_value, lb_cancel)
         if lb_cancel then li_return = -1 else li_return = 1
-        
+
     case "process"
         li_return = this.Event ue_process("save")
-        
+
     case else
         of_update_status("Unknown event: " + as_event_name)
         li_return = 0
@@ -195,17 +195,17 @@ event timer;// Process queued events
 if UpperBound(is_event_queue) > 0 then
     string ls_event
     ls_event = is_event_queue[1]
-    
+
     // Remove from queue
     integer li_i
     for li_i = 2 to UpperBound(is_event_queue)
         is_event_queue[li_i - 1] = is_event_queue[li_i]
     next
     is_event_queue[UpperBound(is_event_queue)] = ""
-    
+
     // Trigger the event
     of_trigger_event(ls_event)
-    
+
     // Continue timer if more events
     if UpperBound(is_event_queue) > 0 then
         Timer(0.1)
@@ -257,7 +257,7 @@ if Len(ls_value) > 0 then
     // Trigger process event with the value
     integer li_result
     li_result = parent.Event ue_process(ls_value)
-    
+
     // Post delayed event based on result
     if li_result > 0 then
         parent.of_post_event("custom", 500)

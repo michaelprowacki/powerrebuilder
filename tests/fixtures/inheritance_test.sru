@@ -41,7 +41,7 @@ if ib_debug_mode then
     string ls_output
     ls_output = String(DateTime(Today(), Now()), "yyyy-mm-dd hh:mm:ss") + &
                 " [" + is_service_name + "] " + as_message
-    
+
     // In real app, would write to file
     // For testing, just store in instance variable
     return 1

@@ -10,7 +10,7 @@ sequences that may occur due to:
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from src.decompile.pcode.decoder import PCodeInstruction
 
@@ -286,12 +286,12 @@ class PCodeRecoveryManager:
 
     def analyze_corruption_patterns(
         self, pcode_bytes: bytes, instructions: list[PCodeInstruction]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze P-code for corruption patterns.
 
         Dictionary with analysis results
         """
-        analysis: Dict[str, Any] = {
+        analysis: dict[str, Any] = {
             "total_bytes": len(pcode_bytes),
             "decoded_instructions": len(instructions),
             "invalid_sequences": [],

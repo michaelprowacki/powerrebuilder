@@ -15,9 +15,12 @@ This file consolidates ALL PowerBuilder node tests from:
 - test_source_anchor.py
 """
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
+
+import pytest
+
+from src.model.ast import PBCustomTypeNode
 
 # Base imports
 from src.model.base.pb_behavioral import PBNode
@@ -25,140 +28,65 @@ from src.model.behavioral import PBBehavioralMethod, PBBehavioralObject
 from src.model.builtin_functions import (
     builtin_function_registry,
     pb_abs,
-    pb_asc,
-    pb_avg,
-    pb_blob,
     pb_ceiling,
-    pb_char,
-    pb_close,
-    pb_cos,
-    pb_count,
-    pb_date,
-    pb_datetime,
     pb_day,
-    pb_daysafter,
-    pb_dec,
     pb_double,
-    pb_exp,
-    pb_fact,
-    pb_fill,
     pb_hour,
-    pb_int,
     pb_integer,
-    pb_isnull,
-    pb_isnumber,
-    pb_lastpos,
     pb_left,
-    pb_leftw,
     pb_len,
-    pb_lenw,
-    pb_log,
-    pb_logten,
     pb_long,
     pb_lower,
-    pb_lowerw,
-    pb_match,
-    pb_matchw,
-    pb_max,
     pb_mid,
-    pb_midw,
-    pb_min,
     pb_minute,
-    pb_mod,
     pb_month,
-    pb_now,
-    pb_pos,
-    pb_posw,
-    pb_profileint,
-    pb_profilestring,
-    pb_rand,
-    pb_randomize,
-    pb_real,
-    pb_relativedate,
-    pb_relativetime,
-    pb_replace,
-    pb_replacew,
-    pb_reverse,
-    pb_rgb,
     pb_right,
-    pb_rightw,
     pb_round,
     pb_second,
-    pb_secondsafter,
-    pb_setpointer,
-    pb_setnull,
-    pb_sign,
-    pb_sin,
-    pb_sqrt,
     pb_string,
-    pb_sum,
-    pb_tan,
-    pb_time,
-    pb_today,
-    pb_trim,
-    pb_trimw,
-    pb_truncate,
     pb_upper,
-    pb_upperw,
-    pb_wordcap,
     pb_year,
-    pb_pi,
-    pb_e,
 )
+from src.model.datawindow import PBDataWindowNode
 
 # Expression and AST imports
 from src.model.entities.pb_expression import (
-    # Control flow nodes
-    PBDoLoopUntilNode,
-    PBDoLoopWhileNode,
-    PBDoUntilLoopNode,
-    PBDoWhileLoopNode,
-    PBElseIfNode,
-    PBElseNode,
-    PBElseOnLineNode,
-    PBEndForwardNode,
-    # Core nodes
-    PBCustomCallStatement,
-    PBDestroyStatementNode,
-    PBDynamicMethodInvocationNode,
-    # Declaration nodes
-    PBDeclareCursorNode,
-    PBDeclareProcedureNode,
-    PBFunctionArgumentNode,
-    PBDescriptorNode,
-    # Event nodes
-    PBDefaultEventTypeNode,
-    PBEventAttributeNode,
-    PBEventDeclarationNode,
-    PBEventInvocationNode,
-    PBEventLongNode,
-    PBEventNameNode,
-    PBEventReferenceNameNode,
-    # DataWindow nodes
-    PBDataWindowFileNode,
-    PBDataComponentNode,
-    # Expression nodes
-    PBExpression,
     PBAdditionExpression,
     PBAndExpression,
     PBArrayElementExpression,
     PBAttributeAccessExpression,
     PBBooleanExpression,
-    PBColumnExpression,
-    PBComparisonExpression,
-    PBConcatenationExpression,
-    PBConstantExpression,
     PBCreateUsingExpression,
-    PBDateLiteralExpression,
-    PBDateTimeLiteralExpression,
+    # Core nodes
+    PBCustomCallStatement,
+    PBDataComponentNode,
+    # DataWindow nodes
+    PBDataWindowFileNode,
+    PBDeclareCursorNode,
+    PBDeclareProcedureNode,
+    # Event nodes
+    PBDescriptorNode,
+    PBDestroyStatementNode,
     PBDivisionExpression,
-    PBEnumerationValueExpression,
+    # Control flow nodes
+    PBDoLoopUntilNode,
+    PBDoLoopWhileNode,
+    PBDoUntilLoopNode,
+    PBDoWhileLoopNode,
+    PBDynamicMethodInvocationNode,
+    PBElseIfNode,
+    PBElseNode,
+    PBElseOnLineNode,
+    PBEndForwardNode,
+    PBEventAttributeNode,
+    PBEventDeclarationNode,
+    PBEventInvocationNode,
+    PBEventNameNode,
+    PBEventReferenceNameNode,
     PBExponentiationExpression,
+    # Expression nodes
+    PBFunctionArgumentNode,
     PBFunctionCallExpression,
-    PBFunctionExpression,
-    PBGenericExpression,
-    PBGlobalVariableExpression,
-    PBIfExpression,
     PBIsValidExpression,
     PBMethodCallExpression,
     PBMultiplicationExpression,
@@ -166,22 +94,15 @@ from src.model.entities.pb_expression import (
     PBNullExpression,
     PBNumberExpression,
     PBOrExpression,
-    PBParenthesesExpression,
-    PBSpecialSQLExpression,
     PBStringExpression,
     PBSubtractionExpression,
     PBThisExpression,
-    PBTimeLiteralExpression,
-    PBTriggerEventExpression,
-    PBUnaryMinusExpression,
     PBVariableExpression,
 )
-from src.model.ast import PBCustomTypeNode
-from src.model.datawindow import PBDataWindowNode
+from src.model.entities.pb_sql import SQLSelectStatement, SQLStatement
 from src.model.entities.pb_variable import PBDefaultVariableNode
-from src.model.entities.pb_sql import SQLStatement, SQLSelectStatement
-from src.model.type_system import PBType, PBTypeCategory
 from src.model.source import SourceAnchor
+from src.model.type_system import PBType, PBTypeCategory
 
 
 class TestBaseNode:
@@ -257,7 +178,7 @@ class TestBehavioralNodes:
             parent_type="nonvisualobject",
             methods=["parent_method"],
         )
-        
+
         assert child.parent_type == parent.name
         assert parent.parent_type == "nonvisualobject"
 
@@ -278,25 +199,25 @@ class TestBuiltinFunctions:
         assert pb_abs(-5) == 5
         assert pb_abs(3.14) == 3.14
         assert pb_abs(Decimal("-10.5")) == Decimal("10.5")
-        
+
         # Test ceiling
         assert pb_ceiling(3.14) == 4
         assert pb_ceiling(-2.1) == -2
-        
+
         # Test round
         assert pb_round(3.14159, 2) == Decimal("3.14")
-        assert pb_round(5.5, 0) == Decimal("6")
+        assert pb_round(5.5, 0) == Decimal(6)
 
     def test_string_functions(self):
         """Test string builtin functions."""
         # Test len
         assert pb_len("hello") == 5
         assert pb_len("") == 0
-        
+
         # Test upper/lower
         assert pb_upper("hello") == "HELLO"
         assert pb_lower("WORLD") == "world"
-        
+
         # Test left/right/mid
         assert pb_left("PowerBuilder", 5) == "Power"
         assert pb_right("PowerBuilder", 7) == "Builder"
@@ -319,7 +240,7 @@ class TestBuiltinFunctions:
         assert pb_string(123) == "123"
         assert pb_string(3.14) == "3.14"
         assert pb_string(True) == "true"
-        
+
         # Test numeric conversions
         assert pb_integer("123") == 123
         assert pb_long("999999") == 999999
@@ -335,15 +256,15 @@ class TestControlFlowNodes:
         node1 = PBDoLoopUntilNode(name="test_loop", line_number=10)
         assert node1.name == "test_loop"
         assert node1.line_number == 10
-        
+
         # Do-Loop-While
         node2 = PBDoLoopWhileNode(name="while_loop", line_number=20)
         assert node2.name == "while_loop"
-        
+
         # Do-Until-Loop
         node3 = PBDoUntilLoopNode(name="until_loop", line_number=30)
         assert node3.name == "until_loop"
-        
+
         # Do-While-Loop
         node4 = PBDoWhileLoopNode(name="do_while", line_number=40)
         assert node4.name == "do_while"
@@ -353,11 +274,11 @@ class TestControlFlowNodes:
         # ElseIf
         elseif = PBElseIfNode(name="elseif_test", line_number=100)
         assert elseif.name == "elseif_test"
-        
+
         # Else
         else_node = PBElseNode(name="else_test", line_number=110)
         assert else_node.name == "else_test"
-        
+
         # ElseOnLine
         else_online = PBElseOnLineNode(name="else_online", line_number=120)
         assert else_online.name == "else_online"
@@ -381,7 +302,7 @@ class TestCoreNodes:
             stop_position=20,
         )
         assert call.identifier == "my_custom_call"
-        
+
         # Destroy statement
         destroy = PBDestroyStatementNode(
             expression="my_obj",
@@ -468,7 +389,7 @@ class TestDeclarationNodes:
         )
         assert cursor.identifier == "my_cursor"
         assert str(cursor) == "declare my_cursor cursor for SELECT * FROM table"
-        
+
         # Declare procedure
         proc = PBDeclareProcedureNode(
             procedure_name="my_proc",
@@ -488,7 +409,7 @@ class TestDeclarationNodes:
         )
         assert var.default_variable == "my_var"
         assert str(var) == "default variable my_var"
-        
+
         # Function argument
         arg = PBFunctionArgumentNode(
             argument_name="arg1",
@@ -551,7 +472,7 @@ class TestEventNodes:
             stop_position=20,
         )
         assert len(attr.attributes) == 2
-        
+
         # Event name
         name = PBEventNameNode(
             event_name="clicked",
@@ -559,7 +480,7 @@ class TestEventNodes:
             stop_position=20,
         )
         assert name.event_name == "clicked"
-        
+
         # Event reference
         ref = PBEventReferenceNameNode(
             identifier="base_clicked",
@@ -578,17 +499,17 @@ class TestExpressionNodes:
         str_expr = PBStringExpression(value="Hello World")
         assert str_expr.value == "Hello World"
         assert str(str_expr) == '"Hello World"'
-        
+
         # Number
         num_expr = PBNumberExpression(value=42)
         assert num_expr.value == 42
         assert str(num_expr) == "42"
-        
+
         # Boolean
         bool_expr = PBBooleanExpression(value=True)
         assert bool_expr.value is True
         assert str(bool_expr) == "true"
-        
+
         # Null
         null_expr = PBNullExpression()
         assert str(null_expr) == "null"
@@ -597,23 +518,23 @@ class TestExpressionNodes:
         """Test arithmetic expression nodes."""
         left = PBNumberExpression(value=10)
         right = PBNumberExpression(value=5)
-        
+
         # Addition
         add = PBAdditionExpression(left=left, right=right)
         assert str(add) == "10 + 5"
-        
+
         # Subtraction
         sub = PBSubtractionExpression(left=left, right=right)
         assert str(sub) == "10 - 5"
-        
+
         # Multiplication
         mul = PBMultiplicationExpression(left=left, right=right)
         assert str(mul) == "10 * 5"
-        
+
         # Division
         div = PBDivisionExpression(left=left, right=right)
         assert str(div) == "10 / 5"
-        
+
         # Exponentiation
         exp = PBExponentiationExpression(left=left, right=right)
         assert str(exp) == "10 ^ 5"
@@ -622,15 +543,15 @@ class TestExpressionNodes:
         """Test logical expression nodes."""
         left = PBBooleanExpression(value=True)
         right = PBBooleanExpression(value=False)
-        
+
         # AND
         and_expr = PBAndExpression(left=left, right=right)
         assert str(and_expr) == "true and false"
-        
+
         # OR
         or_expr = PBOrExpression(left=left, right=right)
         assert str(or_expr) == "true or false"
-        
+
         # NOT
         not_expr = PBNotExpression(operand=left)
         assert str(not_expr) == "not true"
@@ -641,19 +562,17 @@ class TestExpressionNodes:
         var = PBVariableExpression(variable_name="my_var")
         assert var.variable_name == "my_var"
         assert str(var) == "my_var"
-        
+
         # Attribute access
         attr = PBAttributeAccessExpression(
-            object_expression=var,
-            attribute_name="property"
+            object_expression=var, attribute_name="property"
         )
         assert attr.attribute_name == "property"
         assert str(attr) == "my_var.property"
-        
+
         # Array element
         array = PBArrayElementExpression(
-            array_expression=var,
-            index_expression=PBNumberExpression(value=1)
+            array_expression=var, index_expression=PBNumberExpression(value=1)
         )
         assert str(array) == "my_var[1]"
 
@@ -664,18 +583,16 @@ class TestExpressionNodes:
             function_name="MessageBox",
             arguments=[
                 PBStringExpression(value="Title"),
-                PBStringExpression(value="Message")
-            ]
+                PBStringExpression(value="Message"),
+            ],
         )
         assert func.function_name == "MessageBox"
         assert len(func.arguments) == 2
-        
+
         # Method call
         obj = PBVariableExpression(variable_name="dw_1")
         method = PBMethodCallExpression(
-            object_expression=obj,
-            method_name="Retrieve",
-            arguments=[]
+            object_expression=obj, method_name="Retrieve", arguments=[]
         )
         assert method.method_name == "Retrieve"
 
@@ -684,17 +601,16 @@ class TestExpressionNodes:
         # This
         this = PBThisExpression()
         assert str(this) == "this"
-        
+
         # IsValid
         valid = PBIsValidExpression(
             expression=PBVariableExpression(variable_name="my_obj")
         )
         assert str(valid) == "IsValid(my_obj)"
-        
+
         # CreateUsing
         create = PBCreateUsingExpression(
-            type_name="n_custom",
-            descriptor="my_descriptor"
+            type_name="n_custom", descriptor="my_descriptor"
         )
         assert create.type_name == "n_custom"
 
@@ -742,7 +658,7 @@ class TestSQLNodes:
         )
         assert insert.statement_type == "INSERT"
         assert len(insert.parameters) == 2
-        
+
         # UPDATE
         update = SQLStatement(
             statement_type="UPDATE",
@@ -750,7 +666,7 @@ class TestSQLNodes:
             parameters=[":salary", ":id"],
         )
         assert update.statement_type == "UPDATE"
-        
+
         # DELETE
         delete = SQLStatement(
             statement_type="DELETE",
@@ -774,7 +690,7 @@ class TestTypeNodes:
         assert int_type.name == "integer"
         assert int_type.category == PBTypeCategory.PRIMITIVE
         assert not int_type.is_array
-        
+
         # Array type
         array_type = PBType(
             name="string",
@@ -790,15 +706,15 @@ class TestTypeNodes:
         # Primitive
         prim = PBType(name="long", category=PBTypeCategory.PRIMITIVE)
         assert prim.category == PBTypeCategory.PRIMITIVE
-        
+
         # Object
         obj = PBType(name="datawindow", category=PBTypeCategory.OBJECT)
         assert obj.category == PBTypeCategory.OBJECT
-        
+
         # Custom
         custom = PBType(name="n_custom", category=PBTypeCategory.CUSTOM)
         assert custom.category == PBTypeCategory.CUSTOM
-        
+
         # Structure
         struct = PBType(name="str_address", category=PBTypeCategory.STRUCTURE)
         assert struct.category == PBTypeCategory.STRUCTURE
@@ -808,11 +724,11 @@ class TestTypeNodes:
         int_type = PBType(name="integer", category=PBTypeCategory.PRIMITIVE)
         long_type = PBType(name="long", category=PBTypeCategory.PRIMITIVE)
         string_type = PBType(name="string", category=PBTypeCategory.PRIMITIVE)
-        
+
         # Numeric types should be compatible
         assert int_type.name != long_type.name
         assert int_type.category == long_type.category
-        
+
         # String is different category
         assert string_type.category == PBTypeCategory.PRIMITIVE
         assert string_type.name != int_type.name
@@ -871,7 +787,7 @@ class TestSourceAnchor:
             end_line=20,
             end_column=1,
         )
-        
+
         assert anchor1 == anchor2
         assert anchor1 != anchor3
 

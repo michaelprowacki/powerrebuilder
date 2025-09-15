@@ -38,12 +38,15 @@ Implements BaseCoordinator interface with process() and validate_inputs() method
 
 import json
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
-from src.contracts.types import GenerationSummaryDict, GeneratedFilesDict, GenerationErrorDict
-
+from src.contracts.types import (
+    GeneratedFilesDict,
+    GenerationErrorDict,
+    GenerationSummaryDict,
+)
 from src.parse.parser.sql import SQLParser
 
 from .converters.flutter.layouts import LayoutConverter, LayoutStrategy
@@ -139,7 +142,7 @@ class GenerateCoordinator:
         self.flutter_generator.ui_converter = self.ui_converter
         self.python_ui_generator.layout_converter = self.layout_converter
 
-    def generate_from_model(self, model_file: str) -> Dict[str, Any]:
+    def generate_from_model(self, model_file: str) -> dict[str, Any]:
         """Generate code from a model file.
 
         Args:
@@ -260,7 +263,7 @@ class GenerateCoordinator:
             logger.error("Error generating from model {model_file}: %s", e)
             return {"success": False, "error": str(e)}
 
-    def generate_all(self) -> Dict[str, Any]:
+    def generate_all(self) -> dict[str, Any]:
         """Generate all code from parsed AST files.
 
         Returns:
@@ -308,7 +311,9 @@ class GenerateCoordinator:
 
         return results
 
-    def generate(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
+    def generate(
+        self, progress_callback: Callable[[int, int, str], None] | None = None
+    ) -> dict[str, Any]:
         """Main entry point for the pipeline - generates all code.
 
         Args:
@@ -337,7 +342,7 @@ class GenerateCoordinator:
                 "flutter": [],
                 "python": [],
             }
-            
+
             summary: GenerationSummaryDict = {
                 "total_models": len(model_files),
                 "successful_models": 0,
@@ -409,7 +414,7 @@ class GenerateCoordinator:
             logger.error("Error in generate: %s", e)
             return {"error": str(e), "success": False}
 
-    def process(self) -> Dict[str, Any]:
+    def process(self) -> dict[str, Any]:
         """Process input files and produce output (required by BaseCoordinator).
 
         Returns:
@@ -441,7 +446,7 @@ class GenerateCoordinator:
         return True
 
 
-def generate_models(input_dir: str, output_dir: str) -> Dict[str, Any]:
+def generate_models(input_dir: str, output_dir: str) -> dict[str, Any]:
     """Generate SQLModel models from DataWindow AST files.
 
     Args:
@@ -459,7 +464,7 @@ def generate_models(input_dir: str, output_dir: str) -> Dict[str, Any]:
     return coordinator.generate({})
 
 
-def extract_datawindow_from_ast(ast_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def extract_datawindow_from_ast(ast_data: dict[str, Any]) -> dict[str, Any] | None:
     """Extract DataWindow information from an AST.
 
     Args:
@@ -519,7 +524,7 @@ def extract_datawindow_from_ast(ast_data: Dict[str, Any]) -> Optional[Dict[str, 
         return None
 
 
-def generate_services(input_dir: str, output_dir: str) -> Dict[str, Any]:
+def generate_services(input_dir: str, output_dir: str) -> dict[str, Any]:
     """Generate service layer from User Object AST files.
 
     Args:
@@ -537,7 +542,7 @@ def generate_services(input_dir: str, output_dir: str) -> Dict[str, Any]:
     return coordinator.generate({})
 
 
-def generate_flutter(input_dir: str, output_dir: str) -> Dict[str, Any]:
+def generate_flutter(input_dir: str, output_dir: str) -> dict[str, Any]:
     """Generate Flutter UI from Window AST files.
 
     Args:
@@ -555,7 +560,7 @@ def generate_flutter(input_dir: str, output_dir: str) -> Dict[str, Any]:
     return coordinator.generate({})
 
 
-def generate_python_ui(input_dir: str, output_dir: str) -> Dict[str, Any]:
+def generate_python_ui(input_dir: str, output_dir: str) -> dict[str, Any]:
     """Generate Python UI from Window AST files.
 
     Args:

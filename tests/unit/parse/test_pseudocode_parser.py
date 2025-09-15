@@ -7,23 +7,11 @@ from src.parse.parser.specialized.pseudocode import PowerBuilderPseudocodeParser
 
 @pytest.fixture
 def parser() -> PowerBuilderPseudocodeParser:
-
-
-
-
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
 
 def test_basic_parsing(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test basic pseudocode parsing."""
     code = """
     IF x > 0 THEN
@@ -36,14 +24,6 @@ def test_basic_parsing(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_parse_and_transform(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test parsing and transforming pseudocode to Python."""
     code = """
     IF x > 0 THEN
@@ -62,14 +42,6 @@ def test_parse_and_transform(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_function_definition(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test parsing function definitions."""
     code = """
     FUNCTION max(a: INTEGER, b: INTEGER) RETURNS INTEGER
@@ -91,14 +63,6 @@ def test_function_definition(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test array operations."""
     code = """
     DECLARE numbers: ARRAY[10] OF INTEGER
@@ -114,14 +78,6 @@ def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test file operations."""
     code = """
     OPENFILE data FOR READ
@@ -137,14 +93,6 @@ def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_sql_operations(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test SQL operations."""
     code = """
     SELECT id, name
@@ -162,14 +110,6 @@ def test_sql_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_datawindow_operations(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test DataWindow operations."""
     code = """
     RETRIEVE dw_users INTO users WHERE active = TRUE
@@ -183,14 +123,6 @@ def test_datawindow_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_error_handling(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test error handling in parser."""
     with pytest.raises(ValueError, match="Syntax error") as exc:
         parser.parse("INVALID x := 1")
@@ -198,14 +130,6 @@ def test_error_handling(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_type_inference(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test type inference in declarations."""
     code = """
     DECLARE x: INTEGER = 42
@@ -221,14 +145,6 @@ def test_type_inference(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_complex_expressions(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test complex expression handling."""
     code = """
     x := (a + b) * (c - d) / 2
@@ -244,14 +160,6 @@ def test_complex_expressions(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_builtin_functions(parser: PowerBuilderPseudocodeParser) -> None:
-
-
-
-
-
-
-
-
     """Test built-in function transformations."""
     cases = [
         ("LENGTH(text)", "len(text)"),

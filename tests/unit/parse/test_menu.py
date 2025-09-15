@@ -4,12 +4,6 @@ from src.parse.transformer import PBTransformer
 
 
 def test_menu_parsing():
-
-
-
-
-
-
     """Test parsing menu definitions."""
     test_input = """
     type m_main from menu

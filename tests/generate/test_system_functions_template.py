@@ -19,10 +19,6 @@ class TestSystemFunctionsTemplate:
     """Tests for system functions template generation."""
 
     def setup_method(self):
-
-
-
-
         """Set up the test."""
         # Create a Jinja2 environment with our templates directory
         templates_dir = os.path.join(
@@ -34,10 +30,6 @@ class TestSystemFunctionsTemplate:
         self.env = Environment(loader=FileSystemLoader(templates_dir))
 
     def test_system_functions_template(self):
-
-
-
-
         """Test rendering the system functions template."""
         # Create some test system functions with names that already exist in the class
         test_functions = [
@@ -76,10 +68,6 @@ class TestSystemFunctionsTemplate:
         assert '"right":' not in result
 
     def test_system_functions_default_template(self):
-
-
-
-
         """Test rendering the system functions template with default functions."""
         # Render the template without providing custom functions
         template = self.env.get_template("system_functions.py.jinja2")
@@ -92,10 +80,6 @@ class TestSystemFunctionsTemplate:
         assert '"today": PowerBuilderSystemFunctions.today' in result
 
     def test_call_system_function(self):
-
-
-
-
         """Test that the call_system_function function is correctly generated."""
         # Render the template
         template = self.env.get_template("system_functions.py.jinja2")

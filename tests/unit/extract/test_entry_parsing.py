@@ -18,10 +18,6 @@ class TestEntryParsing:
     """Test entry definition extraction and parsing."""
 
     def test_extract_entry_def_valid(self):
-
-
-
-
         """Test extracting valid entry definition."""
         # Create valid ENT* entry data
         entry_data = b"ENT*"  # Signature
@@ -44,10 +40,6 @@ class TestEntryParsing:
         assert result.objnamelen == 8
 
     def test_extract_entry_def_invalid_signature(self):
-
-
-
-
         """Test extraction with invalid signature."""
         # Create entry with wrong signature
         entry_data = b"BAD*"  # Wrong signature
@@ -58,10 +50,6 @@ class TestEntryParsing:
         assert result is None
 
     def test_extract_entry_def_short_data(self):
-
-
-
-
         """Test extraction with data too short."""
         # Less than 24 bytes (FIXED_PART_LEN)
         entry_data = b"ENT*" + b"10.0"
@@ -71,10 +59,6 @@ class TestEntryParsing:
         assert result is None
 
     def test_extract_entry_def_truncated_name(self):
-
-
-
-
         """Test extraction with truncated object name."""
         # Create entry claiming name is longer than available data
         entry_data = b"ENT*"  # Signature
@@ -93,10 +77,6 @@ class TestEntryParsing:
         assert "<TRUNCATED>" in result.objectname
 
     def test_extract_entry_def_unicode_valid(self):
-
-
-
-
         """Test extracting valid Unicode entry definition."""
         # Create valid Unicode ENT* entry (48 bytes fixed part)
         entry_data = b"E\x00N\x00T\x00*\x00"  # Unicode signature (8 bytes)
@@ -119,10 +99,6 @@ class TestEntryParsing:
         assert result.version == "10.0"
 
     def test_extract_entry_def_unicode_with_ascii_signature(self):
-
-
-
-
         """Test Unicode entry with ASCII signature (fallback)."""
         # Import the specific function for ASCII sig with Unicode data
         from src.extract.pbd.entry import (
@@ -141,7 +117,9 @@ class TestEntryParsing:
         entry_data += struct.pack("<H", 0)  # Comment length in bytes (2 bytes)
         entry_data += struct.pack("<H", 16)  # Object name length in bytes (2 bytes)
         # Total: 28 bytes
-        entry_data += b"n\x00_\x00t\x00e\x00s\x00t\x00.\x00u\x00"  # Unicode name (16 bytes)
+        entry_data += (
+            b"n\x00_\x00t\x00e\x00s\x00t\x00.\x00u\x00"  # Unicode name (16 bytes)
+        )
 
         result = extract_entry_def_ascii_sig_unicode_data(entry_data)
 
@@ -152,15 +130,11 @@ class TestEntryParsing:
         assert result.objectsize == 2000
 
     def test_extract_entry_def_invalid_data(self):
-
-
-
-
         """Test extraction with corrupted data."""
         # Create entry with invalid structure
         entry_data = b"ENT*"
         entry_data += b"10.0"
-        entry_data += b"\xFF" * 16  # Invalid binary data
+        entry_data += b"\xff" * 16  # Invalid binary data
 
         result = extract_entry_def(entry_data)
 
@@ -172,10 +146,6 @@ class TestReadAndParseEntry:
     """Test read_and_parse_entry_def function."""
 
     def test_read_and_parse_entry_def_ascii(self):
-
-
-
-
         """Test reading and parsing ASCII entry from file."""
         import tempfile
 
@@ -200,7 +170,11 @@ class TestReadAndParseEntry:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = read_and_parse_entry_def(
-                    f, 100, False, 512, file_size,
+                    f,
+                    100,
+                    False,
+                    512,
+                    file_size,
                 )
 
             assert result is not None
@@ -212,10 +186,6 @@ class TestReadAndParseEntry:
             Path(temp_file.name).unlink()
 
     def test_read_and_parse_entry_def_unicode(self):
-
-
-
-
         """Test reading and parsing Unicode entry from file."""
         import tempfile
 
@@ -242,7 +212,11 @@ class TestReadAndParseEntry:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = read_and_parse_entry_def(
-                    f, 200, True, 512, file_size,
+                    f,
+                    200,
+                    True,
+                    512,
+                    file_size,
                 )
 
             assert result is not None
@@ -252,10 +226,6 @@ class TestReadAndParseEntry:
             Path(temp_file.name).unlink()
 
     def test_read_and_parse_entry_def_beyond_file(self):
-
-
-
-
         """Test reading entry that extends beyond file size."""
         import tempfile
 
@@ -268,7 +238,11 @@ class TestReadAndParseEntry:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = read_and_parse_entry_def(
-                    f, 0, False, 512, file_size,
+                    f,
+                    0,
+                    False,
+                    512,
+                    file_size,
                 )
 
             # Should return None for incomplete entry
@@ -281,10 +255,6 @@ class TestDataExtraction:
     """Test extracting data blocks from entries."""
 
     def test_extract_data_from_entry_single_block(self):
-
-
-
-
         """Test extracting data from entry with single DAT block."""
         import tempfile
 
@@ -314,7 +284,11 @@ class TestDataExtraction:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = extract_data_from_entry(
-                    f, entry, False, 512, file_size,
+                    f,
+                    entry,
+                    False,
+                    512,
+                    file_size,
                 )
 
             data_blocks, is_partial = result  # Unpack tuple
@@ -327,10 +301,6 @@ class TestDataExtraction:
             Path(temp_file.name).unlink()
 
     def test_extract_data_from_entry_multiple_blocks(self):
-
-
-
-
         """Test extracting data from entry with chained DAT blocks."""
         import tempfile
 
@@ -365,7 +335,11 @@ class TestDataExtraction:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = extract_data_from_entry(
-                    f, entry, False, 512, file_size,
+                    f,
+                    entry,
+                    False,
+                    512,
+                    file_size,
                 )
 
             data_blocks, is_partial = result  # Unpack tuple
@@ -379,10 +353,6 @@ class TestDataExtraction:
             Path(temp_file.name).unlink()
 
     def test_extract_data_from_entry_unicode_blocks(self):
-
-
-
-
         """Test extracting Unicode DAT blocks."""
         import tempfile
 
@@ -410,7 +380,11 @@ class TestDataExtraction:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = extract_data_from_entry(
-                    f, entry, True, 512, file_size,  # Unicode = True
+                    f,
+                    entry,
+                    True,
+                    512,
+                    file_size,  # Unicode = True
                 )
 
             data_blocks, is_partial = result  # Unpack tuple
@@ -424,22 +398,14 @@ class TestEntryParsingEdgeCases:
     """Test edge cases and error conditions."""
 
     def test_extract_entry_def_non_ascii_signature(self):
-
-
-
-
         """Test entry with non-ASCII bytes in signature position."""
-        entry_data = b"\xFF\xFF\xFF\xFF" + b"\x00" * 20
+        entry_data = b"\xff\xff\xff\xff" + b"\x00" * 20
 
         result = extract_entry_def(entry_data)
 
         assert result is None
 
     def test_extract_entry_def_extreme_values(self):
-
-
-
-
         """Test entry with extreme field values."""
         entry_data = b"ENT*"
         entry_data += b"99.9"
@@ -458,17 +424,13 @@ class TestEntryParsingEdgeCases:
         assert result.objectsize == 0xFFFFFFFF
 
     def test_extract_entry_def_zero_length_name(self):
-
-
-
-
         """Test entry with zero-length object name."""
         entry_data = b"ENT*"
         entry_data += b"10.0"
         entry_data += struct.pack("<I", 1000)  # Offset
-        entry_data += struct.pack("<I", 500)   # Object size
+        entry_data += struct.pack("<I", 500)  # Object size
         entry_data += struct.pack("<I", 1234567890)  # Mod time
-        entry_data += struct.pack("<H", 0)     # Comment length
+        entry_data += struct.pack("<H", 0)  # Comment length
         entry_data += struct.pack("<H", 0)  # Zero name length
 
         result = extract_entry_def(entry_data)
@@ -478,10 +440,6 @@ class TestEntryParsingEdgeCases:
         assert result.objnamelen == 0
 
     def test_extract_data_from_entry_invalid_dat_header(self):
-
-
-
-
         """Test extracting data when DAT header is invalid."""
         import tempfile
 
@@ -508,7 +466,11 @@ class TestEntryParsingEdgeCases:
             with open(temp_file.name, "rb") as f:
                 file_size = Path(temp_file.name).stat().st_size
                 result = extract_data_from_entry(
-                    f, entry, False, 512, file_size,
+                    f,
+                    entry,
+                    False,
+                    512,
+                    file_size,
                 )
 
             data_blocks, is_partial = result  # Unpack tuple

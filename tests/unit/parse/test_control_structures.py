@@ -25,27 +25,17 @@ from src.model.utils.validators import ASTValidator
 
 @pytest.fixture
 def type_registry():
-
-
     """Create a type registry for testing."""
     return TypeRegistry()
 
 
 @pytest.fixture
 def validator(type_registry):
-
-
     """Create a control flow validator."""
     return ASTValidator(type_registry)
 
 
 def test_if_statement(validator):
-
-
-
-
-
-
     """Test IF statement validation."""
     # Create a simple IF statement
     if_stmt = IfStatement(
@@ -69,12 +59,6 @@ def test_if_statement(validator):
 
 
 def test_while_loop(validator):
-
-
-
-
-
-
     """Test WHILE loop validation."""
     # Create a WHILE loop
     while_loop = WhileLoop(
@@ -94,12 +78,6 @@ def test_while_loop(validator):
 
 
 def test_repeat_until_loop(validator):
-
-
-
-
-
-
     """Test REPEAT-UNTIL loop validation."""
     # Create a REPEAT-UNTIL loop
     repeat_loop = RepeatUntilLoop(
@@ -119,12 +97,6 @@ def test_repeat_until_loop(validator):
 
 
 def test_for_loop(validator):
-
-
-
-
-
-
     """Test FOR loop validation."""
     # Create a FOR loop
     for_loop = ForLoop(
@@ -143,12 +115,6 @@ def test_for_loop(validator):
 
 
 def test_case_statement(validator):
-
-
-
-
-
-
     """Test CASE statement validation."""
     # Create a CASE statement
     case_stmt = CaseStatement(
@@ -163,12 +129,6 @@ def test_case_statement(validator):
 
 
 def test_break_continue_validation(validator):
-
-
-
-
-
-
     """Test BREAK and CONTINUE validation."""
     # BREAK/CONTINUE outside loop should fail
     block = Block(
@@ -193,12 +153,6 @@ def test_break_continue_validation(validator):
 
 
 def test_goto_validation(validator):
-
-
-
-
-
-
     """Test GOTO validation."""
     # Create label and GOTO
     label = LabelStatement("target")
@@ -212,12 +166,6 @@ def test_goto_validation(validator):
 
 
 def test_nested_control_structures(validator):
-
-
-
-
-
-
     """Test nested control structures."""
     # Create complex nested structure
     nested_block = Block(
@@ -258,12 +206,6 @@ def test_nested_control_structures(validator):
 
 
 def test_return_validation(validator, type_registry):
-
-
-
-
-
-
     """Test return statement validation."""
     # Return without value in void context
     assert ReturnStatement().validate(
@@ -289,12 +231,6 @@ def test_return_validation(validator, type_registry):
 
 
 def test_boolean_operations(validator):
-
-
-
-
-
-
     """Test boolean operations in conditions."""
     # Test AND operation
     and_op = BooleanOperation(
@@ -320,12 +256,6 @@ def test_boolean_operations(validator):
 
 
 def test_empty_blocks(validator):
-
-
-
-
-
-
     """Test empty block validation."""
     assert validator.validate_block(Block([]))
 
@@ -343,12 +273,6 @@ def test_empty_blocks(validator):
 
 
 def test_invalid_control_flow(validator):
-
-
-
-
-
-
     """Test invalid control flow patterns."""
     # BREAK in IF statement (not in loop)
     if_stmt = IfStatement(
@@ -374,12 +298,6 @@ def test_invalid_control_flow(validator):
 
 
 def test_example1_arithmetic_operations(validator):
-
-
-
-
-
-
     """Test arithmetic operations from Example1.txt."""
     # Create a block of arithmetic operations
     block = Block(
@@ -401,12 +319,6 @@ def test_example1_arithmetic_operations(validator):
 
 
 def test_example2_loop_combinations(validator):
-
-
-
-
-
-
     """Test loop combinations from Example2.txt."""
     # FOR loop with STEP
     for_loop = ForLoop(
@@ -455,12 +367,6 @@ def test_example2_loop_combinations(validator):
 
 
 def test_example3_function_procedure(validator, type_registry):
-
-
-
-
-
-
     """Test function and procedure from Example3.txt."""
     # Function with parameters and return
     function_block = Block(
@@ -485,12 +391,6 @@ def test_example3_function_procedure(validator, type_registry):
 
 
 def test_example4_if_case(validator):
-
-
-
-
-
-
     """Test IF and CASE statements from Example4.txt."""
     # IF statement
     if_stmt = IfStatement(
@@ -526,12 +426,6 @@ def test_example4_if_case(validator):
 
 
 def test_nested_loops_with_break(validator):
-
-
-
-
-
-
     """Test nested loops with break statements."""
     inner_loop = WhileLoop(
         condition=Expression(),
@@ -561,12 +455,6 @@ def test_nested_loops_with_break(validator):
 
 
 def test_case_with_multiple_actions(validator):
-
-
-
-
-
-
     """Test CASE statement with multiple actions per case."""
     case_stmt = CaseStatement(
         expression=Expression(),
@@ -608,12 +496,6 @@ def test_case_with_multiple_actions(validator):
 
 
 def test_loop_with_continue_conditions(validator):
-
-
-
-
-
-
     """Test loops with conditional continue statements."""
     loop = WhileLoop(
         condition=Expression(),
@@ -642,12 +524,6 @@ def test_loop_with_continue_conditions(validator):
 
 
 def test_mixed_control_flow(validator):
-
-
-
-
-
-
     """Test mixed control flow structures."""
     block = Block(
         [
@@ -685,12 +561,6 @@ def test_mixed_control_flow(validator):
 
 
 def test_control_flow_type_checking(validator, type_registry):
-
-
-
-
-
-
     """Test type checking in control structures."""
     from src.model.ast import BinaryExpression, IntegerLiteral, StringLiteral, Variable
     from src.model.utils.type_checker import CheckLevel, TypeChecker
@@ -762,12 +632,14 @@ def test_control_flow_type_checking(validator, type_registry):
     void_return = ReturnStatement()
 
     # Create blocks to validate
-    valid_block = Block([
-        if_stmt_numeric,
-        while_loop,
-        for_loop,
-        case_stmt,
-    ])
+    valid_block = Block(
+        [
+            if_stmt_numeric,
+            while_loop,
+            for_loop,
+            case_stmt,
+        ]
+    )
 
     # Test type checking integration - validator.validate_block expects a Block
     assert validator.validate_block(valid_block)
@@ -778,28 +650,40 @@ def test_control_flow_type_checking(validator, type_registry):
         left=Variable("i"),
         right=IntegerLiteral(value=5),
     )
-    nested_typed = Block([
-        ForLoop(
-            variable="i",
-            start=IntegerLiteral(value=0),
-            end=IntegerLiteral(value=10),
-            body=Block([
-                IfStatement(
-                    condition=nested_comparison,
-                    then_branch=Block([
-                        CaseStatement(
-                            expression=Variable("i"),
-                            cases=[
-                                CaseItem(IntegerLiteral(value=6), BreakStatement()),
-                                CaseItem(IntegerLiteral(value=7), ContinueStatement()),
-                            ],
-                            default_case=Expression(),
+    nested_typed = Block(
+        [
+            ForLoop(
+                variable="i",
+                start=IntegerLiteral(value=0),
+                end=IntegerLiteral(value=10),
+                body=Block(
+                    [
+                        IfStatement(
+                            condition=nested_comparison,
+                            then_branch=Block(
+                                [
+                                    CaseStatement(
+                                        expression=Variable("i"),
+                                        cases=[
+                                            CaseItem(
+                                                IntegerLiteral(value=6),
+                                                BreakStatement(),
+                                            ),
+                                            CaseItem(
+                                                IntegerLiteral(value=7),
+                                                ContinueStatement(),
+                                            ),
+                                        ],
+                                        default_case=Expression(),
+                                    ),
+                                ]
+                            ),
                         ),
-                    ]),
+                    ]
                 ),
-            ]),
-        ),
-    ])
+            ),
+        ]
+    )
 
     assert validator.validate_block(nested_typed)
 

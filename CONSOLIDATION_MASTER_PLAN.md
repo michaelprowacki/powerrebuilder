@@ -1,9 +1,9 @@
 # PowerRebuilder CONSOLIDATION MASTER PLAN
 ## Single Source of Truth (SSOT) for Code Consolidation Effort
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-01-03  
-**Progress**: 80% Complete - Major consolidation already achieved  
+**Document Version**: 1.0
+**Last Updated**: 2025-01-03
+**Progress**: 80% Complete - Major consolidation already achieved
 **Current State**: 42 Python files (down from ~150+ originally)
 
 ---
@@ -29,10 +29,10 @@ src/
 ├── contracts/          # 4 files - KEEP (central interfaces)
 ├── core/              # 3 files - FULLY CONSOLIDATED ✅
 │   ├── base_patterns.py      # 563 lines - All mixins/base classes
-│   ├── unified_core.py       # 2430 lines - Universal coordinator/factory  
+│   ├── unified_core.py       # 2430 lines - Universal coordinator/factory
 │   └── unified_infrastructure.py # 2612 lines - All infrastructure
 ├── decompile/         # 18 files - PRIMARY TARGET 🎯
-│   ├── opcodes/           # 3 files - Essential opcode definitions  
+│   ├── opcodes/           # 3 files - Essential opcode definitions
 │   ├── pcode/            # 11 files - P-code processing pipeline
 │   ├── coordinator.py     # Main coordinator (CONSOLIDATE)
 │   ├── unified_decompile.py # 664 lines - Partially consolidated
@@ -44,10 +44,10 @@ src/
 ├── generate/          # 2 files - FULLY CONSOLIDATED ✅
 │   └── unified_generate.py # 2007 lines - All generation
 ├── model/             # 4 files - PARTIALLY CONSOLIDATED
-│   ├── coordinator.py     # Keep as interface  
+│   ├── coordinator.py     # Keep as interface
 │   ├── unified_model.py   # 3009 lines - Major consolidation
 │   └── [2 other files]    # Minimal utilities
-├── parse/             # 6 files - PARTIALLY CONSOLIDATED  
+├── parse/             # 6 files - PARTIALLY CONSOLIDATED
 │   ├── coordinator.py     # Keep as interface
 │   ├── unified_parse.py   # 3459 lines - Major consolidation
 │   └── [4 other files]    # Grammar/utilities
@@ -62,7 +62,7 @@ src/
 |------|-------|---------|------------|---------|
 | `extract/coordinator.py` | 156 | Extract orchestration | main.py:350, tests/ | ✅ Keep |
 | `decompile/coordinator.py` | 1350 | Decompile orchestration | main.py:696, tests/ | 🎯 CONSOLIDATE |
-| `parse/coordinator.py` | 77 | Parse orchestration | main.py:892, tests/ | ✅ Keep |  
+| `parse/coordinator.py` | 77 | Parse orchestration | main.py:892, tests/ | ✅ Keep |
 | `model/coordinator.py` | 89 | Model orchestration | main.py:1268, tests/ | ✅ Keep |
 | `generate/coordinator.py` | 45 | Generate orchestration | main.py:1331, tests/ | ✅ Keep |
 
@@ -104,7 +104,7 @@ decompile/ (18 files):
 ```
 
 **CONSOLIDATION OPPORTUNITY:**
-- 🎯 **Target**: Merge 15 files (11 pcode + coordinator + 3 others) into unified_decompile.py  
+- 🎯 **Target**: Merge 15 files (11 pcode + coordinator + 3 others) into unified_decompile.py
 - 🎯 **Keep**: opcodes/ directory (essential data structures)
 - 🎯 **Result**: 18 → 4 files (78% reduction in decompile module)
 
@@ -133,7 +133,7 @@ decompile/ (18 files):
 #### Step 2.3: Consolidate P-code Processing (11 files → unified_decompile.py)
 - [ ] **CHECKPOINT**: Verify unified_decompile.py doesn't already contain P-code logic
 - [ ] **ACTION**: Merge pcode/decoder.py (2,156 lines) into unified_decompile.py
-- [ ] **ACTION**: Merge pcode/detector.py (1,893 lines) into unified_decompile.py  
+- [ ] **ACTION**: Merge pcode/detector.py (1,893 lines) into unified_decompile.py
 - [ ] **ACTION**: Merge pcode/high_performance_detector.py (1,087 lines)
 - [ ] **ACTION**: Merge remaining 8 pcode files (~3,000 lines)
 - [ ] **VERIFY**: All 252 tests still pass after each merge
@@ -160,7 +160,7 @@ decompile/ (18 files):
 - [ ] **VERIFY**: All parsing tests pass
 - [ ] **CLEANUP**: Remove redundant files
 
-### Phase 4: Final Cleanup & Verification  
+### Phase 4: Final Cleanup & Verification
 - [ ] **ACTION**: Remove all archived files after 30-day verification period
 - [ ] **ACTION**: Update all documentation and import statements
 - [ ] **VERIFY**: All 252 tests pass with final structure
@@ -177,7 +177,7 @@ decompile/ (18 files):
 
 ### Remaining Targets:
 - **Files**: 42 → 25 files (40% further reduction)
-- **Primary Target**: decompile/ 18 → 4 files (78% module reduction)  
+- **Primary Target**: decompile/ 18 → 4 files (78% module reduction)
 - **Secondary**: parse/ 6 → 3 files (50% module reduction)
 - **Tests**: All 252 tests must continue to pass
 
@@ -191,7 +191,7 @@ decompile/ (18 files):
 ```python
 # AVAILABLE - Use these instead of creating new:
 - BaseCoordinator           # Lines 564-720 - For all coordinators
-- ErrorHandlingMixin        # Lines 114-198 - For error handling  
+- ErrorHandlingMixin        # Lines 114-198 - For error handling
 - ValidationMixin           # Lines 217-257 - For input/output validation
 - BinaryOperationsMixin     # Lines 278-355 - For binary file operations
 - ConfigurableMixin         # Lines 357-404 - For configuration management
@@ -209,7 +209,7 @@ decompile/ (18 files):
 - ProgressReporter         # Progress tracking
 ```
 
-#### 3. Infrastructure Services (unified_infrastructure.py)  
+#### 3. Infrastructure Services (unified_infrastructure.py)
 ```python
 # AVAILABLE - Use these existing services:
 - get_logger()             # Logging setup
@@ -235,7 +235,7 @@ decompile/ (18 files):
 # Run full test suite
 pytest tests/ -v --tb=short
 
-# Test specific modules  
+# Test specific modules
 pytest tests/unit/decompile/ -v
 pytest tests/unit/parse/ -v
 
@@ -327,13 +327,13 @@ python main.py decompile --help
 
 ### Immediate Priority (Next Session):
 1. **Analyze unified_decompile.py current state** (664 lines - what's already there?)
-2. **Map which of 18 decompile files need consolidation** 
+2. **Map which of 18 decompile files need consolidation**
 3. **Create archive for decompile module** before any changes
 4. **Start with smallest file first** to test consolidation process
 
 ### Success Criteria for Next Session:
 - [ ] Clear understanding of unified_decompile.py current contents
-- [ ] Archive created for rollback protection  
+- [ ] Archive created for rollback protection
 - [ ] At least 1 file successfully merged into unified_decompile.py
 - [ ] All tests still passing after first merge
 - [ ] This document updated with progress
