@@ -6,8 +6,7 @@ Events are colocated with their aggregates following Scott Wlaschin's FDM princi
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Union
-from enum import Enum
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 
@@ -15,14 +14,16 @@ from datetime import datetime
 # DECOMPILED OBJECT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class DecompiledFunction:
     """A decompiled PowerBuilder function."""
+
     name: str
     return_type: Optional[str]
-    parameters: List['Parameter']
-    local_variables: List['LocalVariable']
-    body: 'StatementBlock'
+    parameters: List["Parameter"]
+    local_variables: List["LocalVariable"]
+    body: "StatementBlock"
     is_global: bool = False
     is_static: bool = False
     access_modifier: str = "public"
@@ -33,12 +34,13 @@ class DecompiledFunction:
 @dataclass(frozen=True)
 class DecompiledWindow:
     """A decompiled PowerBuilder window."""
+
     name: str
     title: str
-    controls: List['DecompiledControl']
-    events: List['DecompiledEvent']
+    controls: List["DecompiledControl"]
+    events: List["DecompiledEvent"]
     functions: List[DecompiledFunction]
-    instance_variables: List['InstanceVariable']
+    instance_variables: List["InstanceVariable"]
     properties: Dict[str, Any] = field(default_factory=dict)
     menu: Optional[str] = None
     parent_window: Optional[str] = None
@@ -47,13 +49,14 @@ class DecompiledWindow:
 @dataclass(frozen=True)
 class DecompiledDataWindow:
     """A decompiled PowerBuilder DataWindow."""
+
     name: str
-    data_source: 'DataSource'
-    columns: List['DataWindowColumn']
-    computed_fields: List['ComputedField']
-    groups: List['DataWindowGroup']
-    sort_criteria: List['SortCriterion']
-    filters: List['FilterExpression']
+    data_source: "DataSource"
+    columns: List["DataWindowColumn"]
+    computed_fields: List["ComputedField"]
+    groups: List["DataWindowGroup"]
+    sort_criteria: List["SortCriterion"]
+    filters: List["FilterExpression"]
     presentation_style: str = "grid"
     processing: str = "0"  # 0=Form, 1=Tabular, etc.
 
@@ -61,11 +64,12 @@ class DecompiledDataWindow:
 @dataclass(frozen=True)
 class DecompiledUserObject:
     """A decompiled PowerBuilder user object."""
+
     name: str
     base_class: Optional[str]
     functions: List[DecompiledFunction]
-    events: List['DecompiledEvent']
-    instance_variables: List['InstanceVariable']
+    events: List["DecompiledEvent"]
+    instance_variables: List["InstanceVariable"]
     properties: Dict[str, Any] = field(default_factory=dict)
     is_visual: bool = False
     is_standard: bool = False
@@ -75,9 +79,10 @@ class DecompiledUserObject:
 @dataclass(frozen=True)
 class DecompiledMenu:
     """A decompiled PowerBuilder menu."""
+
     name: str
-    items: List['MenuItem']
-    toolbar_items: List['ToolbarItem']
+    items: List["MenuItem"]
+    toolbar_items: List["ToolbarItem"]
     properties: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -85,11 +90,13 @@ class DecompiledMenu:
 # CONTROL FLOW TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class BasicBlock:
     """A basic block in control flow graph."""
+
     id: int
-    statements: List['Statement']
+    statements: List["Statement"]
     predecessors: List[int] = field(default_factory=list)
     successors: List[int] = field(default_factory=list)
     is_entry: bool = False
@@ -101,26 +108,29 @@ class BasicBlock:
 @dataclass(frozen=True)
 class ControlFlowGraph:
     """Control flow graph for a function."""
+
     entry_block: int
     exit_blocks: List[int]
     blocks: Dict[int, BasicBlock]
-    edges: List['ControlFlowEdge']
+    edges: List["ControlFlowEdge"]
     dominators: Dict[int, int] = field(default_factory=dict)
-    loops: List['Loop'] = field(default_factory=list)
+    loops: List["Loop"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class ControlFlowEdge:
     """An edge in control flow graph."""
+
     source: int
     target: int
     edge_type: str  # "conditional", "unconditional", "exception"
-    condition: Optional['Expression'] = None
+    condition: Optional["Expression"] = None
 
 
 @dataclass(frozen=True)
 class Loop:
     """A loop in control flow."""
+
     header: int
     back_edges: List[ControlFlowEdge]
     body_blocks: List[int]
@@ -132,9 +142,11 @@ class Loop:
 # STATEMENT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Statement:
     """Base statement type."""
+
     line_number: Optional[int] = None
     source_text: Optional[str] = None
 
@@ -142,20 +154,23 @@ class Statement:
 @dataclass(frozen=True)
 class StatementBlock(Statement):
     """A block of statements."""
+
     statements: List[Statement]
 
 
 @dataclass(frozen=True)
 class AssignmentStatement(Statement):
     """Assignment statement."""
-    target: 'Expression'
-    value: 'Expression'
+
+    target: "Expression"
+    value: "Expression"
 
 
 @dataclass(frozen=True)
 class IfStatement(Statement):
     """If-then-else statement."""
-    condition: 'Expression'
+
+    condition: "Expression"
     then_branch: Statement
     else_branch: Optional[Statement] = None
 
@@ -163,45 +178,51 @@ class IfStatement(Statement):
 @dataclass(frozen=True)
 class WhileStatement(Statement):
     """While loop statement."""
-    condition: 'Expression'
+
+    condition: "Expression"
     body: Statement
 
 
 @dataclass(frozen=True)
 class ForStatement(Statement):
     """For loop statement."""
+
     variable: str
-    start_value: 'Expression'
-    end_value: 'Expression'
-    step: Optional['Expression'] = None
+    start_value: "Expression"
+    end_value: "Expression"
+    step: Optional["Expression"] = None
     body: Statement
 
 
 @dataclass(frozen=True)
 class ReturnStatement(Statement):
     """Return statement."""
-    value: Optional['Expression'] = None
+
+    value: Optional["Expression"] = None
 
 
 @dataclass(frozen=True)
 class CallStatement(Statement):
     """Function/method call statement."""
-    target: Optional['Expression']  # None for global functions
+
+    target: Optional["Expression"]  # None for global functions
     function_name: str
-    arguments: List['Expression']
+    arguments: List["Expression"]
 
 
 @dataclass(frozen=True)
 class TryStatement(Statement):
     """Try-catch statement."""
+
     try_block: Statement
-    catch_blocks: List['CatchBlock']
+    catch_blocks: List["CatchBlock"]
     finally_block: Optional[Statement] = None
 
 
 @dataclass(frozen=True)
 class CatchBlock:
     """Catch block in try statement."""
+
     exception_type: str
     variable: Optional[str]
     body: Statement
@@ -211,15 +232,18 @@ class CatchBlock:
 # EXPRESSION TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Expression:
     """Base expression type."""
+
     expression_type: Optional[str] = None  # Inferred type
 
 
 @dataclass(frozen=True)
 class BinaryExpression(Expression):
     """Binary expression (a op b)."""
+
     left: Expression
     operator: str  # "+", "-", "*", "/", "=", "<", ">", "AND", "OR", etc.
     right: Expression
@@ -228,6 +252,7 @@ class BinaryExpression(Expression):
 @dataclass(frozen=True)
 class UnaryExpression(Expression):
     """Unary expression (op a)."""
+
     operator: str  # "-", "NOT", "++", "--"
     operand: Expression
 
@@ -235,6 +260,7 @@ class UnaryExpression(Expression):
 @dataclass(frozen=True)
 class LiteralExpression(Expression):
     """Literal value."""
+
     value: Any
     literal_type: str  # "string", "integer", "decimal", "boolean", "null"
 
@@ -242,6 +268,7 @@ class LiteralExpression(Expression):
 @dataclass(frozen=True)
 class VariableExpression(Expression):
     """Variable reference."""
+
     name: str
     scope: str = "local"  # "local", "instance", "global", "shared"
 
@@ -249,6 +276,7 @@ class VariableExpression(Expression):
 @dataclass(frozen=True)
 class MemberExpression(Expression):
     """Member access (a.b)."""
+
     object: Expression
     member: str
 
@@ -256,6 +284,7 @@ class MemberExpression(Expression):
 @dataclass(frozen=True)
 class IndexExpression(Expression):
     """Array/list index (a[i])."""
+
     object: Expression
     index: Expression
 
@@ -263,6 +292,7 @@ class IndexExpression(Expression):
 @dataclass(frozen=True)
 class CallExpression(Expression):
     """Function call expression."""
+
     target: Optional[Expression]  # None for global functions
     function_name: str
     arguments: List[Expression]
@@ -271,6 +301,7 @@ class CallExpression(Expression):
 @dataclass(frozen=True)
 class NewExpression(Expression):
     """Object creation (CREATE)."""
+
     class_name: str
     arguments: List[Expression] = field(default_factory=list)
 
@@ -278,6 +309,7 @@ class NewExpression(Expression):
 @dataclass(frozen=True)
 class CastExpression(Expression):
     """Type cast expression."""
+
     expression: Expression
     target_type: str
 
@@ -286,9 +318,11 @@ class CastExpression(Expression):
 # SUPPORTING TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Parameter:
     """Function parameter."""
+
     name: str
     data_type: str
     pass_by: str = "value"  # "value", "reference"
@@ -298,6 +332,7 @@ class Parameter:
 @dataclass(frozen=True)
 class LocalVariable:
     """Local variable declaration."""
+
     name: str
     data_type: str
     initial_value: Optional[Expression] = None
@@ -307,6 +342,7 @@ class LocalVariable:
 @dataclass(frozen=True)
 class InstanceVariable:
     """Instance variable."""
+
     name: str
     data_type: str
     access_modifier: str = "private"
@@ -318,6 +354,7 @@ class InstanceVariable:
 @dataclass(frozen=True)
 class DecompiledEvent:
     """A decompiled event handler."""
+
     name: str
     parameters: List[Parameter]
     body: StatementBlock
@@ -328,6 +365,7 @@ class DecompiledEvent:
 @dataclass(frozen=True)
 class DecompiledControl:
     """A decompiled window control."""
+
     name: str
     control_type: str  # "commandbutton", "singlelineedit", etc.
     properties: Dict[str, Any]
@@ -342,18 +380,20 @@ class DecompiledControl:
 @dataclass(frozen=True)
 class MenuItem:
     """A menu item."""
+
     name: str
     text: str
     shortcut: Optional[str] = None
     enabled: bool = True
     checked: bool = False
-    children: List['MenuItem'] = field(default_factory=list)
+    children: List["MenuItem"] = field(default_factory=list)
     click_event: Optional[DecompiledEvent] = None
 
 
 @dataclass(frozen=True)
 class ToolbarItem:
     """A toolbar item."""
+
     name: str
     text: str
     tooltip: str
@@ -367,9 +407,11 @@ class ToolbarItem:
 # DATAWINDOW TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class DataSource:
     """DataWindow data source."""
+
     source_type: str  # "sql", "stored_procedure", "external"
     sql_statement: Optional[str] = None
     stored_procedure: Optional[str] = None
@@ -379,6 +421,7 @@ class DataSource:
 @dataclass(frozen=True)
 class DataWindowColumn:
     """DataWindow column."""
+
     name: str
     data_type: str
     db_column: str
@@ -391,6 +434,7 @@ class DataWindowColumn:
 @dataclass(frozen=True)
 class ComputedField:
     """DataWindow computed field."""
+
     name: str
     expression: str
     data_type: str
@@ -400,6 +444,7 @@ class ComputedField:
 @dataclass(frozen=True)
 class DataWindowGroup:
     """DataWindow grouping."""
+
     level: int
     columns: List[str]
     sort_order: str = "ascending"
@@ -409,6 +454,7 @@ class DataWindowGroup:
 @dataclass(frozen=True)
 class SortCriterion:
     """DataWindow sort criterion."""
+
     column: str
     order: str = "ascending"
 
@@ -416,6 +462,7 @@ class SortCriterion:
 @dataclass(frozen=True)
 class FilterExpression:
     """DataWindow filter."""
+
     expression: str
     apply_on_retrieve: bool = True
 
@@ -424,9 +471,11 @@ class FilterExpression:
 # SYMBOL TABLE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Symbol:
     """Symbol table entry."""
+
     name: str
     symbol_type: str  # "variable", "function", "class", "constant"
     data_type: Optional[str]
@@ -438,8 +487,9 @@ class Symbol:
 @dataclass(frozen=True)
 class SymbolTable:
     """Symbol table for scope management."""
+
     symbols: Dict[str, Symbol]
-    parent: Optional['SymbolTable'] = None
+    parent: Optional["SymbolTable"] = None
     scope_name: str = "global"
 
 
@@ -447,9 +497,11 @@ class SymbolTable:
 # DOMAIN EVENTS (Colocated with Decompiled aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class FunctionDecompiled:
     """Event: Function was decompiled from P-code."""
+
     function: DecompiledFunction
     p_code_size: int
     instruction_count: int
@@ -460,6 +512,7 @@ class FunctionDecompiled:
 @dataclass(frozen=True)
 class WindowDecompiled:
     """Event: Window was decompiled."""
+
     window: DecompiledWindow
     control_count: int
     event_count: int
@@ -469,6 +522,7 @@ class WindowDecompiled:
 @dataclass(frozen=True)
 class DataWindowDecompiled:
     """Event: DataWindow was decompiled."""
+
     datawindow: DecompiledDataWindow
     column_count: int
     has_sql: bool
@@ -478,6 +532,7 @@ class DataWindowDecompiled:
 @dataclass(frozen=True)
 class ControlFlowAnalyzed:
     """Event: Control flow was analyzed."""
+
     function_name: str
     cfg: ControlFlowGraph
     block_count: int
@@ -489,6 +544,7 @@ class ControlFlowAnalyzed:
 @dataclass(frozen=True)
 class ExpressionReconstructed:
     """Event: Expression was reconstructed from P-code."""
+
     expression: Expression
     p_code_offset: int
     stack_depth: int
@@ -498,6 +554,7 @@ class ExpressionReconstructed:
 @dataclass(frozen=True)
 class DecompilationFailed:
     """Event: Decompilation failed."""
+
     object_name: str
     object_type: str
     error_message: str

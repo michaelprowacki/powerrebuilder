@@ -6,7 +6,7 @@ Pure data types following Scott Wlaschin's FDM principles.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any
 from enum import Enum
 from datetime import datetime
 
@@ -15,19 +15,22 @@ from datetime import datetime
 # FUNDAMENTAL CONTROL CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Control:
     """Abstract control flow construct.
 
     The flow of execution through a program.
     """
-    control_type: 'ControlType'
-    entry_point: 'ControlPoint'
-    exit_points: List['ControlPoint']
+
+    control_type: "ControlType"
+    entry_point: "ControlPoint"
+    exit_points: List["ControlPoint"]
 
 
 class ControlType(str, Enum):
     """Types of control flow."""
+
     SEQUENCE = "sequence"  # Sequential execution
     BRANCH = "branch"  # Conditional execution
     LOOP = "loop"  # Repetition
@@ -39,6 +42,7 @@ class ControlType(str, Enum):
 @dataclass(frozen=True)
 class ControlPoint:
     """A point in the control flow."""
+
     label: Optional[str] = None
     is_entry: bool = False
     is_exit: bool = False
@@ -48,12 +52,14 @@ class ControlPoint:
 # SEQUENCE (LINEAR EXECUTION)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Sequence:
     """Sequential execution - statements executed in order.
 
     The most fundamental control structure.
     """
+
     statements: List[Any]  # Would be Statement from computation.py
     is_atomic: bool = False  # All-or-nothing execution
 
@@ -64,6 +70,7 @@ class Block:
 
     Groups statements together.
     """
+
     statements: List[Any]
     has_local_scope: bool = True
     label: Optional[str] = None
@@ -73,13 +80,15 @@ class Block:
 # SELECTION (CONDITIONAL EXECUTION)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Branch:
     """Conditional execution based on a predicate.
 
     The fundamental selection mechanism.
     """
-    condition: 'Condition'
+
+    condition: "Condition"
     then_branch: Control
     else_branch: Optional[Control] = None
 
@@ -87,6 +96,7 @@ class Branch:
 @dataclass(frozen=True)
 class Condition:
     """A boolean condition/predicate."""
+
     expression: Any  # Would be Expression from computation.py
     is_compile_time: bool = False  # Can be evaluated at compile time
 
@@ -97,8 +107,9 @@ class MultiWayBranch:
 
     Selects from multiple alternatives.
     """
+
     scrutinee: Any  # Expression being matched
-    branches: List['CaseBranch']
+    branches: List["CaseBranch"]
     default_branch: Optional[Control] = None
     is_exhaustive: bool = False
 
@@ -106,7 +117,8 @@ class MultiWayBranch:
 @dataclass(frozen=True)
 class CaseBranch:
     """One branch in a multi-way selection."""
-    pattern: 'Pattern'
+
+    pattern: "Pattern"
     guard: Optional[Condition] = None  # Additional condition
     body: Control
     fallthrough: bool = False  # Continue to next case
@@ -115,13 +127,15 @@ class CaseBranch:
 @dataclass(frozen=True)
 class Pattern:
     """A pattern to match against."""
-    pattern_type: 'PatternType'
+
+    pattern_type: "PatternType"
     value: Any
     bindings: List[str] = field(default_factory=list)  # Variables bound by pattern
 
 
 class PatternType(str, Enum):
     """Types of patterns."""
+
     LITERAL = "literal"  # Exact value
     VARIABLE = "variable"  # Bind to variable
     WILDCARD = "wildcard"  # Match anything
@@ -134,19 +148,22 @@ class PatternType(str, Enum):
 # ITERATION (REPETITION)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Loop:
     """Repetitive execution.
 
     The fundamental iteration mechanism.
     """
-    loop_type: 'LoopType'
+
+    loop_type: "LoopType"
     body: Control
     is_infinite: bool = False
 
 
 class LoopType(str, Enum):
     """Types of loops."""
+
     WHILE = "while"  # Test at beginning
     DO_WHILE = "do_while"  # Test at end
     FOR = "for"  # Counter-based
@@ -157,6 +174,7 @@ class LoopType(str, Enum):
 @dataclass(frozen=True)
 class WhileLoop(Loop):
     """Loop with condition tested before each iteration."""
+
     condition: Condition
     invariant: Optional[Any] = None  # Loop invariant for verification
 
@@ -164,6 +182,7 @@ class WhileLoop(Loop):
 @dataclass(frozen=True)
 class DoWhileLoop(Loop):
     """Loop with condition tested after each iteration."""
+
     condition: Condition
     min_iterations: int = 1
 
@@ -171,6 +190,7 @@ class DoWhileLoop(Loop):
 @dataclass(frozen=True)
 class ForLoop(Loop):
     """Counter-based loop."""
+
     initialization: Any  # Initial statement
     condition: Condition
     increment: Any  # Update statement
@@ -180,6 +200,7 @@ class ForLoop(Loop):
 @dataclass(frozen=True)
 class ForEachLoop(Loop):
     """Iteration over collection."""
+
     iterator_variable: str
     collection: Any  # Expression yielding collection
     is_parallel: bool = False
@@ -189,18 +210,21 @@ class ForEachLoop(Loop):
 # CONTROL TRANSFER
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Transfer:
     """Transfer of control to another point.
 
     Breaks normal sequential flow.
     """
-    transfer_type: 'TransferType'
+
+    transfer_type: "TransferType"
     target: Optional[ControlPoint] = None
 
 
 class TransferType(str, Enum):
     """Types of control transfer."""
+
     GOTO = "goto"  # Unconditional jump
     BREAK = "break"  # Exit loop
     CONTINUE = "continue"  # Next iteration
@@ -213,6 +237,7 @@ class TransferType(str, Enum):
 @dataclass(frozen=True)
 class Goto:
     """Unconditional jump to label."""
+
     target_label: str
     is_computed: bool = False  # Computed goto
 
@@ -220,6 +245,7 @@ class Goto:
 @dataclass(frozen=True)
 class Break:
     """Exit from loop or switch."""
+
     levels: int = 1  # Number of levels to break
     label: Optional[str] = None  # Labeled break
 
@@ -227,6 +253,7 @@ class Break:
 @dataclass(frozen=True)
 class Continue:
     """Skip to next iteration."""
+
     levels: int = 1  # Number of levels
     label: Optional[str] = None  # Labeled continue
 
@@ -234,6 +261,7 @@ class Continue:
 @dataclass(frozen=True)
 class Return:
     """Return from function."""
+
     value: Optional[Any] = None
     is_early_return: bool = False
 
@@ -241,6 +269,7 @@ class Return:
 @dataclass(frozen=True)
 class Yield:
     """Yield control (generators/coroutines)."""
+
     value: Optional[Any] = None
     is_yield_from: bool = False  # Delegating yield
 
@@ -249,17 +278,20 @@ class Yield:
 # EXCEPTION HANDLING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ExceptionHandling:
     """Exception/error handling mechanism."""
+
     try_block: Control
-    handlers: List['ExceptionHandler']
+    handlers: List["ExceptionHandler"]
     finally_block: Optional[Control] = None
 
 
 @dataclass(frozen=True)
 class ExceptionHandler:
     """Handler for specific exception type."""
+
     exception_type: Any  # Type of exception to catch
     variable: Optional[str] = None  # Bind exception to variable
     handler_body: Control
@@ -269,6 +301,7 @@ class ExceptionHandler:
 @dataclass(frozen=True)
 class Throw:
     """Raise/throw an exception."""
+
     exception: Any
     is_rethrow: bool = False
 
@@ -276,6 +309,7 @@ class Throw:
 @dataclass(frozen=True)
 class Finally:
     """Code that always executes."""
+
     body: Control
     executes_on_exception: bool = True
     executes_on_normal: bool = True
@@ -285,15 +319,18 @@ class Finally:
 # CONCURRENCY CONTROL
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ConcurrentControl:
     """Concurrent/parallel execution."""
+
     branches: List[Control]
-    synchronization: 'SynchronizationType'
+    synchronization: "SynchronizationType"
 
 
 class SynchronizationType(str, Enum):
     """Types of synchronization."""
+
     FORK_JOIN = "fork_join"  # All must complete
     SELECT = "select"  # First to complete
     PIPELINE = "pipeline"  # Staged execution
@@ -303,12 +340,14 @@ class SynchronizationType(str, Enum):
 @dataclass(frozen=True)
 class Synchronization:
     """Synchronization primitive."""
-    sync_type: 'SyncPrimitive'
+
+    sync_type: "SyncPrimitive"
     participants: List[str]  # Thread/process IDs
 
 
 class SyncPrimitive(str, Enum):
     """Synchronization primitives."""
+
     MUTEX = "mutex"
     SEMAPHORE = "semaphore"
     BARRIER = "barrier"
@@ -320,12 +359,14 @@ class SyncPrimitive(str, Enum):
 # STRUCTURED CONTROL
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class StructuredControl:
     """Structured programming constructs.
 
     No arbitrary gotos - well-nested control.
     """
+
     has_single_entry: bool = True
     has_single_exit: bool = True
     is_well_nested: bool = True
@@ -334,15 +375,17 @@ class StructuredControl:
 @dataclass(frozen=True)
 class ControlFlowGraph:
     """Graph representation of control flow."""
-    nodes: List['CFGNode']
-    edges: List['CFGEdge']
-    entry_node: 'CFGNode'
-    exit_nodes: List['CFGNode']
+
+    nodes: List["CFGNode"]
+    edges: List["CFGEdge"]
+    entry_node: "CFGNode"
+    exit_nodes: List["CFGNode"]
 
 
 @dataclass(frozen=True)
 class CFGNode:
     """Node in control flow graph."""
+
     id: str
     statement: Any
     is_branch: bool = False
@@ -352,6 +395,7 @@ class CFGNode:
 @dataclass(frozen=True)
 class CFGEdge:
     """Edge in control flow graph."""
+
     source: CFGNode
     target: CFGNode
     condition: Optional[Condition] = None
@@ -362,9 +406,11 @@ class CFGEdge:
 # DOMAIN EVENTS (Colocated with Control aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ControlFlowEntered:
     """Event: Control flow entered a construct."""
+
     control: Control
     entry_point: ControlPoint
     timestamp: datetime
@@ -373,6 +419,7 @@ class ControlFlowEntered:
 @dataclass(frozen=True)
 class BranchTaken:
     """Event: Conditional branch was taken."""
+
     branch: Branch
     condition_result: bool
     branch_taken: str  # "then" or "else"
@@ -382,6 +429,7 @@ class BranchTaken:
 @dataclass(frozen=True)
 class LoopIteration:
     """Event: Loop iteration occurred."""
+
     loop: Loop
     iteration_number: int
     continue_condition: bool
@@ -391,6 +439,7 @@ class LoopIteration:
 @dataclass(frozen=True)
 class ControlTransferred:
     """Event: Control was transferred."""
+
     transfer: Transfer
     from_point: ControlPoint
     to_point: Optional[ControlPoint]
@@ -400,6 +449,7 @@ class ControlTransferred:
 @dataclass(frozen=True)
 class ExceptionRaised:
     """Event: Exception was raised."""
+
     exception: Any
     location: ControlPoint
     timestamp: datetime
@@ -408,6 +458,7 @@ class ExceptionRaised:
 @dataclass(frozen=True)
 class ExceptionCaught:
     """Event: Exception was caught."""
+
     exception: Any
     handler: ExceptionHandler
     timestamp: datetime

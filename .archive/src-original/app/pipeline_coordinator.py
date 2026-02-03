@@ -5,34 +5,38 @@ This is the main workflow that coordinates all stages using the new approach.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import List, Dict, Any
 import time
 import uuid
 from datetime import datetime
 
 from src_new._core.result import Result, Success, Failure, EventfulResult
-from src_new._core.value_objects import FilePath, DirectoryPath, Version
+from src_new._core.value_objects import FilePath, DirectoryPath
 from src_new._core.dependencies import Dependencies
 from src_new._core.events import DomainEvent, EventStore
 from src_new._core.errors import DomainError
 from src_new._core.workflow import (
-    WorkflowStep, StepResult, Workflow, WorkflowDefinition,
-    WorkflowBuilder, PipelineStage
+    WorkflowStep,
+    StepResult,
+    Workflow,
+    WorkflowDefinition,
+    WorkflowBuilder,
+    PipelineStage,
 )
 
 # Import functional domain functions
 from src_new.domain.extract.extract_pbl_functional import extract_pbl_pure
-from src_new.domain.extract.functional_extract import extract_library
 
 
 # ============================================================================
 # PIPELINE CONFIGURATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PipelineConfig:
     """Configuration for the pipeline execution."""
+
     source_path: FilePath
     output_path: DirectoryPath
     target_language: str = "flutter"  # flutter, python, react
@@ -48,9 +52,11 @@ class PipelineConfig:
 # PIPELINE EVENTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PipelineStartedEvent(DomainEvent):
     """Pipeline execution started."""
+
     config: PipelineConfig
     stages: List[str]
 
@@ -66,6 +72,7 @@ class PipelineStartedEvent(DomainEvent):
 @dataclass(frozen=True)
 class StageStartedEvent(DomainEvent):
     """Stage execution started."""
+
     stage: PipelineStage
     input_files: int
 
@@ -81,6 +88,7 @@ class StageStartedEvent(DomainEvent):
 @dataclass(frozen=True)
 class StageCompletedEvent(DomainEvent):
     """Stage execution completed."""
+
     stage: PipelineStage
     duration_ms: float
     output_files: int
@@ -98,6 +106,7 @@ class StageCompletedEvent(DomainEvent):
 @dataclass(frozen=True)
 class PipelineCompletedEvent(DomainEvent):
     """Pipeline execution completed."""
+
     total_duration_ms: float
     stages_completed: int
     total_errors: int
@@ -116,6 +125,7 @@ class PipelineCompletedEvent(DomainEvent):
 # WORKFLOW STEPS
 # ============================================================================
 
+
 class ExtractStep(WorkflowStep):
     """Extract stage using functional approach."""
 
@@ -132,12 +142,14 @@ class ExtractStep(WorkflowStep):
         events = []
 
         # Emit stage started event
-        events.append(StageStartedEvent(
-            event_id=str(uuid.uuid4()),
-            timestamp=datetime.now(),
-            stage=PipelineStage.EXTRACT,
-            input_files=1
-        ))
+        events.append(
+            StageStartedEvent(
+                event_id=str(uuid.uuid4()),
+                timestamp=datetime.now(),
+                stage=PipelineStage.EXTRACT,
+                input_files=1,
+            )
+        )
 
         # Read library file
         read_result = self.deps.file_system.read_file(config.source_path)
@@ -168,32 +180,35 @@ class ExtractStep(WorkflowStep):
             path_result = FilePath.create(str(file_path))
             if path_result.is_success():
                 write_result = self.deps.file_system.write_file(
-                    path_result.value(),
-                    entry.data
+                    path_result.value(), entry.data
                 )
                 if write_result.is_success():
                     output_count += 1
 
         # Emit stage completed event
         duration_ms = (time.time() - start_time) * 1000
-        events.append(StageCompletedEvent(
-            event_id=str(uuid.uuid4()),
-            timestamp=datetime.now(),
-            stage=PipelineStage.EXTRACT,
-            duration_ms=duration_ms,
-            output_files=output_count,
-            errors=0
-        ))
+        events.append(
+            StageCompletedEvent(
+                event_id=str(uuid.uuid4()),
+                timestamp=datetime.now(),
+                stage=PipelineStage.EXTRACT,
+                duration_ms=duration_ms,
+                output_files=output_count,
+                errors=0,
+            )
+        )
 
-        return Success(StepResult(
-            output={
-                'entries': entries,
-                'count': len(entries),
-                'output_files': output_count
-            },
-            events=events,
-            metadata={'stage': self.name, 'duration_ms': duration_ms}
-        ))
+        return Success(
+            StepResult(
+                output={
+                    "entries": entries,
+                    "count": len(entries),
+                    "output_files": output_count,
+                },
+                events=events,
+                metadata={"stage": self.name, "duration_ms": duration_ms},
+            )
+        )
 
 
 class DecompileStep(WorkflowStep):
@@ -210,11 +225,13 @@ class DecompileStep(WorkflowStep):
         """Execute decompilation stage."""
         # TODO: Implement functional decompilation
         # For now, pass through
-        return Success(StepResult(
-            output=input,
-            events=[],
-            metadata={'stage': self.name, 'status': 'not_implemented'}
-        ))
+        return Success(
+            StepResult(
+                output=input,
+                events=[],
+                metadata={"stage": self.name, "status": "not_implemented"},
+            )
+        )
 
 
 class ParseStep(WorkflowStep):
@@ -230,11 +247,13 @@ class ParseStep(WorkflowStep):
     def execute(self, input: Dict) -> Result[StepResult, str]:
         """Execute parsing stage."""
         # TODO: Implement functional parsing
-        return Success(StepResult(
-            output=input,
-            events=[],
-            metadata={'stage': self.name, 'status': 'not_implemented'}
-        ))
+        return Success(
+            StepResult(
+                output=input,
+                events=[],
+                metadata={"stage": self.name, "status": "not_implemented"},
+            )
+        )
 
 
 class ModelStep(WorkflowStep):
@@ -250,11 +269,13 @@ class ModelStep(WorkflowStep):
     def execute(self, input: Dict) -> Result[StepResult, str]:
         """Execute modeling stage."""
         # TODO: Implement functional modeling
-        return Success(StepResult(
-            output=input,
-            events=[],
-            metadata={'stage': self.name, 'status': 'not_implemented'}
-        ))
+        return Success(
+            StepResult(
+                output=input,
+                events=[],
+                metadata={"stage": self.name, "status": "not_implemented"},
+            )
+        )
 
 
 class GenerateStep(WorkflowStep):
@@ -270,16 +291,19 @@ class GenerateStep(WorkflowStep):
     def execute(self, input: Dict) -> Result[StepResult, str]:
         """Execute generation stage."""
         # TODO: Implement functional generation
-        return Success(StepResult(
-            output={'generated': True, 'files': []},
-            events=[],
-            metadata={'stage': self.name, 'status': 'not_implemented'}
-        ))
+        return Success(
+            StepResult(
+                output={"generated": True, "files": []},
+                events=[],
+                metadata={"stage": self.name, "status": "not_implemented"},
+            )
+        )
 
 
 # ============================================================================
 # PIPELINE COORDINATOR
 # ============================================================================
+
 
 class FunctionalPipelineCoordinator:
     """Coordinates the complete pipeline using functional approach."""
@@ -294,8 +318,9 @@ class FunctionalPipelineCoordinator:
         builder = WorkflowBuilder("PowerRebuilder Pipeline")
 
         workflow = (
-            builder
-            .with_description("Complete PowerRebuilder pipeline with functional approach")
+            builder.with_description(
+                "Complete PowerRebuilder pipeline with functional approach"
+            )
             .add_step(ExtractStep(self.deps))
             .add_step(DecompileStep(self.deps))
             .add_step(ParseStep(self.deps))
@@ -307,8 +332,7 @@ class FunctionalPipelineCoordinator:
         return workflow
 
     def execute_pipeline(
-        self,
-        config: PipelineConfig
+        self, config: PipelineConfig
     ) -> EventfulResult[Dict[str, Any], str]:
         """Execute the complete pipeline.
 
@@ -323,12 +347,14 @@ class FunctionalPipelineCoordinator:
         )
 
         # Emit pipeline started event
-        all_events.append(PipelineStartedEvent(
-            event_id=str(uuid.uuid4()),
-            timestamp=datetime.now(),
-            config=config,
-            stages=[s.value for s in PipelineStage]
-        ))
+        all_events.append(
+            PipelineStartedEvent(
+                event_id=str(uuid.uuid4()),
+                timestamp=datetime.now(),
+                config=config,
+                stages=[s.value for s in PipelineStage],
+            )
+        )
 
         # Create workflow
         workflow_def = self.create_pipeline_workflow(config)
@@ -373,14 +399,16 @@ class FunctionalPipelineCoordinator:
         total_duration_ms = (time.time() - start_time) * 1000
 
         # Emit pipeline completed event
-        all_events.append(PipelineCompletedEvent(
-            event_id=str(uuid.uuid4()),
-            timestamp=datetime.now(),
-            total_duration_ms=total_duration_ms,
-            stages_completed=stages_completed,
-            total_errors=total_errors,
-            output_path=str(config.output_path)
-        ))
+        all_events.append(
+            PipelineCompletedEvent(
+                event_id=str(uuid.uuid4()),
+                timestamp=datetime.now(),
+                total_duration_ms=total_duration_ms,
+                stages_completed=stages_completed,
+                total_errors=total_errors,
+                output_path=str(config.output_path),
+            )
+        )
 
         # Store all events
         self.event_store.append_many(all_events)
@@ -393,20 +421,18 @@ class FunctionalPipelineCoordinator:
 
         # Return final result
         final_output = {
-            'stages_completed': stages_completed,
-            'total_errors': total_errors,
-            'duration_ms': total_duration_ms,
-            'output_path': str(config.output_path),
-            'events_generated': len(all_events),
-            'final_output': current_output
+            "stages_completed": stages_completed,
+            "total_errors": total_errors,
+            "duration_ms": total_duration_ms,
+            "output_path": str(config.output_path),
+            "events_generated": len(all_events),
+            "final_output": current_output,
         }
 
         return EventfulResult.success(final_output, all_events)
 
     def execute_stage(
-        self,
-        stage: PipelineStage,
-        config: PipelineConfig
+        self, stage: PipelineStage, config: PipelineConfig
     ) -> EventfulResult[Dict[str, Any], str]:
         """Execute a single pipeline stage.
 
@@ -448,18 +474,18 @@ class FunctionalPipelineCoordinator:
         events = self.get_events()
 
         report = {
-            'total_events': len(events),
-            'stages': {},
-            'errors': [],
-            'warnings': []
+            "total_events": len(events),
+            "stages": {},
+            "errors": [],
+            "warnings": [],
         }
 
         for event in events:
             if isinstance(event, StageCompletedEvent):
-                report['stages'][event.stage.value] = {
-                    'duration_ms': event.duration_ms,
-                    'output_files': event.output_files,
-                    'errors': event.errors
+                report["stages"][event.stage.value] = {
+                    "duration_ms": event.duration_ms,
+                    "output_files": event.output_files,
+                    "errors": event.errors,
                 }
 
         return report
@@ -469,6 +495,7 @@ class FunctionalPipelineCoordinator:
 # FACTORY FUNCTION
 # ============================================================================
 
+
 def create_pipeline_coordinator(deps: Dependencies) -> FunctionalPipelineCoordinator:
     """Create a pipeline coordinator with dependencies."""
     return FunctionalPipelineCoordinator(deps)
@@ -477,6 +504,7 @@ def create_pipeline_coordinator(deps: Dependencies) -> FunctionalPipelineCoordin
 # ============================================================================
 # USAGE EXAMPLE
 # ============================================================================
+
 
 def example_usage():
     """Example of using the functional pipeline coordinator."""
@@ -493,7 +521,7 @@ def example_usage():
         source_path=source,
         output_path=output,
         target_language="flutter",
-        generate_reports=True
+        generate_reports=True,
     )
 
     # Create coordinator
@@ -507,7 +535,7 @@ def example_usage():
         output = result.result.value()
         events = result.events
 
-        print(f"Pipeline completed successfully!")
+        print("Pipeline completed successfully!")
         print(f"Stages completed: {output['stages_completed']}")
         print(f"Events generated: {output['events_generated']}")
         print(f"Duration: {output['duration_ms']:.2f}ms")

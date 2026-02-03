@@ -4,12 +4,11 @@ This module provides database schema extraction from PowerBuilder source files,
 including DataWindows, SQL statements, and database operations.
 """
 
-import json
 import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List
 
 from src_new._patterns import FileHandler
 
@@ -118,9 +117,7 @@ class SchemaExtractor:
 
         # Extract SQL
         sql_match = re.search(
-            r'retrieve\s*=\s*"([^"]+)"',
-            content,
-            re.IGNORECASE | re.DOTALL
+            r'retrieve\s*=\s*"([^"]+)"', content, re.IGNORECASE | re.DOTALL
         )
 
         if sql_match:
@@ -153,10 +150,10 @@ class SchemaExtractor:
         """
         # SQL patterns
         sql_patterns = [
-            r'(SELECT\s+.*?FROM\s+.*?)(?:;|\n\n|\Z)',
-            r'(INSERT\s+INTO\s+.*?)(?:;|\n\n|\Z)',
-            r'(UPDATE\s+.*?SET\s+.*?)(?:;|\n\n|\Z)',
-            r'(DELETE\s+FROM\s+.*?)(?:;|\n\n|\Z)',
+            r"(SELECT\s+.*?FROM\s+.*?)(?:;|\n\n|\Z)",
+            r"(INSERT\s+INTO\s+.*?)(?:;|\n\n|\Z)",
+            r"(UPDATE\s+.*?SET\s+.*?)(?:;|\n\n|\Z)",
+            r"(DELETE\s+FROM\s+.*?)(?:;|\n\n|\Z)",
             r'EXECUTE\s+IMMEDIATE\s*["\']([^"\']+)["\']',
         ]
 
@@ -171,12 +168,14 @@ class SchemaExtractor:
                     tables = self._extract_table_names(sql)
                     statement_type = self._determine_sql_type(sql)
 
-                    self.schema_data["sql_statements"].append({
-                        "file_path": str(file_path),
-                        "statement": sql,
-                        "statement_type": statement_type,
-                        "tables_referenced": tables,
-                    })
+                    self.schema_data["sql_statements"].append(
+                        {
+                            "file_path": str(file_path),
+                            "statement": sql,
+                            "statement_type": statement_type,
+                            "tables_referenced": tables,
+                        }
+                    )
 
                     self.schema_data["statistics"]["sql_statements_found"] += 1
 
@@ -196,7 +195,7 @@ class SchemaExtractor:
             content: File content
         """
         # Find functions with database operations
-        function_pattern = r'(public|private|protected)?\s*function\s+(\w+)\s*\([^)]*\).*?end\s+function'
+        function_pattern = r"(public|private|protected)?\s*function\s+(\w+)\s*\([^)]*\).*?end\s+function"
         matches = re.finditer(function_pattern, content, re.IGNORECASE | re.DOTALL)
 
         for match in matches:
@@ -205,11 +204,11 @@ class SchemaExtractor:
 
             # Check for database operations
             db_ops = []
-            if re.search(r'SELECT|INSERT|UPDATE|DELETE', function_body, re.IGNORECASE):
+            if re.search(r"SELECT|INSERT|UPDATE|DELETE", function_body, re.IGNORECASE):
                 db_ops.append("SQL")
-            if re.search(r'COMMIT|ROLLBACK', function_body, re.IGNORECASE):
+            if re.search(r"COMMIT|ROLLBACK", function_body, re.IGNORECASE):
                 db_ops.append("Transaction")
-            if re.search(r'datawindow', function_body, re.IGNORECASE):
+            if re.search(r"datawindow", function_body, re.IGNORECASE):
                 db_ops.append("DataWindow")
 
             if db_ops:
@@ -232,16 +231,16 @@ class SchemaExtractor:
         tables = []
 
         # Clean SQL
-        sql = re.sub(r'--.*$', '', sql, flags=re.MULTILINE)  # Remove comments
-        sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.DOTALL)  # Remove block comments
+        sql = re.sub(r"--.*$", "", sql, flags=re.MULTILINE)  # Remove comments
+        sql = re.sub(r"/\*.*?\*/", "", sql, flags=re.DOTALL)  # Remove block comments
 
         # Extract table names
         patterns = [
-            r'FROM\s+(\w+)',
-            r'JOIN\s+(\w+)',
-            r'INTO\s+(\w+)',
-            r'UPDATE\s+(\w+)',
-            r'TABLE\s+(\w+)',
+            r"FROM\s+(\w+)",
+            r"JOIN\s+(\w+)",
+            r"INTO\s+(\w+)",
+            r"UPDATE\s+(\w+)",
+            r"TABLE\s+(\w+)",
         ]
 
         for pattern in patterns:
@@ -250,7 +249,7 @@ class SchemaExtractor:
 
         # Remove duplicates and system tables
         tables = list(set(tables))
-        tables = [t for t in tables if not t.lower().startswith('sys')]
+        tables = [t for t in tables if not t.lower().startswith("sys")]
 
         return tables
 
@@ -265,22 +264,22 @@ class SchemaExtractor:
         """
         sql_upper = sql.upper().strip()
 
-        if sql_upper.startswith('SELECT'):
-            return 'SELECT'
-        elif sql_upper.startswith('INSERT'):
-            return 'INSERT'
-        elif sql_upper.startswith('UPDATE'):
-            return 'UPDATE'
-        elif sql_upper.startswith('DELETE'):
-            return 'DELETE'
-        elif sql_upper.startswith('CREATE'):
-            return 'DDL'
-        elif sql_upper.startswith('ALTER'):
-            return 'DDL'
-        elif sql_upper.startswith('DROP'):
-            return 'DDL'
+        if sql_upper.startswith("SELECT"):
+            return "SELECT"
+        elif sql_upper.startswith("INSERT"):
+            return "INSERT"
+        elif sql_upper.startswith("UPDATE"):
+            return "UPDATE"
+        elif sql_upper.startswith("DELETE"):
+            return "DELETE"
+        elif sql_upper.startswith("CREATE"):
+            return "DDL"
+        elif sql_upper.startswith("ALTER"):
+            return "DDL"
+        elif sql_upper.startswith("DROP"):
+            return "DDL"
         else:
-            return 'OTHER'
+            return "OTHER"
 
     def _generate_documentation(self, output_dir: Path, output_format: str) -> None:
         """Generate schema documentation.
@@ -361,7 +360,9 @@ class SchemaExtractor:
                 content.append(sql_info["statement"])
                 content.append("```")
                 if sql_info.get("tables_referenced"):
-                    content.append("**Tables:** " + ", ".join(sql_info["tables_referenced"]))
+                    content.append(
+                        "**Tables:** " + ", ".join(sql_info["tables_referenced"])
+                    )
 
         file_handler.write_text(md_file, "\n".join(content))
 
@@ -392,8 +393,12 @@ class SchemaExtractor:
 """)
 
         html.append("<h1>PowerBuilder Database Schema Documentation</h1>")
-        html.append(f"<p><strong>Generated:</strong> {self.schema_data['extraction_date']}</p>")
-        html.append(f"<p><strong>Project:</strong> {self.schema_data['project_directory']}</p>")
+        html.append(
+            f"<p><strong>Generated:</strong> {self.schema_data['extraction_date']}</p>"
+        )
+        html.append(
+            f"<p><strong>Project:</strong> {self.schema_data['project_directory']}</p>"
+        )
 
         # Statistics
         stats = self.schema_data["statistics"]
@@ -404,7 +409,9 @@ class SchemaExtractor:
         html.append(f"<li>Tables Found: {len(self.schema_data['tables'])}</li>")
         html.append(f"<li>DataWindows: {stats['datawindows_found']}</li>")
         html.append(f"<li>SQL Statements: {stats['sql_statements_found']}</li>")
-        html.append(f"<li>Functions with DB Operations: {stats['functions_found']}</li>")
+        html.append(
+            f"<li>Functions with DB Operations: {stats['functions_found']}</li>"
+        )
         html.append("</ul>")
         html.append("</div>")
 
@@ -412,7 +419,7 @@ class SchemaExtractor:
         if self.schema_data["tables"]:
             html.append("<h2>Database Tables</h2>")
             for table_name, table_info in self.schema_data["tables"].items():
-                html.append(f'<div class="table-info">')
+                html.append('<div class="table-info">')
                 html.append(f"<h3>{table_name}</h3>")
                 if table_info.get("referenced_by"):
                     html.append("<p><strong>Referenced by:</strong></p>")

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Union
+from typing import Any, Iterator, List, Union
 
 PathLike = Union[str, Path]
 
@@ -65,12 +65,7 @@ class FileHandler:
             path_obj.mkdir(parents=True, exist_ok=True)
         return path_obj
 
-    def copy_file(
-        self,
-        src: PathLike,
-        dest: PathLike,
-        overwrite: bool = True
-    ) -> Path:
+    def copy_file(self, src: PathLike, dest: PathLike, overwrite: bool = True) -> Path:
         """Copy file with optional overwrite.
 
         Args:
@@ -96,12 +91,7 @@ class FileHandler:
         shutil.copy2(src_path, dest_path)
         return dest_path
 
-    def move_file(
-        self,
-        src: PathLike,
-        dest: PathLike,
-        overwrite: bool = True
-    ) -> Path:
+    def move_file(self, src: PathLike, dest: PathLike, overwrite: bool = True) -> Path:
         """Move file with optional overwrite.
 
         Args:
@@ -132,10 +122,7 @@ class FileHandler:
     # ============================================================================
 
     def find_files(
-        self,
-        root: PathLike,
-        pattern: str = "*",
-        recursive: bool = True
+        self, root: PathLike, pattern: str = "*", recursive: bool = True
     ) -> List[Path]:
         """Find files matching pattern.
 
@@ -157,10 +144,7 @@ class FileHandler:
             return list(root_path.glob(pattern))
 
     def iter_files(
-        self,
-        root: PathLike,
-        pattern: str = "*",
-        recursive: bool = True
+        self, root: PathLike, pattern: str = "*", recursive: bool = True
     ) -> Iterator[Path]:
         """Iterate over files matching pattern.
 
@@ -197,10 +181,7 @@ class FileHandler:
         return Path(path).read_text(encoding=self.encoding)
 
     def write_text(
-        self,
-        path: PathLike,
-        content: str,
-        create_dirs: bool = True
+        self, path: PathLike, content: str, create_dirs: bool = True
     ) -> Path:
         """Write text file.
 
@@ -219,10 +200,7 @@ class FileHandler:
         return path_obj
 
     def append_text(
-        self,
-        path: PathLike,
-        content: str,
-        create_dirs: bool = True
+        self, path: PathLike, content: str, create_dirs: bool = True
     ) -> Path:
         """Append to text file.
 
@@ -255,10 +233,7 @@ class FileHandler:
         return Path(path).read_text(encoding=self.encoding).splitlines()
 
     def write_lines(
-        self,
-        path: PathLike,
-        lines: List[str],
-        create_dirs: bool = True
+        self, path: PathLike, lines: List[str], create_dirs: bool = True
     ) -> Path:
         """Write lines to file.
 
@@ -289,10 +264,7 @@ class FileHandler:
         return Path(path).read_bytes()
 
     def write_binary(
-        self,
-        path: PathLike,
-        content: bytes,
-        create_dirs: bool = True
+        self, path: PathLike, content: bytes, create_dirs: bool = True
     ) -> Path:
         """Write binary file.
 
@@ -327,11 +299,7 @@ class FileHandler:
         return json.loads(text)
 
     def write_json(
-        self,
-        path: PathLike,
-        data: Any,
-        indent: int = 2,
-        create_dirs: bool = True
+        self, path: PathLike, data: Any, indent: int = 2, create_dirs: bool = True
     ) -> Path:
         """Write JSON file.
 

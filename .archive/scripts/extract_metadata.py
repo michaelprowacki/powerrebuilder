@@ -5,20 +5,22 @@ Separates metadata from P-code for proper processing.
 """
 
 import json
-import struct
 import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
+
 
 @dataclass
 class PBObject:
     """PowerBuilder object extracted from PBD."""
+
     name: str
     type: str
     properties: Dict[str, str]
     methods: List[str]
     dependencies: List[str]
+
 
 class PBDMetadataExtractor:
     """Extract metadata and object definitions from PBD files."""
@@ -40,7 +42,7 @@ class PBDMetadataExtractor:
         Returns:
             Dictionary with extracted metadata
         """
-        with open(self.pbd_file, 'rb') as f:
+        with open(self.pbd_file, "rb") as f:
             data = f.read()
 
         # Extract all strings first
@@ -51,15 +53,15 @@ class PBDMetadataExtractor:
 
         # Build metadata structure
         self.metadata = {
-            'file': self.pbd_file.name,
-            'size': len(data),
-            'objects': [asdict(obj) for obj in self.objects],
-            'total_objects': len(self.objects),
-            'object_types': self._get_object_types(),
-            'dependencies': self._get_dependencies(),
-            'database_objects': self._find_database_objects(),
-            'ui_controls': self._find_ui_controls(),
-            'business_logic': self._find_business_logic()
+            "file": self.pbd_file.name,
+            "size": len(data),
+            "objects": [asdict(obj) for obj in self.objects],
+            "total_objects": len(self.objects),
+            "object_types": self._get_object_types(),
+            "dependencies": self._get_dependencies(),
+            "database_objects": self._find_database_objects(),
+            "ui_controls": self._find_ui_controls(),
+            "business_logic": self._find_business_logic(),
         }
 
         return self.metadata
@@ -78,13 +80,13 @@ class PBDMetadataExtractor:
         # UTF-16LE strings (PowerBuilder default)
         i = 0
         while i < len(data) - 1:
-            if data[i+1] == 0 and 32 <= data[i] <= 126:
+            if data[i + 1] == 0 and 32 <= data[i] <= 126:
                 s = []
-                while i < len(data) - 1 and data[i+1] == 0 and 32 <= data[i] <= 126:
+                while i < len(data) - 1 and data[i + 1] == 0 and 32 <= data[i] <= 126:
                     s.append(chr(data[i]))
                     i += 2
                 if len(s) >= 3:
-                    strings.add(''.join(s))
+                    strings.add("".join(s))
             else:
                 i += 1
 
@@ -97,7 +99,7 @@ class PBDMetadataExtractor:
                     s.append(chr(data[i]))
                     i += 1
                 if len(s) >= 4:
-                    strings.add(''.join(s))
+                    strings.add("".join(s))
             else:
                 i += 1
 
@@ -113,35 +115,35 @@ class PBDMetadataExtractor:
 
         # PowerBuilder naming patterns
         pb_prefixes = {
-            'w_': 'window',
-            'd_': 'datawindow',
-            'u_': 'user_object',
-            'n_': 'nonvisual_object',
-            'm_': 'menu',
-            'f_': 'function',
-            'str_': 'structure',
-            'q_': 'query',
-            'p_': 'pipeline',
-            'uo_': 'user_object',
-            'dw_': 'datawindow_control',
-            'cb_': 'commandbutton',
-            'rb_': 'radiobutton',
-            'cbx_': 'checkbox',
-            'ddlb_': 'dropdownlistbox',
-            'lb_': 'listbox',
-            'sle_': 'singlelineedit',
-            'mle_': 'multilineedit',
-            'st_': 'statictext',
-            'gb_': 'groupbox',
-            'ln_': 'line',
-            'r_': 'rectangle',
-            'ov_': 'oval',
-            'rr_': 'roundrectangle',
-            'p_': 'picture',
-            'tv_': 'treeview',
-            'lv_': 'listview',
-            'tab_': 'tab',
-            'uo_': 'userobject'
+            "w_": "window",
+            "d_": "datawindow",
+            "u_": "user_object",
+            "n_": "nonvisual_object",
+            "m_": "menu",
+            "f_": "function",
+            "str_": "structure",
+            "q_": "query",
+            "p_": "pipeline",
+            "uo_": "user_object",
+            "dw_": "datawindow_control",
+            "cb_": "commandbutton",
+            "rb_": "radiobutton",
+            "cbx_": "checkbox",
+            "ddlb_": "dropdownlistbox",
+            "lb_": "listbox",
+            "sle_": "singlelineedit",
+            "mle_": "multilineedit",
+            "st_": "statictext",
+            "gb_": "groupbox",
+            "ln_": "line",
+            "r_": "rectangle",
+            "ov_": "oval",
+            "rr_": "roundrectangle",
+            "p_": "picture",
+            "tv_": "treeview",
+            "lv_": "listview",
+            "tab_": "tab",
+            "uo_": "userobject",
         }
 
         # Find objects by prefix
@@ -154,43 +156,56 @@ class PBDMetadataExtractor:
                         type=obj_type,
                         properties={},
                         methods=[],
-                        dependencies=[]
+                        dependencies=[],
                     )
                     objects.append(obj)
                     break
 
         # Find classes and structures
-        class_keywords = ['mailsession', 'mailrecipient', 'mailmessage',
-                         'environment', 'connection', 'transaction',
-                         'datastore', 'datawindowchild']
+        class_keywords = [
+            "mailsession",
+            "mailrecipient",
+            "mailmessage",
+            "environment",
+            "connection",
+            "transaction",
+            "datastore",
+            "datawindowchild",
+        ]
 
         for keyword in class_keywords:
             matching = [s for s in self.strings if keyword in s.lower()]
             for match in matching:
                 obj = PBObject(
-                    name=match,
-                    type='class',
-                    properties={},
-                    methods=[],
-                    dependencies=[]
+                    name=match, type="class", properties={}, methods=[], dependencies=[]
                 )
                 objects.append(obj)
 
         # Find methods and events
-        method_patterns = ['create', 'destroy', 'clicked', 'open', 'close',
-                          'retrieve', 'update', 'delete', 'insert', 'save']
+        method_patterns = [
+            "create",
+            "destroy",
+            "clicked",
+            "open",
+            "close",
+            "retrieve",
+            "update",
+            "delete",
+            "insert",
+            "save",
+        ]
 
         for pattern in method_patterns:
-            matching = [s for s in self.strings if pattern in s.lower() and '(' in s]
+            matching = [s for s in self.strings if pattern in s.lower() and "(" in s]
             for match in matching:
                 # These are likely method definitions
                 if not any(obj.name == match for obj in objects):
                     obj = PBObject(
                         name=match,
-                        type='method',
+                        type="method",
                         properties={},
                         methods=[],
-                        dependencies=[]
+                        dependencies=[],
                     )
                     objects.append(obj)
 
@@ -217,14 +232,14 @@ class PBDMetadataExtractor:
 
         # Look for import/include patterns
         for s in self.strings:
-            if 'pfc' in s.lower():
-                deps.append('PowerBuilder Foundation Classes (PFC)')
-            if 'pbni' in s.lower():
-                deps.append('PowerBuilder Native Interface (PBNI)')
-            if '.dll' in s.lower():
-                deps.append(f'DLL: {s}')
-            if 'oracle' in s.lower() or 'jdbc' in s.lower():
-                deps.append('Database: Oracle/JDBC')
+            if "pfc" in s.lower():
+                deps.append("PowerBuilder Foundation Classes (PFC)")
+            if "pbni" in s.lower():
+                deps.append("PowerBuilder Native Interface (PBNI)")
+            if ".dll" in s.lower():
+                deps.append(f"DLL: {s}")
+            if "oracle" in s.lower() or "jdbc" in s.lower():
+                deps.append("Database: Oracle/JDBC")
 
         return list(set(deps))
 
@@ -236,8 +251,19 @@ class PBDMetadataExtractor:
         """
         db_objects = []
 
-        db_keywords = ['select', 'insert', 'update', 'delete', 'from', 'where',
-                      'table', 'column', 'cursor', 'procedure', 'trigger']
+        db_keywords = [
+            "select",
+            "insert",
+            "update",
+            "delete",
+            "from",
+            "where",
+            "table",
+            "column",
+            "cursor",
+            "procedure",
+            "trigger",
+        ]
 
         for s in self.strings:
             s_lower = s.lower()
@@ -255,8 +281,20 @@ class PBDMetadataExtractor:
         """
         ui_controls = []
 
-        ui_types = ['button', 'text', 'edit', 'list', 'combo', 'check',
-                   'radio', 'tree', 'grid', 'tab', 'menu', 'window']
+        ui_types = [
+            "button",
+            "text",
+            "edit",
+            "list",
+            "combo",
+            "check",
+            "radio",
+            "tree",
+            "grid",
+            "tab",
+            "menu",
+            "window",
+        ]
 
         for s in self.strings:
             s_lower = s.lower()
@@ -275,9 +313,20 @@ class PBDMetadataExtractor:
         logic = []
 
         # Business terms for dental clinic
-        business_terms = ['patient', 'appointment', 'invoice', 'payment',
-                         'treatment', 'prescription', 'insurance', 'claim',
-                         'doctor', 'dentist', 'schedule', 'billing']
+        business_terms = [
+            "patient",
+            "appointment",
+            "invoice",
+            "payment",
+            "treatment",
+            "prescription",
+            "insurance",
+            "claim",
+            "doctor",
+            "dentist",
+            "schedule",
+            "billing",
+        ]
 
         for s in self.strings:
             s_lower = s.lower()
@@ -286,6 +335,7 @@ class PBDMetadataExtractor:
                     logic.append(s)
 
         return list(set(logic))[:30]  # Limit to first 30
+
 
 def main():
     """Main entry point."""
@@ -305,40 +355,41 @@ def main():
     metadata = extractor.extract()
 
     # Display summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Metadata Extraction: {metadata['file']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total objects found: {metadata['total_objects']}")
 
     print("\nObject types:")
-    for obj_type, count in metadata['object_types'].items():
+    for obj_type, count in metadata["object_types"].items():
         print(f"  {obj_type}: {count}")
 
-    if metadata['dependencies']:
+    if metadata["dependencies"]:
         print("\nDependencies:")
-        for dep in metadata['dependencies']:
+        for dep in metadata["dependencies"]:
             print(f"  - {dep}")
 
-    if metadata['database_objects']:
+    if metadata["database_objects"]:
         print(f"\nDatabase objects found: {len(metadata['database_objects'])}")
-        for obj in metadata['database_objects'][:5]:
+        for obj in metadata["database_objects"][:5]:
             print(f"  - {obj[:80]}")
 
-    if metadata['ui_controls']:
+    if metadata["ui_controls"]:
         print(f"\nUI controls found: {len(metadata['ui_controls'])}")
-        for ctrl in metadata['ui_controls'][:10]:
+        for ctrl in metadata["ui_controls"][:10]:
             print(f"  - {ctrl}")
 
-    if metadata['business_logic']:
+    if metadata["business_logic"]:
         print(f"\nBusiness logic elements: {len(metadata['business_logic'])}")
-        for logic in metadata['business_logic'][:10]:
+        for logic in metadata["business_logic"][:10]:
             print(f"  - {logic}")
 
     # Save to JSON if requested
     if output_file:
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(metadata, f, indent=2)
         print(f"\nMetadata saved to: {output_file}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

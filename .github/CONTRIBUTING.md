@@ -209,15 +209,15 @@ class TestExtractor:
         """Test extraction of valid PBL file."""
         extractor = Extractor()
         result = extractor.extract(sample_pbl_file)
-        
+
         assert result.success
         assert len(result.objects) > 0
         assert result.version == "PB2019R3"
-    
+
     def test_extract_invalid_file_raises_error(self):
         """Test that invalid file raises appropriate error."""
         extractor = Extractor()
-        
+
         with pytest.raises(InvalidFileError):
             extractor.extract("not_a_pbl_file.txt")
 ```
@@ -232,14 +232,14 @@ class TestExtractor:
 ```python
 def extract_objects(file_path: Path, output_dir: Path) -> List[ExtractedObject]:
     """Extract PowerBuilder objects from a PBL/PBD file.
-    
+
     Args:
         file_path: Path to the PBL/PBD file.
         output_dir: Directory to write extracted objects.
-    
+
     Returns:
         List of extracted PowerBuilder objects.
-    
+
     Raises:
         FileNotFoundError: If the input file doesn't exist.
         ExtractionError: If extraction fails.

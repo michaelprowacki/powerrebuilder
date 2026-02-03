@@ -4,10 +4,9 @@ This module generates modern application code from semantic models.
 Supports multiple target languages and frameworks.
 """
 
-import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from src_new._core import (
     ApplicationModel,
@@ -21,10 +20,9 @@ from src_new._core import (
 )
 from src_new._patterns import (
     BaseCoordinator,
-    BaseTransformer,
     FileHandler,
 )
-from .templates import get_template, render_template
+from .templates import render_template
 
 logger = logging.getLogger(__name__)
 
@@ -165,32 +163,42 @@ class FlutterGenerator(BaseCodeGenerator):
         files = []
 
         # Generate main screen file
-        screen_code = render_template("flutter/screen.dart", {
-            "class_name": self._to_pascal_case(obj.name),
-            "title": obj.name,
-            "properties": obj.properties,
-            "methods": obj.methods,
-            "events": obj.events,
-        })
+        screen_code = render_template(
+            "flutter/screen.dart",
+            {
+                "class_name": self._to_pascal_case(obj.name),
+                "title": obj.name,
+                "properties": obj.properties,
+                "methods": obj.methods,
+                "events": obj.events,
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"lib/screens/{obj.name}.dart",
-            content=screen_code,
-            language=TargetLanguage.FLUTTER,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"lib/screens/{obj.name}.dart",
+                content=screen_code,
+                language=TargetLanguage.FLUTTER,
+            )
+        )
 
         # Generate state management if needed
         if obj.properties:
-            state_code = render_template("flutter/state.dart", {
-                "class_name": self._to_pascal_case(obj.name),
-                "properties": obj.properties,
-            })
+            state_code = render_template(
+                "flutter/state.dart",
+                {
+                    "class_name": self._to_pascal_case(obj.name),
+                    "properties": obj.properties,
+                },
+            )
 
-            files.append(GeneratedFile(
-                path=f"lib/providers/{obj.name}_provider.dart",
-                content=state_code,
-                language=TargetLanguage.FLUTTER,
-            ))
+            files.append(
+                GeneratedFile(
+                    path=f"lib/providers/{obj.name}_provider.dart",
+                    content=state_code,
+                    language=TargetLanguage.FLUTTER,
+                )
+            )
 
         return files
 
@@ -206,29 +214,39 @@ class FlutterGenerator(BaseCodeGenerator):
         files = []
 
         # Generate data grid widget
-        grid_code = render_template("flutter/data_grid.dart", {
-            "class_name": self._to_pascal_case(obj.name),
-            "columns": self._extract_columns(obj),
-            "properties": obj.properties,
-        })
+        grid_code = render_template(
+            "flutter/data_grid.dart",
+            {
+                "class_name": self._to_pascal_case(obj.name),
+                "columns": self._extract_columns(obj),
+                "properties": obj.properties,
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"lib/widgets/{obj.name}_grid.dart",
-            content=grid_code,
-            language=TargetLanguage.FLUTTER,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"lib/widgets/{obj.name}_grid.dart",
+                content=grid_code,
+                language=TargetLanguage.FLUTTER,
+            )
+        )
 
         # Generate data model
-        model_code = render_template("flutter/model.dart", {
-            "class_name": self._to_pascal_case(obj.name),
-            "properties": obj.properties,
-        })
+        model_code = render_template(
+            "flutter/model.dart",
+            {
+                "class_name": self._to_pascal_case(obj.name),
+                "properties": obj.properties,
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"lib/models/{obj.name}.dart",
-            content=model_code,
-            language=TargetLanguage.FLUTTER,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"lib/models/{obj.name}.dart",
+                content=model_code,
+                language=TargetLanguage.FLUTTER,
+            )
+        )
 
         return files
 
@@ -244,30 +262,44 @@ class FlutterGenerator(BaseCodeGenerator):
         files = []
 
         # Generate pubspec.yaml
-        pubspec = render_template("flutter/pubspec.yaml", {
-            "name": model.name.lower(),
-            "version": model.version,
-            "dependencies": self._get_flutter_dependencies(),
-        })
+        pubspec = render_template(
+            "flutter/pubspec.yaml",
+            {
+                "name": model.name.lower(),
+                "version": model.version,
+                "dependencies": self._get_flutter_dependencies(),
+            },
+        )
 
-        files.append(GeneratedFile(
-            path="pubspec.yaml",
-            content=pubspec,
-            language=TargetLanguage.FLUTTER,
-            file_type="config",
-        ))
+        files.append(
+            GeneratedFile(
+                path="pubspec.yaml",
+                content=pubspec,
+                language=TargetLanguage.FLUTTER,
+                file_type="config",
+            )
+        )
 
         # Generate main.dart
-        main_code = render_template("flutter/main.dart", {
-            "app_name": model.name,
-            "screens": [obj for obj in model.objects.values() if obj.type == ObjectType.WINDOW],
-        })
+        main_code = render_template(
+            "flutter/main.dart",
+            {
+                "app_name": model.name,
+                "screens": [
+                    obj
+                    for obj in model.objects.values()
+                    if obj.type == ObjectType.WINDOW
+                ],
+            },
+        )
 
-        files.append(GeneratedFile(
-            path="lib/main.dart",
-            content=main_code,
-            language=TargetLanguage.FLUTTER,
-        ))
+        files.append(
+            GeneratedFile(
+                path="lib/main.dart",
+                content=main_code,
+                language=TargetLanguage.FLUTTER,
+            )
+        )
 
         return files
 
@@ -296,11 +328,13 @@ class FlutterGenerator(BaseCodeGenerator):
         columns = []
         for prop in obj.properties:
             if "column" in prop.name.lower():
-                columns.append({
-                    "name": prop.name,
-                    "type": prop.type,
-                    "label": prop.name.replace("_", " ").title(),
-                })
+                columns.append(
+                    {
+                        "name": prop.name,
+                        "type": prop.type,
+                        "label": prop.name.replace("_", " ").title(),
+                    }
+                )
         return columns
 
     def _get_flutter_dependencies(self) -> Dict[str, str]:
@@ -337,18 +371,23 @@ class PythonGenerator(BaseCodeGenerator):
         files = []
 
         # Generate class file
-        class_code = render_template("python/class.py", {
-            "class_name": self._to_class_name(obj.name),
-            "properties": obj.properties,
-            "methods": obj.methods,
-            "parent": obj.parent,
-        })
+        class_code = render_template(
+            "python/class.py",
+            {
+                "class_name": self._to_class_name(obj.name),
+                "properties": obj.properties,
+                "methods": obj.methods,
+                "parent": obj.parent,
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"src/windows/{obj.name}.py",
-            content=class_code,
-            language=TargetLanguage.PYTHON,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"src/windows/{obj.name}.py",
+                content=class_code,
+                language=TargetLanguage.PYTHON,
+            )
+        )
 
         return files
 
@@ -364,29 +403,39 @@ class PythonGenerator(BaseCodeGenerator):
         files = []
 
         # Generate SQLModel/Pydantic model
-        model_code = render_template("python/model.py", {
-            "class_name": self._to_class_name(obj.name),
-            "properties": obj.properties,
-            "table_name": obj.name.lower(),
-        })
+        model_code = render_template(
+            "python/model.py",
+            {
+                "class_name": self._to_class_name(obj.name),
+                "properties": obj.properties,
+                "table_name": obj.name.lower(),
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"src/models/{obj.name}.py",
-            content=model_code,
-            language=TargetLanguage.PYTHON,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"src/models/{obj.name}.py",
+                content=model_code,
+                language=TargetLanguage.PYTHON,
+            )
+        )
 
         # Generate repository
-        repo_code = render_template("python/repository.py", {
-            "model_name": self._to_class_name(obj.name),
-            "model_import": f"models.{obj.name}",
-        })
+        repo_code = render_template(
+            "python/repository.py",
+            {
+                "model_name": self._to_class_name(obj.name),
+                "model_import": f"models.{obj.name}",
+            },
+        )
 
-        files.append(GeneratedFile(
-            path=f"src/repositories/{obj.name}_repository.py",
-            content=repo_code,
-            language=TargetLanguage.PYTHON,
-        ))
+        files.append(
+            GeneratedFile(
+                path=f"src/repositories/{obj.name}_repository.py",
+                content=repo_code,
+                language=TargetLanguage.PYTHON,
+            )
+        )
 
         return files
 
@@ -402,30 +451,40 @@ class PythonGenerator(BaseCodeGenerator):
         files = []
 
         # Generate pyproject.toml
-        pyproject = render_template("python/pyproject.toml", {
-            "name": model.name.lower(),
-            "version": model.version,
-            "dependencies": self._get_python_dependencies(),
-        })
+        pyproject = render_template(
+            "python/pyproject.toml",
+            {
+                "name": model.name.lower(),
+                "version": model.version,
+                "dependencies": self._get_python_dependencies(),
+            },
+        )
 
-        files.append(GeneratedFile(
-            path="pyproject.toml",
-            content=pyproject,
-            language=TargetLanguage.PYTHON,
-            file_type="config",
-        ))
+        files.append(
+            GeneratedFile(
+                path="pyproject.toml",
+                content=pyproject,
+                language=TargetLanguage.PYTHON,
+                file_type="config",
+            )
+        )
 
         # Generate main.py
-        main_code = render_template("python/main.py", {
-            "app_name": model.name,
-            "models": [obj for obj in model.objects.values()],
-        })
+        main_code = render_template(
+            "python/main.py",
+            {
+                "app_name": model.name,
+                "models": [obj for obj in model.objects.values()],
+            },
+        )
 
-        files.append(GeneratedFile(
-            path="src/main.py",
-            content=main_code,
-            language=TargetLanguage.PYTHON,
-        ))
+        files.append(
+            GeneratedFile(
+                path="src/main.py",
+                content=main_code,
+                language=TargetLanguage.PYTHON,
+            )
+        )
 
         return files
 
@@ -466,7 +525,9 @@ class GenerateCoordinator(BaseCoordinator):
     Generates modern application code from semantic models.
     """
 
-    def __init__(self, *args, target: TargetLanguage = TargetLanguage.FLUTTER, **kwargs):
+    def __init__(
+        self, *args, target: TargetLanguage = TargetLanguage.FLUTTER, **kwargs
+    ):
         """Initialize coordinator.
 
         Args:
@@ -488,21 +549,27 @@ class GenerateCoordinator(BaseCoordinator):
             return PythonGenerator(self.target)
         elif self.target == TargetLanguage.TYPESCRIPT:
             from .typescript import TypeScriptGenerator
+
             return TypeScriptGenerator()
         elif self.target == TargetLanguage.REACT:
             from .react import ReactGenerator
+
             return ReactGenerator()
         elif self.target == TargetLanguage.TAURI:
             from .tauri import TauriGenerator
+
             return TauriGenerator(self.input_path, self.output_path)
         elif self.target == TargetLanguage.DIOXUS:
             from .rust_dioxus import DioxusGenerator as RustDioxusGenerator
+
             return RustDioxusGenerator(self.input_path, self.output_path)
         elif self.target == TargetLanguage.VUE:
             from .vue import VueGenerator
+
             return VueGenerator()
         elif self.target == TargetLanguage.SVELTE:
             from .svelte import SvelteGenerator
+
             return SvelteGenerator()
         else:
             # Default to Flutter
@@ -622,19 +689,23 @@ class GenerateCoordinator(BaseCoordinator):
 
         # Load properties
         for prop_data in data.get("properties", []):
-            obj.properties.append(Property(
-                name=prop_data["name"],
-                type=prop_data["type"],
-                access=prop_data.get("access", "public"),
-                default_value=prop_data.get("default_value"),
-            ))
+            obj.properties.append(
+                Property(
+                    name=prop_data["name"],
+                    type=prop_data["type"],
+                    access=prop_data.get("access", "public"),
+                    default_value=prop_data.get("default_value"),
+                )
+            )
 
         # Load methods
         for method_data in data.get("methods", []):
-            obj.methods.append(Method(
-                name=method_data["name"],
-                return_type=method_data.get("return_type"),
-                access=method_data.get("access", "public"),
-            ))
+            obj.methods.append(
+                Method(
+                    name=method_data["name"],
+                    return_type=method_data.get("return_type"),
+                    access=method_data.get("access", "public"),
+                )
+            )
 
         return obj

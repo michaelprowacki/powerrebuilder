@@ -30,6 +30,7 @@ PathLike = Union[str, Path]
 @dataclass
 class CoordinatorResult:
     """Standard result from any coordinator."""
+
     success: bool
     stage: str
     input_path: str
@@ -164,7 +165,9 @@ class BaseCoordinator(
                     self._result.files_failed += 1
                     error_msg = f"Error processing {file_path}: {e}"
                     self._result.errors.append(error_msg)
-                    self.handle_error(e, str(file_path), recoverable=True, reraise=False)
+                    self.handle_error(
+                        e, str(file_path), recoverable=True, reraise=False
+                    )
 
             # Step 5: Complete and calculate metrics
             self.complete_task("main")
@@ -181,7 +184,9 @@ class BaseCoordinator(
             self._result.success = False
             self._result.errors.append(str(e))
             self.fail_task("main", str(e))
-            self.handle_error(e, f"{self.stage_name} process", recoverable=False, reraise=True)
+            self.handle_error(
+                e, f"{self.stage_name} process", recoverable=False, reraise=True
+            )
 
         return self._result
 

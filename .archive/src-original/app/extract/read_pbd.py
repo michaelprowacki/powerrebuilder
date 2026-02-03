@@ -7,18 +7,17 @@ Following Scott Wlaschin's FDM principles.
 
 import struct
 from typing import List, Tuple, Optional
-from src_new.domain.powerbuilder.library import (
-    PBLHeader, PBLEntry, PBDBlock, PBObjectType
-)
-from src_new.shared.result import Result, Success, Failure
+from src_new.domain.powerbuilder.library import PBLHeader, PBLEntry, PBObjectType
 
 
 # ============================================================================
 # EXTRACTION ERRORS
 # ============================================================================
 
+
 class ExtractionError:
     """Error during extraction."""
+
     def __init__(self, entry_name: str, message: str, offset: Optional[int] = None):
         self.entry_name = entry_name
         self.message = message
@@ -32,6 +31,7 @@ class ExtractionError:
 
 class InvalidLibraryFormat(Exception):
     """Invalid library format exception."""
+
     pass
 
 
@@ -63,17 +63,14 @@ def parse_hdr_header(data: bytes) -> PBLHeader:
         entry_count = 0
     else:
         # Read entry count from ENT* section
-        ent_data = data[ent_offset + 4:ent_offset + 8]
+        ent_data = data[ent_offset + 4 : ent_offset + 8]
         if len(ent_data) == 4:
-            entry_count = struct.unpack('<I', ent_data)[0]
+            entry_count = struct.unpack("<I", ent_data)[0]
         else:
             entry_count = 0
 
     return PBLHeader(
-        signature=HDR_SIGNATURE,
-        version=version,
-        entry_count=entry_count,
-        format='PBD'
+        signature=HDR_SIGNATURE, version=version, entry_count=entry_count, format="PBD"
     )
 
 
@@ -94,10 +91,9 @@ def extract_hdr_objects(data: bytes) -> Tuple[List[PBLEntry], List[ExtractionErr
     # Find ENT* section
     ent_offset = data.find(ENT_SIGNATURE)
     if ent_offset == -1:
-        errors.append(ExtractionError(
-            entry_name="<entries>",
-            message="No ENT* section found"
-        ))
+        errors.append(
+            ExtractionError(entry_name="<entries>", message="No ENT* section found")
+        )
         return entries, errors
 
     # Find DAT* sections
@@ -112,11 +108,11 @@ def extract_hdr_objects(data: bytes) -> Tuple[List[PBLEntry], List[ExtractionErr
             if entry:
                 entries.append(entry)
         except Exception as e:
-            errors.append(ExtractionError(
-                entry_name=f"DAT@{dat_offset}",
-                message=str(e),
-                offset=dat_offset
-            ))
+            errors.append(
+                ExtractionError(
+                    entry_name=f"DAT@{dat_offset}", message=str(e), offset=dat_offset
+                )
+            )
 
         dat_offset += 4  # Move past current DAT* marker
 
@@ -135,17 +131,17 @@ def extract_dat_entry(data: bytes, offset: int) -> Optional[PBLEntry]:
     pos = offset + 4
 
     # Read section length
-    length_bytes = data[pos:pos + 4]
+    length_bytes = data[pos : pos + 4]
     if len(length_bytes) < 4:
         return None
-    section_length = struct.unpack('<I', length_bytes)[0]
+    section_length = struct.unpack("<I", length_bytes)[0]
     pos += 4
 
     # Extract metadata and object data
     if pos + section_length > len(data):
         return None
 
-    section_data = data[pos:pos + section_length]
+    section_data = data[pos : pos + section_length]
 
     # Parse object metadata from section
     # This is simplified - real format is more complex
@@ -157,19 +153,21 @@ def extract_dat_entry(data: bytes, offset: int) -> Optional[PBLEntry]:
             object_type=object_type,
             size=len(object_data),
             offset=offset,
-            data=object_data
+            data=object_data,
         )
 
     return None
 
 
-def parse_dat_metadata(section_data: bytes) -> Tuple[Optional[str], PBObjectType, bytes]:
+def parse_dat_metadata(
+    section_data: bytes,
+) -> Tuple[Optional[str], PBObjectType, bytes]:
     """Parse metadata from DAT* section data.
 
     Extracts object name, type, and actual data.
     """
     if len(section_data) < 100:
-        return None, PBObjectType.GLOBAL, b''
+        return None, PBObjectType.GLOBAL, b""
 
     # Try to extract strings (UTF-16LE encoded)
     strings = extract_unicode_strings(section_data)
@@ -215,7 +213,7 @@ def extract_unicode_strings(data: bytes) -> List[str]:
 
             if string_bytes:
                 try:
-                    decoded = string_bytes.decode('utf-16le')
+                    decoded = string_bytes.decode("utf-16le")
                     if decoded.isprintable() and len(decoded) > 2:
                         strings.append(decoded)
                 except UnicodeDecodeError:
@@ -237,25 +235,27 @@ def detect_object_type(data: bytes) -> PBObjectType:
     data_lower = data.lower()
 
     # Check for type indicators
-    if b'window' in data_lower:
+    if b"window" in data_lower:
         return PBObjectType.WINDOW
-    elif b'datawindow' in data_lower:
+    elif b"datawindow" in data_lower:
         return PBObjectType.DATAWINDOW
-    elif b'menu' in data_lower:
+    elif b"menu" in data_lower:
         return PBObjectType.MENU
-    elif b'function' in data_lower:
+    elif b"function" in data_lower:
         return PBObjectType.FUNCTION
-    elif b'user_object' in data_lower or b'userobject' in data_lower:
+    elif b"user_object" in data_lower or b"userobject" in data_lower:
         return PBObjectType.USEROBJECT
-    elif b'application' in data_lower:
+    elif b"application" in data_lower:
         return PBObjectType.APPLICATION
-    elif b'structure' in data_lower:
+    elif b"structure" in data_lower:
         return PBObjectType.STRUCTURE
     else:
         return PBObjectType.GLOBAL
 
 
-def parse_dat_metadata(section_data: bytes) -> Tuple[Optional[str], str, Optional[bytes]]:
+def parse_dat_metadata(
+    section_data: bytes,
+) -> Tuple[Optional[str], str, Optional[bytes]]:
     """Parse metadata from DAT* section data.
 
     Returns: (name, object_type, object_data)
@@ -268,19 +268,21 @@ def parse_dat_metadata(section_data: bytes) -> Tuple[Optional[str], str, Optiona
     text_start = 0
     for i in range(min(16, len(section_data) - 4)):
         # Look for UTF-16LE pattern: printable ASCII followed by 0x00
-        if (i + 3 < len(section_data) and
-            section_data[i+1] == 0 and
-            section_data[i+3] == 0 and
-            0x20 <= section_data[i] <= 0x7F):  # Printable ASCII range
+        if (
+            i + 3 < len(section_data)
+            and section_data[i + 1] == 0
+            and section_data[i + 3] == 0
+            and 0x20 <= section_data[i] <= 0x7F
+        ):  # Printable ASCII range
             text_start = i
             break
 
     # If no UTF-16LE pattern found, try to skip common header sizes
     if text_start == 0:
         # Common header sizes are 2, 4, or 6 bytes
-        if len(section_data) > 6 and section_data[6:7] != b'\x00':
+        if len(section_data) > 6 and section_data[6:7] != b"\x00":
             text_start = 6
-        elif len(section_data) > 4 and section_data[4:5] != b'\x00':
+        elif len(section_data) > 4 and section_data[4:5] != b"\x00":
             text_start = 4
         elif len(section_data) > 2:
             text_start = 2
@@ -289,23 +291,30 @@ def parse_dat_metadata(section_data: bytes) -> Tuple[Optional[str], str, Optiona
     name_data = section_data[text_start:]
 
     # Find end of name (double null for UTF-16 or single null)
-    name_end = name_data.find(b'\x00\x00')
+    name_end = name_data.find(b"\x00\x00")
     if name_end == -1:
-        name_end = name_data.find(b'\x00')
+        name_end = name_data.find(b"\x00")
     if name_end == -1:
         name_end = min(256, len(name_data))
 
-    name_bytes = name_data[:name_end + (2 if name_end > 0 and name_data[name_end:name_end+2] == b'\x00\x00' else 1)]
+    name_bytes = name_data[
+        : name_end
+        + (
+            2
+            if name_end > 0 and name_data[name_end : name_end + 2] == b"\x00\x00"
+            else 1
+        )
+    ]
 
     try:
         # Check if it's UTF-16LE (every other byte is 0x00 for ASCII chars)
-        if len(name_bytes) > 1 and b'\x00' in name_bytes[1::2]:
-            name = name_bytes.decode('utf-16-le', errors='ignore').strip('\x00').strip()
+        if len(name_bytes) > 1 and b"\x00" in name_bytes[1::2]:
+            name = name_bytes.decode("utf-16-le", errors="ignore").strip("\x00").strip()
         else:
-            name = name_bytes.decode('ascii', errors='ignore').strip('\x00').strip()
+            name = name_bytes.decode("ascii", errors="ignore").strip("\x00").strip()
 
         # Clean up name - remove non-printable chars
-        name = ''.join(c for c in name if c.isprintable() or c in ' _-.')
+        name = "".join(c for c in name if c.isprintable() or c in " _-.")
 
         if not name:
             name = f"object_{text_start:02x}_{hash(section_data) & 0xFFFFFF:06x}"
@@ -314,15 +323,17 @@ def parse_dat_metadata(section_data: bytes) -> Tuple[Optional[str], str, Optiona
 
     # Rest is object data (after name and some padding)
     data_start = text_start + len(name_bytes) + 2  # Skip name and padding
-    object_data = section_data[data_start:] if data_start < len(section_data) else section_data
+    object_data = (
+        section_data[data_start:] if data_start < len(section_data) else section_data
+    )
 
     # Determine type from data patterns
     object_type = "unknown"
-    if b'datawindow' in object_data[:100].lower():
+    if b"datawindow" in object_data[:100].lower():
         object_type = PBObjectType.DATAWINDOW.value
-    elif b'window' in object_data[:100].lower():
+    elif b"window" in object_data[:100].lower():
         object_type = PBObjectType.WINDOW.value
-    elif b'function' in object_data[:100].lower():
+    elif b"function" in object_data[:100].lower():
         object_type = PBObjectType.FUNCTION.value
 
     return name, object_type, object_data

@@ -63,7 +63,7 @@ SHARED: "shared"
 # Common type system
 TYPE_NAME.2: "INTEGER" | "REAL" | "CHAR" | "STRING" | "BOOLEAN" | "VOID"
            | "integer" | "string" | "boolean" | "date" | "decimal" | "void"
-           | "long" | "real" | "transaction" | "blob" | "datetime" 
+           | "long" | "real" | "transaction" | "blob" | "datetime"
            | "time" | "any" | "powerobject"
 BOOLEAN.2: "true" | "false"
 
@@ -74,14 +74,14 @@ OR: "or"
 # Common rules for expressions and statements
 expression: term ((PLUS | MINUS) term)*
 term: factor (("*" | "/" | DIV | MOD) factor)*
-factor: ("+" | "-") factor 
+factor: ("+" | "-") factor
       | power
 power: atom (POWER factor)*
-atom: IDENTIFIER 
-    | STRING 
-    | INT 
-    | BOOLEAN 
-    | DATE_LIT 
+atom: IDENTIFIER
+    | STRING
+    | INT
+    | BOOLEAN
+    | DATE_LIT
     | TIME_LIT
     | function_call
     | array_access
@@ -132,4 +132,4 @@ array_value: "{" value_list "}"
 value_list: value ("," value)*
 
 %ignore WS
-%ignore COMMENT 
+%ignore COMMENT

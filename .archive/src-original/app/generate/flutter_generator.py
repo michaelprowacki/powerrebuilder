@@ -1,7 +1,7 @@
 """Flutter generator with FFI support and cross-architecture portability."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from pathlib import Path
 
 from src_new._core.result import Result, Success, Failure
@@ -26,8 +26,11 @@ class FlutterGeneratorConfig:
 
     def __post_init__(self):
         if self.target_platforms is None:
-            object.__setattr__(self, 'target_platforms',
-                             ['ios', 'android', 'windows', 'macos', 'linux'])
+            object.__setattr__(
+                self,
+                "target_platforms",
+                ["ios", "android", "windows", "macos", "linux"],
+            )
 
 
 class FlutterGenerator:
@@ -38,17 +41,19 @@ class FlutterGenerator:
         self.portable_gen = PortablePatternGenerator()
 
     def generate_main_dart(
-        self,
-        config: FlutterGeneratorConfig,
-        domain_model: Dict[str, Any]
+        self, config: FlutterGeneratorConfig, domain_model: Dict[str, Any]
     ) -> Result[str, str]:
         """Generate main.dart with FFI integration."""
         try:
-            ffi_imports = """
+            ffi_imports = (
+                """
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'ffi/bindings.dart';
-import 'ffi/runtime.dart';""" if config.enable_ffi else ""
+import 'ffi/runtime.dart';"""
+                if config.enable_ffi
+                else ""
+            )
 
             content = f"""import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -60,14 +65,14 @@ import 'ui/app_theme.dart';
 import 'ui/screens/home_screen.dart';
 
 void main() {{
-  {'initializeFFI();' if config.enable_ffi else ''}
+  {"initializeFFI();" if config.enable_ffi else ""}
   runApp(MyApp());
 }}
 
-{'void initializeFFI() {' if config.enable_ffi else ''}
-{'  final runtime = PowerBuilderRuntime();' if config.enable_ffi else ''}
-{'  print("FFI initialized on ${runtime.platformInfo.archName}");' if config.enable_ffi else ''}
-{'}' if config.enable_ffi else ''}
+{"void initializeFFI() {" if config.enable_ffi else ""}
+{"  final runtime = PowerBuilderRuntime();" if config.enable_ffi else ""}
+{'  print("FFI initialized on ${runtime.platformInfo.archName}");' if config.enable_ffi else ""}
+{"}" if config.enable_ffi else ""}
 
 class MyApp extends StatelessWidget {{
   @override
@@ -75,7 +80,7 @@ class MyApp extends StatelessWidget {{
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => StateManager()),
-        {'Provider.value(value: PowerBuilderRuntime()),' if config.enable_ffi else ''}
+        {"Provider.value(value: PowerBuilderRuntime())," if config.enable_ffi else ""}
       ],
       child: MaterialApp(
         title: '{config.app_title}',
@@ -93,9 +98,7 @@ class MyApp extends StatelessWidget {{
             return Failure(f"Failed to generate main.dart: {e}")
 
     def generate_ffi_runtime(
-        self,
-        config: FlutterGeneratorConfig,
-        domain_model: Dict[str, Any]
+        self, config: FlutterGeneratorConfig, domain_model: Dict[str, Any]
     ) -> Result[str, str]:
         """Generate FFI runtime wrapper for Flutter."""
         try:
@@ -249,7 +252,7 @@ class FFIException implements Exception {{
   }""")
 
         # Window operations if needed
-        if any('window' in str(obj).lower() for obj in domain_model.get('objects', [])):
+        if any("window" in str(obj).lower() for obj in domain_model.get("objects", [])):
             operations.append("""
   WindowHandle createWindow({
     int parentId = 0,
@@ -277,7 +280,9 @@ class FFIException implements Exception {{
   }""")
 
         # DataWindow operations if present
-        if any('datawindow' in str(obj).lower() for obj in domain_model.get('objects', [])):
+        if any(
+            "datawindow" in str(obj).lower() for obj in domain_model.get("objects", [])
+        ):
             operations.append("""
   Future<DataWindowContent> loadDataWindow(String name) async {
     return executeWithErrorHandling(() async {
@@ -291,7 +296,7 @@ class FFIException implements Exception {{
     }, 'loadDataWindow');
   }""")
 
-        return '\n'.join(operations)
+        return "\n".join(operations)
 
     def _generate_data_converters(self) -> str:
         """Generate cross-architecture data converters."""
@@ -359,13 +364,11 @@ class FFIException implements Exception {{
   }"""
 
     def generate_domain_models(
-        self,
-        config: FlutterGeneratorConfig,
-        domain_model: Dict[str, Any]
+        self, config: FlutterGeneratorConfig, domain_model: Dict[str, Any]
     ) -> Result[str, str]:
         """Generate domain models with FFI support."""
         try:
-            content = f"""import 'dart:typed_data';
+            content = """import 'dart:typed_data';
 import 'package:json_annotation/json_annotation.dart';
 
 import '../ffi/bindings.dart';
@@ -377,20 +380,20 @@ part 'domain.g.dart';
 // ============================================================================
 
 @JsonSerializable()
-class Entity {{
+class Entity {
   final int id;
   final String name;
   final EntityData data;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Entity({{
+  Entity({
     required this.id,
     required this.name,
     required this.data,
     required this.createdAt,
     required this.updatedAt,
-  }});
+  });
 
   factory Entity.fromJson(Map<String, dynamic> json) =>
       _$EntityFromJson(json);
@@ -398,7 +401,7 @@ class Entity {{
   Map<String, dynamic> toJson() => _$EntityToJson(this);
 
   // Binary serialization for FFI
-  factory Entity.fromBinary(PortableBinaryReader reader) {{
+  factory Entity.fromBinary(PortableBinaryReader reader) {
     final id = reader.readUint32LE();
     final nameLength = reader.readUint16LE();
     final nameBytes = reader.readBytes(nameLength);
@@ -420,9 +423,9 @@ class Entity {{
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
-  }}
+  }
 
-  void writeToBinary(PortableBinaryWriter writer) {{
+  void writeToBinary(PortableBinaryWriter writer) {
     writer.writeUint32LE(id);
     writer.writeString(name);
 
@@ -435,25 +438,25 @@ class Entity {{
 
     writer.writeUint64LE(createdAt.millisecondsSinceEpoch);
     writer.writeUint64LE(updatedAt.millisecondsSinceEpoch);
-  }}
-}}
+  }
+}
 
 @JsonSerializable()
-class EntityData {{
+class EntityData {
   final Map<String, dynamic> fields;
 
-  EntityData({{required this.fields}});
+  EntityData({required this.fields});
 
   factory EntityData.fromJson(Map<String, dynamic> json) =>
       _$EntityDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$EntityDataToJson(this);
 
-  factory EntityData.fromBinary(PortableBinaryReader reader) {{
+  factory EntityData.fromBinary(PortableBinaryReader reader) {
     final fieldCount = reader.readUint16LE();
-    final fields = <String, dynamic>{{}};
+    final fields = <String, dynamic>{};
 
-    for (int i = 0; i < fieldCount; i++) {{
+    for (int i = 0; i < fieldCount; i++) {
       final keyLength = reader.readUint16LE();
       final keyBytes = reader.readBytes(keyLength);
       final key = String.fromCharCodes(keyBytes);
@@ -462,22 +465,22 @@ class EntityData {{
       final value = _readFieldValue(reader, valueType);
 
       fields[key] = value;
-    }}
+    }
 
     return EntityData(fields: fields);
-  }}
+  }
 
-  void writeToBinary(PortableBinaryWriter writer) {{
+  void writeToBinary(PortableBinaryWriter writer) {
     writer.writeUint16LE(fields.length);
 
-    for (final entry in fields.entries) {{
+    for (final entry in fields.entries) {
       writer.writeString(entry.key);
       _writeFieldValue(writer, entry.value);
-    }}
-  }}
+    }
+  }
 
-  static dynamic _readFieldValue(PortableBinaryReader reader, int type) {{
-    switch (type) {{
+  static dynamic _readFieldValue(PortableBinaryReader reader, int type) {
+    switch (type) {
       case 0: // String
         final length = reader.readUint16LE();
         final bytes = reader.readBytes(length);
@@ -490,52 +493,52 @@ class EntityData {{
         return reader.readUint8() != 0;
       default:
         throw Exception('Unknown field type: $type');
-    }}
-  }}
+    }
+  }
 
-  static void _writeFieldValue(PortableBinaryWriter writer, dynamic value) {{
-    if (value is String) {{
+  static void _writeFieldValue(PortableBinaryWriter writer, dynamic value) {
+    if (value is String) {
       writer.writeUint8(0);
       writer.writeString(value);
-    }} else if (value is int) {{
+    } else if (value is int) {
       writer.writeUint8(1);
       writer.writeInt32LE(value);
-    }} else if (value is double) {{
+    } else if (value is double) {
       writer.writeUint8(2);
       writer.writeUint64LE((value * 10000).toInt());
-    }} else if (value is bool) {{
+    } else if (value is bool) {
       writer.writeUint8(3);
       writer.writeUint8(value ? 1 : 0);
-    }} else {{
-      throw Exception('Unsupported field type: ${{value.runtimeType}}');
-    }}
-  }}
-}}
+    } else {
+      throw Exception('Unsupported field type: ${value.runtimeType}');
+    }
+  }
+}
 
 // ============================================================================
 // QUERY PARAMETERS
 // ============================================================================
 
 @JsonSerializable()
-class QueryParams {{
+class QueryParams {
   final String? filter;
   final String? orderBy;
   final int? limit;
   final int? offset;
 
-  QueryParams({{
+  QueryParams({
     this.filter,
     this.orderBy,
     this.limit,
     this.offset,
-  }});
+  });
 
   factory QueryParams.fromJson(Map<String, dynamic> json) =>
       _$QueryParamsFromJson(json);
 
   Map<String, dynamic> toJson() => _$QueryParamsToJson(this);
 
-  void writeToBinary(PortableBinaryWriter writer) {{
+  void writeToBinary(PortableBinaryWriter writer) {
     writer.writeUint8(filter != null ? 1 : 0);
     if (filter != null) writer.writeString(filter!);
 
@@ -547,14 +550,14 @@ class QueryParams {{
 
     writer.writeUint8(offset != null ? 1 : 0);
     if (offset != null) writer.writeUint32LE(offset!);
-  }}
-}}
+  }
+}
 
 // ============================================================================
 // WINDOW HANDLES (for FFI)
 // ============================================================================
 
-class WindowHandle {{
+class WindowHandle {
   final Pointer<PBWindowHandle> pointer;
 
   WindowHandle.fromPointer(this.pointer);
@@ -565,7 +568,7 @@ class WindowHandle {{
   int get y => pointer.ref.y;
   int get width => pointer.ref.width;
   int get height => pointer.ref.height;
-}}
+}
 """
             return Success(content)
 
@@ -573,9 +576,7 @@ class WindowHandle {{
             return Failure(f"Failed to generate domain models: {e}")
 
     def generate_state_manager(
-        self,
-        config: FlutterGeneratorConfig,
-        domain_model: Dict[str, Any]
+        self, config: FlutterGeneratorConfig, domain_model: Dict[str, Any]
     ) -> Result[str, str]:
         """Generate state management with FFI integration."""
         try:
@@ -583,11 +584,11 @@ class WindowHandle {{
 import 'dart:async';
 
 import '../models/domain.dart';
-{'import "../ffi/runtime.dart";' if config.enable_ffi else ''}
+{'import "../ffi/runtime.dart";' if config.enable_ffi else ""}
 
 /// Functional state management with effects
 class StateManager extends ChangeNotifier {{
-  {'final FFIRuntime _ffi = FFIRuntime();' if config.enable_ffi else ''}
+  {"final FFIRuntime _ffi = FFIRuntime();" if config.enable_ffi else ""}
 
   // State
   final List<Entity> _entities = [];
@@ -660,7 +661,11 @@ class StateManager extends ChangeNotifier {{
 
     return [
       Effect.addToState(entity),
-      {'Effect.persistToFFI(entity),' if config.enable_ffi else 'Effect.persistToLocal(entity),'}
+      {
+                "Effect.persistToFFI(entity),"
+                if config.enable_ffi
+                else "Effect.persistToLocal(entity),"
+            }
       Effect.log('Created entity ${{entity.id}}'),
     ];
   }}
@@ -682,7 +687,11 @@ class StateManager extends ChangeNotifier {{
 
     return [
       Effect.updateInState(index, updatedEntity),
-      {'Effect.persistToFFI(updatedEntity),' if config.enable_ffi else 'Effect.persistToLocal(updatedEntity),'}
+      {
+                "Effect.persistToFFI(updatedEntity),"
+                if config.enable_ffi
+                else "Effect.persistToLocal(updatedEntity),"
+            }
       Effect.log('Updated entity $id'),
     ];
   }}
@@ -695,14 +704,22 @@ class StateManager extends ChangeNotifier {{
 
     return [
       Effect.removeFromState(index),
-      {'Effect.deleteFromFFI(id),' if config.enable_ffi else 'Effect.deleteFromLocal(id),'}
+      {
+                "Effect.deleteFromFFI(id),"
+                if config.enable_ffi
+                else "Effect.deleteFromLocal(id),"
+            }
       Effect.log('Deleted entity $id'),
     ];
   }}
 
   Future<List<Effect>> _handleQuery(QueryParams params) async {{
     return [
-      {'Effect.queryFromFFI(params),' if config.enable_ffi else 'Effect.queryFromLocal(params),'}
+      {
+                "Effect.queryFromFFI(params),"
+                if config.enable_ffi
+                else "Effect.queryFromLocal(params),"
+            }
       Effect.log('Querying with params: ${{params.toJson()}}'),
     ];
   }}
@@ -735,16 +752,40 @@ class StateManager extends ChangeNotifier {{
         notifyListeners();
         break;
 
-      {'case EffectType.persistToFFI:' if config.enable_ffi else 'case EffectType.persistToLocal:'}
-        {'await _ffi.saveEntity(effect.data as Entity);' if config.enable_ffi else 'await _saveToLocal(effect.data as Entity);'}
+      {
+                "case EffectType.persistToFFI:"
+                if config.enable_ffi
+                else "case EffectType.persistToLocal:"
+            }
+        {
+                "await _ffi.saveEntity(effect.data as Entity);"
+                if config.enable_ffi
+                else "await _saveToLocal(effect.data as Entity);"
+            }
         break;
 
-      {'case EffectType.deleteFromFFI:' if config.enable_ffi else 'case EffectType.deleteFromLocal:'}
-        {'// FFI delete handled by native code' if config.enable_ffi else 'await _deleteFromLocal(effect.data as int);'}
+      {
+                "case EffectType.deleteFromFFI:"
+                if config.enable_ffi
+                else "case EffectType.deleteFromLocal:"
+            }
+        {
+                "// FFI delete handled by native code"
+                if config.enable_ffi
+                else "await _deleteFromLocal(effect.data as int);"
+            }
         break;
 
-      {'case EffectType.queryFromFFI:' if config.enable_ffi else 'case EffectType.queryFromLocal:'}
-        {'final results = await _ffi.queryEntities(effect.data as QueryParams);' if config.enable_ffi else 'final results = await _queryFromLocal(effect.data as QueryParams);'}
+      {
+                "case EffectType.queryFromFFI:"
+                if config.enable_ffi
+                else "case EffectType.queryFromLocal:"
+            }
+        {
+                "final results = await _ffi.queryEntities(effect.data as QueryParams);"
+                if config.enable_ffi
+                else "final results = await _queryFromLocal(effect.data as QueryParams);"
+            }
         _entities.clear();
         _entities.addAll(results);
         notifyListeners();
@@ -781,7 +822,10 @@ class StateManager extends ChangeNotifier {{
     _error = null;
   }}
 
-  {'' if config.enable_ffi else '''
+  {
+                ""
+                if config.enable_ffi
+                else '''
   // Local storage implementations (when FFI is disabled)
   Future<void> _saveToLocal(Entity entity) async {
     // Implementation for local storage
@@ -794,7 +838,8 @@ class StateManager extends ChangeNotifier {{
   Future<List<Entity>> _queryFromLocal(QueryParams params) async {
     // Implementation for local storage
     return [];
-  }'''}
+  }'''
+            }
 }}
 
 // ============================================================================
@@ -838,9 +883,9 @@ enum EffectType {{
   addToState,
   updateInState,
   removeFromState,
-  {'persistToFFI,' if config.enable_ffi else 'persistToLocal,'}
-  {'deleteFromFFI,' if config.enable_ffi else 'deleteFromLocal,'}
-  {'queryFromFFI,' if config.enable_ffi else 'queryFromLocal,'}
+  {"persistToFFI," if config.enable_ffi else "persistToLocal,"}
+  {"deleteFromFFI," if config.enable_ffi else "deleteFromLocal,"}
+  {"queryFromFFI," if config.enable_ffi else "queryFromLocal,"}
   log,
   error,
   none,
@@ -861,14 +906,38 @@ class Effect {{
   factory Effect.removeFromState(int index) =>
       Effect._(EffectType.removeFromState, index);
 
-  {'factory Effect.persistToFFI(Entity entity) =>' if config.enable_ffi else 'factory Effect.persistToLocal(Entity entity) =>'}
-      {'Effect._(EffectType.persistToFFI, entity);' if config.enable_ffi else 'Effect._(EffectType.persistToLocal, entity);'}
+  {
+                "factory Effect.persistToFFI(Entity entity) =>"
+                if config.enable_ffi
+                else "factory Effect.persistToLocal(Entity entity) =>"
+            }
+      {
+                "Effect._(EffectType.persistToFFI, entity);"
+                if config.enable_ffi
+                else "Effect._(EffectType.persistToLocal, entity);"
+            }
 
-  {'factory Effect.deleteFromFFI(int id) =>' if config.enable_ffi else 'factory Effect.deleteFromLocal(int id) =>'}
-      {'Effect._(EffectType.deleteFromFFI, id);' if config.enable_ffi else 'Effect._(EffectType.deleteFromLocal, id);'}
+  {
+                "factory Effect.deleteFromFFI(int id) =>"
+                if config.enable_ffi
+                else "factory Effect.deleteFromLocal(int id) =>"
+            }
+      {
+                "Effect._(EffectType.deleteFromFFI, id);"
+                if config.enable_ffi
+                else "Effect._(EffectType.deleteFromLocal, id);"
+            }
 
-  {'factory Effect.queryFromFFI(QueryParams params) =>' if config.enable_ffi else 'factory Effect.queryFromLocal(QueryParams params) =>'}
-      {'Effect._(EffectType.queryFromFFI, params);' if config.enable_ffi else 'Effect._(EffectType.queryFromLocal, params);'}
+  {
+                "factory Effect.queryFromFFI(QueryParams params) =>"
+                if config.enable_ffi
+                else "factory Effect.queryFromLocal(QueryParams params) =>"
+            }
+      {
+                "Effect._(EffectType.queryFromFFI, params);"
+                if config.enable_ffi
+                else "Effect._(EffectType.queryFromLocal, params);"
+            }
 
   factory Effect.log(String message) => Effect._(EffectType.log, message);
 
@@ -893,7 +962,7 @@ class StateUpdate {{
         self,
         config: FlutterGeneratorConfig,
         domain_model: Dict[str, Any],
-        output_dir: Path
+        output_dir: Path,
     ) -> Result[Dict[str, Path], str]:
         """Generate complete Flutter application with FFI support."""
         output_dir = Path(output_dir)
@@ -924,7 +993,9 @@ class StateUpdate {{
                 enable_ffi=True,
             )
 
-            bindings_result = self.portable_gen.generate_flutter_ffi_bindings(portable_config)
+            bindings_result = self.portable_gen.generate_flutter_ffi_bindings(
+                portable_config
+            )
             if bindings_result.is_success:
                 bindings_path = ffi_dir / "bindings.dart"
                 bindings_path.write_text(bindings_result.value)
@@ -959,9 +1030,13 @@ class StateUpdate {{
 
         # Generate Rust FFI library if needed
         if config.use_rust_backend:
-            rust_result = self._generate_rust_ffi_library(config, domain_model, output_dir)
+            rust_result = self._generate_rust_ffi_library(
+                config, domain_model, output_dir
+            )
             if rust_result.is_failure:
-                return Failure(f"Failed to generate Rust FFI library: {rust_result.error}")
+                return Failure(
+                    f"Failed to generate Rust FFI library: {rust_result.error}"
+                )
             generated_files.update(rust_result.value)
 
         # Generate pubspec.yaml
@@ -976,7 +1051,7 @@ class StateUpdate {{
         self,
         config: FlutterGeneratorConfig,
         domain_model: Dict[str, Any],
-        output_dir: Path
+        output_dir: Path,
     ) -> Result[Dict[str, Path], str]:
         """Generate Rust FFI library for Flutter."""
         rust_dir = output_dir / "rust"
@@ -993,9 +1068,7 @@ class StateUpdate {{
         )
 
         portable_result = self.portable_gen.generate_all_portable_files(
-            portable_config,
-            rust_dir,
-            domain_model
+            portable_config, rust_dir, domain_model
         )
 
         if portable_result.is_failure:
@@ -1007,9 +1080,13 @@ class StateUpdate {{
 
     def _generate_pubspec(self, config: FlutterGeneratorConfig) -> str:
         """Generate pubspec.yaml."""
-        ffi_deps = """
+        ffi_deps = (
+            """
   ffi: ^2.1.0
-  flutter_rust_bridge: ^2.0.0""" if config.enable_ffi else ""
+  flutter_rust_bridge: ^2.0.0"""
+            if config.enable_ffi
+            else ""
+        )
 
         return f"""name: {config.app_name}
 description: {config.app_title}

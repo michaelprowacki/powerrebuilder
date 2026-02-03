@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any, Union
 
-from src_new._core.result import Result, Success, Failure, EventfulResult
+from src_new._core.result import Result, Success, Failure
 
 
 # ============================================================================
@@ -20,9 +20,11 @@ from src_new._core.result import Result, Success, Failure, EventfulResult
 # MODEL DOMAIN ERRORS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ModelBuildError:
     """Error building semantic model."""
+
     error_type: str
     message: str
     node_type: Optional[str] = None
@@ -40,6 +42,7 @@ class ModelBuildError:
 @dataclass(frozen=True)
 class SymbolResolutionError:
     """Error resolving symbols."""
+
     symbol_name: str
     reason: str
     scope: Optional[str] = None
@@ -53,8 +56,10 @@ class SymbolResolutionError:
 # MODEL DOMAIN VALUE TYPES
 # ============================================================================
 
+
 class NodeType(str, Enum):
     """AST node types needed for model building."""
+
     MODULE = "MODULE"
     CLASS = "CLASS"
     FUNCTION = "FUNCTION"
@@ -83,22 +88,24 @@ class NodeType(str, Enum):
 @dataclass(frozen=True)
 class ASTNode:
     """Abstract syntax tree node (immutable)."""
+
     type: NodeType
     value: Any = None
     children: tuple = field(default_factory=tuple)
     metadata: dict = field(default_factory=dict)
 
-    def get_child(self, index: int) -> Optional['ASTNode']:
+    def get_child(self, index: int) -> Optional["ASTNode"]:
         """Get child node by index."""
         return self.children[index] if index < len(self.children) else None
 
-    def find_children(self, node_type: NodeType) -> List['ASTNode']:
+    def find_children(self, node_type: NodeType) -> List["ASTNode"]:
         """Find all children of a specific type."""
         return [c for c in self.children if c.type == node_type]
 
 
 class SymbolType(str, Enum):
     """Symbol types in semantic model."""
+
     CLASS = "CLASS"
     FUNCTION = "FUNCTION"
     VARIABLE = "VARIABLE"
@@ -111,6 +118,7 @@ class SymbolType(str, Enum):
 @dataclass(frozen=True)
 class Symbol:
     """Symbol in semantic model (immutable)."""
+
     name: str
     type: SymbolType
     data_type: Optional[str] = None
@@ -121,6 +129,7 @@ class Symbol:
 @dataclass(frozen=True)
 class SemanticModel:
     """Semantic model of PowerBuilder code."""
+
     symbols: Dict[str, Symbol]
     dependencies: List[str]
     entry_points: List[str]
@@ -130,6 +139,7 @@ class SemanticModel:
 @dataclass(frozen=True)
 class ModelSuccess:
     """Successful model building result."""
+
     model: SemanticModel
     warnings: List[str]
 
@@ -137,6 +147,7 @@ class ModelSuccess:
 @dataclass(frozen=True)
 class ModelFailed:
     """Failed model building result."""
+
     error: str
     partial_model: Optional[SemanticModel] = None
 
@@ -152,10 +163,9 @@ def build_model(ast: ASTNode) -> Result[SemanticModel, ModelBuildError]:
     No exceptions - total function handling all cases.
     """
     if not ast:
-        return Failure(ModelBuildError(
-            error_type="InvalidInput",
-            message="Empty AST provided"
-        ))
+        return Failure(
+            ModelBuildError(error_type="InvalidInput", message="Empty AST provided")
+        )
 
     # Extract symbols
     symbols_result = extract_symbols(ast)
@@ -177,7 +187,7 @@ def build_model(ast: ASTNode) -> Result[SemanticModel, ModelBuildError]:
         symbols=symbols_result.value(),
         dependencies=dependencies_result.value(),
         entry_points=entry_points_result.value(),
-        metadata={'ast_type': ast.type.value}
+        metadata={"ast_type": ast.type.value},
     )
 
     # Validate model
@@ -199,45 +209,45 @@ def extract_symbols(ast: ASTNode) -> Result[Dict[str, Symbol], ModelBuildError]:
     for node in walk_ast(ast):
         if node.type == NodeType.FUNCTION:
             if not node.value:
-                return Failure(ModelBuildError(
-                    error_type="InvalidNode",
-                    message="Function node missing name",
-                    node_type=node.type.value
-                ))
+                return Failure(
+                    ModelBuildError(
+                        error_type="InvalidNode",
+                        message="Function node missing name",
+                        node_type=node.type.value,
+                    )
+                )
 
             symbol = Symbol(
                 name=node.value,
                 type=SymbolType.FUNCTION,
-                metadata={'line': node.metadata.get('line')}
+                metadata={"line": node.metadata.get("line")},
             )
             symbols[node.value] = symbol
 
         elif node.type == NodeType.ASSIGNMENT:
             if not node.value:
-                return Failure(ModelBuildError(
-                    error_type="InvalidNode",
-                    message="Assignment node missing variable name",
-                    node_type=node.type.value
-                ))
+                return Failure(
+                    ModelBuildError(
+                        error_type="InvalidNode",
+                        message="Assignment node missing variable name",
+                        node_type=node.type.value,
+                    )
+                )
 
-            symbol = Symbol(
-                name=node.value,
-                type=SymbolType.VARIABLE
-            )
+            symbol = Symbol(name=node.value, type=SymbolType.VARIABLE)
             symbols[node.value] = symbol
 
         elif node.type == NodeType.CLASS:
             if not node.value:
-                return Failure(ModelBuildError(
-                    error_type="InvalidNode",
-                    message="Class node missing name",
-                    node_type=node.type.value
-                ))
+                return Failure(
+                    ModelBuildError(
+                        error_type="InvalidNode",
+                        message="Class node missing name",
+                        node_type=node.type.value,
+                    )
+                )
 
-            symbol = Symbol(
-                name=node.value,
-                type=SymbolType.CLASS
-            )
+            symbol = Symbol(name=node.value, type=SymbolType.CLASS)
             symbols[node.value] = symbol
 
     return Success(symbols)
@@ -254,8 +264,8 @@ def find_dependencies(ast: ASTNode) -> Result[List[str], ModelBuildError]:
     for node in walk_ast(ast):
         if node.type == NodeType.CALL:
             # Check if it's a system call that implies dependency
-            if node.value and node.value.startswith('import_'):
-                dep = node.value.replace('import_', '')
+            if node.value and node.value.startswith("import_"):
+                dep = node.value.replace("import_", "")
                 if dep not in dependencies:
                     dependencies.append(dep)
 
@@ -273,7 +283,7 @@ def find_entry_points(symbols: Dict[str, Symbol]) -> Result[List[str], ModelBuil
     for name, symbol in symbols.items():
         if symbol.type == SymbolType.FUNCTION:
             # Check for main/entry function patterns
-            if name.lower() in ['main', 'start', 'init', 'constructor']:
+            if name.lower() in ["main", "start", "init", "constructor"]:
                 entry_points.append(name)
 
     return Success(entry_points)
@@ -289,10 +299,12 @@ def validate_model(model: SemanticModel) -> Result[List[str], ModelBuildError]:
 
     # Critical validations that would cause failure
     if not model.symbols:
-        return Failure(ModelBuildError(
-            error_type="InvalidModel",
-            message="Model has no symbols - cannot proceed"
-        ))
+        return Failure(
+            ModelBuildError(
+                error_type="InvalidModel",
+                message="Model has no symbols - cannot proceed",
+            )
+        )
 
     # Non-critical warnings
     if len(model.symbols) > 100:

@@ -7,12 +7,10 @@ to avoid reprocessing unchanged files.
 import hashlib
 import json
 import logging
-import os
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FileState:
     """State of a file for change tracking."""
+
     path: str
     size: int
     modified_time: float
@@ -32,6 +31,7 @@ class FileState:
 @dataclass
 class ChangeSet:
     """Set of file changes."""
+
     added: List[Path] = field(default_factory=list)
     modified: List[Path] = field(default_factory=list)
     deleted: List[Path] = field(default_factory=list)
@@ -114,8 +114,7 @@ class IncrementalTracker:
                     for path, state in self.file_states.items()
                 },
                 "dependencies": {
-                    path: list(deps)
-                    for path, deps in self.dependency_graph.items()
+                    path: list(deps) for path, deps in self.dependency_graph.items()
                 },
                 "timestamp": time.time(),
             }
@@ -234,8 +233,10 @@ class IncrementalTracker:
 
                     if self.track_file(file_path):
                         path_str = str(file_path)
-                        if path_str in self.file_states and \
-                           self.file_states[path_str].last_processed:
+                        if (
+                            path_str in self.file_states
+                            and self.file_states[path_str].last_processed
+                        ):
                             changes.modified.append(file_path)
                         else:
                             changes.added.append(file_path)
@@ -371,11 +372,11 @@ class IncrementalTracker:
         """
         total_files = len(self.file_states)
         processed_files = sum(
-            1 for state in self.file_states.values()
-            if state.last_processed is not None
+            1 for state in self.file_states.values() if state.last_processed is not None
         )
         failed_files = sum(
-            1 for state in self.file_states.values()
+            1
+            for state in self.file_states.values()
             if state.processing_result == "failed"
         )
 

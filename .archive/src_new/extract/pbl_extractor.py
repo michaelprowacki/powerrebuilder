@@ -7,10 +7,9 @@ This module provides more advanced extraction capabilities including:
 """
 
 import logging
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from src_new._core import ExtractedObject, ObjectType
 from src_new._patterns import BinaryReader
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RecoveryResult:
     """Result from recovery attempt."""
+
     success: bool
     recovered_data: Optional[bytes] = None
     error: Optional[str] = None
@@ -40,9 +40,7 @@ class AdvancedPBLExtractor:
         self.extracted_objects = []
 
     def extract_with_recovery(
-        self,
-        file_path: Path,
-        output_dir: Path
+        self, file_path: Path, output_dir: Path
     ) -> List[ExtractedObject]:
         """Extract with corruption recovery.
 
@@ -172,8 +170,8 @@ class AdvancedPBLExtractor:
         # P-code function signatures (simplified)
         # Real implementation would use more sophisticated patterns
         pcode_signatures = [
-            b"\x50\x43\x4F\x44",  # "PCOD"
-            b"\x46\x55\x4E\x43",  # "FUNC"
+            b"\x50\x43\x4f\x44",  # "PCOD"
+            b"\x46\x55\x4e\x43",  # "FUNC"
         ]
 
         for sig in pcode_signatures:
@@ -186,7 +184,7 @@ class AdvancedPBLExtractor:
                 # Try to extract function block
                 # Simplified - real implementation would parse structure
                 block_size = min(4096, len(data) - idx)
-                functions.append(data[idx:idx + block_size])
+                functions.append(data[idx : idx + block_size])
                 offset = idx + 1
 
         return functions
@@ -311,11 +309,7 @@ class AdvancedPBLExtractor:
         except:
             return ObjectType.USER_OBJECT
 
-    def _validate_recovered_data(
-        self,
-        data: bytes,
-        expected_type: ObjectType
-    ) -> bool:
+    def _validate_recovered_data(self, data: bytes, expected_type: ObjectType) -> bool:
         """Validate recovered data.
 
         Args:
@@ -349,10 +343,7 @@ class AdvancedPBLExtractor:
 class ResourceExtractor:
     """Extract embedded resources from PBL files."""
 
-    def extract_resources(
-        self,
-        file_path: Path
-    ) -> Dict[str, List[bytes]]:
+    def extract_resources(self, file_path: Path) -> Dict[str, List[bytes]]:
         """Extract embedded resources like images.
 
         Args:
@@ -405,9 +396,9 @@ class ResourceExtractor:
 
             # Read BMP header to get size
             if idx + 14 <= len(data):
-                size = int.from_bytes(data[idx + 2:idx + 6], "little")
+                size = int.from_bytes(data[idx + 2 : idx + 6], "little")
                 if 54 <= size <= 10 * 1024 * 1024:  # Reasonable size
-                    bmp_data = data[idx:idx + size]
+                    bmp_data = data[idx : idx + size]
                     if self._validate_bitmap(bmp_data):
                         bitmaps.append(bmp_data)
 
@@ -436,12 +427,12 @@ class ResourceExtractor:
             # Simple extraction - real implementation would parse ICO structure
             if idx + 22 <= len(data):
                 # Read basic header
-                icon_count = int.from_bytes(data[idx + 4:idx + 6], "little")
+                icon_count = int.from_bytes(data[idx + 4 : idx + 6], "little")
                 if 1 <= icon_count <= 20:  # Reasonable icon count
                     # Estimate size (simplified)
                     size = 22 + (icon_count * 16) + 1024
                     size = min(size, len(data) - idx)
-                    icons.append(data[idx:idx + size])
+                    icons.append(data[idx : idx + size])
 
             offset = idx + 1
 
@@ -466,11 +457,11 @@ class ResourceExtractor:
                 break
 
             # Check for WAVE format
-            if idx + 12 <= len(data) and data[idx + 8:idx + 12] == b"WAVE":
+            if idx + 12 <= len(data) and data[idx + 8 : idx + 12] == b"WAVE":
                 # Read size from RIFF header
-                size = int.from_bytes(data[idx + 4:idx + 8], "little") + 8
+                size = int.from_bytes(data[idx + 4 : idx + 8], "little") + 8
                 if size <= 50 * 1024 * 1024:  # Max 50MB
-                    wav_data = data[idx:idx + size]
+                    wav_data = data[idx : idx + size]
                     sounds.append(wav_data)
 
             offset = idx + 1

@@ -40,6 +40,7 @@ try:
         ChangeSet,
         FileState,
     )
+
     _new_patterns = True
 except ImportError:
     _new_patterns = False
@@ -76,28 +77,30 @@ __all__ = [
 ]
 
 if _new_patterns:
-    __all__.extend([
-        # Caching
-        "Cache",
-        "MemoryCache",
-        "DiskCache",
-        "HybridCache",
-        # Parallel processing
-        "ParallelExecutor",
-        "ExecutorType",
-        "BatchResult",
-        # Progress tracking
-        "RichProgress",
-        "ProgressTracker",
-        "RichLogger",
-        # Observability
-        "ObservabilityManager",
-        "PipelineTracer",
-        "MetricsCollector",
-        "initialize_observability",
-        # Incremental processing
-        "IncrementalTracker",
-        "IncrementalProcessor",
-        "ChangeSet",
-        "FileState",
-    ])
+    __all__.extend(
+        [
+            # Caching
+            "Cache",
+            "MemoryCache",
+            "DiskCache",
+            "HybridCache",
+            # Parallel processing
+            "ParallelExecutor",
+            "ExecutorType",
+            "BatchResult",
+            # Progress tracking
+            "RichProgress",
+            "ProgressTracker",
+            "RichLogger",
+            # Observability
+            "ObservabilityManager",
+            "PipelineTracer",
+            "MetricsCollector",
+            "initialize_observability",
+            # Incremental processing
+            "IncrementalTracker",
+            "IncrementalProcessor",
+            "ChangeSet",
+            "FileState",
+        ]
+    )

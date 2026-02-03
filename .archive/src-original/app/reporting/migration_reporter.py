@@ -12,24 +12,35 @@ import json
 
 # Import event types from all domains
 from src_new.domain.extract.extract_pbl import (
-    ObjectExtracted, ExtractionFailed, HeaderParsed, LibraryValidated,
-    ExtractionEvent
-)
-from src_new.domain.extract.pbd_format import (
-    BlockParsed, InvalidBlockFound, StructureValidated
+    ObjectExtracted,
+    ExtractionFailed,
+    HeaderParsed,
+    LibraryValidated,
+    ExtractionEvent,
 )
 from src_new.domain.decompile.decompile_pcode import DecompileResult
 from src_new.domain.parse.parse_datawindow import (
-    DataWindowParsed, ColumnParsed, ControlParsed, SQLExtracted, DataWindowWarning,
-    DataWindowEvent
+    DataWindowParsed,
+    ColumnParsed,
+    ControlParsed,
+    SQLExtracted,
+    DataWindowWarning,
+    DataWindowEvent,
 )
 from src_new.domain.model.symbol_resolution import (
-    SymbolResolved, UnresolvedReference, CircularDependency, DependencyFound,
-    SymbolTableBuilt, SymbolEvent
+    SymbolResolved,
+    UnresolvedReference,
+    CircularDependency,
+    DependencyFound,
+    SymbolTableBuilt,
+    SymbolEvent,
 )
 from src_new.domain.generate.generate_flutter import (
-    WidgetGenerated, DartFileGenerated, ProjectConfigured, GenerationWarning,
-    FlutterEvent
+    WidgetGenerated,
+    DartFileGenerated,
+    ProjectConfigured,
+    GenerationWarning,
+    FlutterEvent,
 )
 
 
@@ -37,8 +48,10 @@ from src_new.domain.generate.generate_flutter import (
 # REPORT TYPES
 # ============================================================================
 
+
 class ReportFormat(str, Enum):
     """Output formats for migration reports."""
+
     JSON = "json"
     HTML = "html"
     MARKDOWN = "markdown"
@@ -47,6 +60,7 @@ class ReportFormat(str, Enum):
 
 class SeverityLevel(str, Enum):
     """Severity levels for issues."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -56,6 +70,7 @@ class SeverityLevel(str, Enum):
 @dataclass(frozen=True)
 class MigrationIssue:
     """A single issue found during migration."""
+
     stage: str
     component: str
     description: str
@@ -68,6 +83,7 @@ class MigrationIssue:
 @dataclass
 class StageMetrics:
     """Metrics for a single pipeline stage."""
+
     stage_name: str
     files_processed: int = 0
     objects_extracted: int = 0
@@ -81,6 +97,7 @@ class StageMetrics:
 @dataclass
 class MigrationReport:
     """Complete migration report."""
+
     project_name: str
     timestamp: datetime
     source_path: str
@@ -95,6 +112,7 @@ class MigrationReport:
 # ============================================================================
 # REPORT GENERATOR
 # ============================================================================
+
 
 class MigrationReporter:
     """Generates migration reports from pipeline events."""
@@ -114,43 +132,54 @@ class MigrationReporter:
         metrics = self.stages["extract"]
 
         for event in events:
-            self.events.append({
-                'stage': 'extract',
-                'type': type(event).__name__,
-                'data': event.__dict__
-            })
+            self.events.append(
+                {
+                    "stage": "extract",
+                    "type": type(event).__name__,
+                    "data": event.__dict__,
+                }
+            )
 
             if isinstance(event, ObjectExtracted):
                 metrics.objects_extracted += 1
-                metrics.custom_metrics[event.object_type.value] = \
+                metrics.custom_metrics[event.object_type.value] = (
                     metrics.custom_metrics.get(event.object_type.value, 0) + 1
+                )
 
             elif isinstance(event, ExtractionFailed):
                 metrics.errors_count += 1
-                self.issues.append(MigrationIssue(
-                    stage="extract",
-                    component=event.object_name,
-                    description=event.reason,
-                    severity=SeverityLevel.ERROR if not event.recoverable else SeverityLevel.WARNING,
-                    file_path=None,
-                    line_number=None,
-                    suggestion="Check file format and integrity"
-                ))
+                self.issues.append(
+                    MigrationIssue(
+                        stage="extract",
+                        component=event.object_name,
+                        description=event.reason,
+                        severity=SeverityLevel.ERROR
+                        if not event.recoverable
+                        else SeverityLevel.WARNING,
+                        file_path=None,
+                        line_number=None,
+                        suggestion="Check file format and integrity",
+                    )
+                )
 
             elif isinstance(event, LibraryValidated):
-                metrics.custom_metrics['valid_libraries'] = \
-                    metrics.custom_metrics.get('valid_libraries', 0) + (1 if event.is_valid else 0)
+                metrics.custom_metrics["valid_libraries"] = metrics.custom_metrics.get(
+                    "valid_libraries", 0
+                ) + (1 if event.is_valid else 0)
                 if event.issues_found > 0:
                     metrics.warnings_count += event.issues_found
 
             elif isinstance(event, HeaderParsed):
                 metrics.files_processed += 1
-                metrics.custom_metrics['total_entries'] = \
-                    metrics.custom_metrics.get('total_entries', 0) + event.entry_count
+                metrics.custom_metrics["total_entries"] = (
+                    metrics.custom_metrics.get("total_entries", 0) + event.entry_count
+                )
 
         # Calculate success rate
         if metrics.files_processed > 0:
-            metrics.success_rate = (metrics.files_processed - metrics.errors_count) / metrics.files_processed
+            metrics.success_rate = (
+                metrics.files_processed - metrics.errors_count
+            ) / metrics.files_processed
 
     def collect_decompile_events(self, results: List[DecompileResult]) -> None:
         """Collect results from decompilation stage."""
@@ -163,40 +192,50 @@ class MigrationReporter:
             metrics.files_processed += 1
 
             # Record result
-            self.events.append({
-                'stage': 'decompile',
-                'type': 'DecompileResult',
-                'data': {
-                    'success': hasattr(result, 'source'),
-                    'instructions': getattr(result, 'instructions_processed', 0),
-                    'warnings': len(getattr(result, 'warnings', []))
+            self.events.append(
+                {
+                    "stage": "decompile",
+                    "type": "DecompileResult",
+                    "data": {
+                        "success": hasattr(result, "source"),
+                        "instructions": getattr(result, "instructions_processed", 0),
+                        "warnings": len(getattr(result, "warnings", [])),
+                    },
                 }
-            })
+            )
 
-            if hasattr(result, 'source'):  # Success
-                metrics.custom_metrics['instructions_processed'] = \
-                    metrics.custom_metrics.get('instructions_processed', 0) + result.instructions_processed
+            if hasattr(result, "source"):  # Success
+                metrics.custom_metrics["instructions_processed"] = (
+                    metrics.custom_metrics.get("instructions_processed", 0)
+                    + result.instructions_processed
+                )
 
                 for warning in result.warnings:
                     metrics.warnings_count += 1
-                    self.issues.append(MigrationIssue(
-                        stage="decompile",
-                        component="p-code",
-                        description=warning,
-                        severity=SeverityLevel.WARNING
-                    ))
+                    self.issues.append(
+                        MigrationIssue(
+                            stage="decompile",
+                            component="p-code",
+                            description=warning,
+                            severity=SeverityLevel.WARNING,
+                        )
+                    )
             else:  # Failed
                 metrics.errors_count += 1
-                self.issues.append(MigrationIssue(
-                    stage="decompile",
-                    component="p-code",
-                    description=result.error,
-                    severity=SeverityLevel.ERROR
-                ))
+                self.issues.append(
+                    MigrationIssue(
+                        stage="decompile",
+                        component="p-code",
+                        description=result.error,
+                        severity=SeverityLevel.ERROR,
+                    )
+                )
 
         # Calculate success rate
         if metrics.files_processed > 0:
-            metrics.success_rate = (metrics.files_processed - metrics.errors_count) / metrics.files_processed
+            metrics.success_rate = (
+                metrics.files_processed - metrics.errors_count
+            ) / metrics.files_processed
 
     def collect_parse_events(self, events: List[DataWindowEvent]) -> None:
         """Collect events from parsing stage."""
@@ -206,43 +245,49 @@ class MigrationReporter:
         metrics = self.stages["parse"]
 
         for event in events:
-            self.events.append({
-                'stage': 'parse',
-                'type': type(event).__name__,
-                'data': event.__dict__
-            })
+            self.events.append(
+                {"stage": "parse", "type": type(event).__name__, "data": event.__dict__}
+            )
 
             if isinstance(event, DataWindowParsed):
                 metrics.files_processed += 1
-                metrics.custom_metrics['datawindows'] = \
-                    metrics.custom_metrics.get('datawindows', 0) + 1
-                metrics.custom_metrics[f'dw_{event.type}'] = \
-                    metrics.custom_metrics.get(f'dw_{event.type}', 0) + 1
+                metrics.custom_metrics["datawindows"] = (
+                    metrics.custom_metrics.get("datawindows", 0) + 1
+                )
+                metrics.custom_metrics[f"dw_{event.type}"] = (
+                    metrics.custom_metrics.get(f"dw_{event.type}", 0) + 1
+                )
 
             elif isinstance(event, ColumnParsed):
-                metrics.custom_metrics['columns'] = \
-                    metrics.custom_metrics.get('columns', 0) + 1
+                metrics.custom_metrics["columns"] = (
+                    metrics.custom_metrics.get("columns", 0) + 1
+                )
 
             elif isinstance(event, ControlParsed):
-                metrics.custom_metrics['controls'] = \
-                    metrics.custom_metrics.get('controls', 0) + 1
+                metrics.custom_metrics["controls"] = (
+                    metrics.custom_metrics.get("controls", 0) + 1
+                )
 
             elif isinstance(event, SQLExtracted):
-                metrics.custom_metrics['sql_statements'] = \
-                    metrics.custom_metrics.get('sql_statements', 0) + 1
+                metrics.custom_metrics["sql_statements"] = (
+                    metrics.custom_metrics.get("sql_statements", 0) + 1
+                )
                 if event.has_joins:
-                    metrics.custom_metrics['complex_queries'] = \
-                        metrics.custom_metrics.get('complex_queries', 0) + 1
+                    metrics.custom_metrics["complex_queries"] = (
+                        metrics.custom_metrics.get("complex_queries", 0) + 1
+                    )
 
             elif isinstance(event, DataWindowWarning):
                 metrics.warnings_count += 1
-                self.issues.append(MigrationIssue(
-                    stage="parse",
-                    component=event.component,
-                    description=event.issue,
-                    severity=SeverityLevel.WARNING,
-                    line_number=event.line
-                ))
+                self.issues.append(
+                    MigrationIssue(
+                        stage="parse",
+                        component=event.component,
+                        description=event.issue,
+                        severity=SeverityLevel.WARNING,
+                        line_number=event.line,
+                    )
+                )
 
     def collect_model_events(self, events: List[SymbolEvent]) -> None:
         """Collect events from model stage."""
@@ -252,37 +297,44 @@ class MigrationReporter:
         metrics = self.stages["model"]
 
         for event in events:
-            self.events.append({
-                'stage': 'model',
-                'type': type(event).__name__,
-                'data': event.__dict__
-            })
+            self.events.append(
+                {"stage": "model", "type": type(event).__name__, "data": event.__dict__}
+            )
 
             if isinstance(event, SymbolResolved):
-                metrics.custom_metrics['symbols_resolved'] = \
-                    metrics.custom_metrics.get('symbols_resolved', 0) + 1
+                metrics.custom_metrics["symbols_resolved"] = (
+                    metrics.custom_metrics.get("symbols_resolved", 0) + 1
+                )
 
             elif isinstance(event, UnresolvedReference):
                 metrics.warnings_count += 1
-                self.issues.append(MigrationIssue(
-                    stage="model",
-                    component="symbol_resolution",
-                    description=f"Unresolved reference: {event.reference}",
-                    severity=SeverityLevel.WARNING,
-                    file_path=event.from_location,
-                    line_number=event.line_number,
-                    suggestion=f"Possible matches: {', '.join(event.possible_matches)}"
-                ))
+                self.issues.append(
+                    MigrationIssue(
+                        stage="model",
+                        component="symbol_resolution",
+                        description=f"Unresolved reference: {event.reference}",
+                        severity=SeverityLevel.WARNING,
+                        file_path=event.from_location,
+                        line_number=event.line_number,
+                        suggestion=f"Possible matches: {', '.join(event.possible_matches)}",
+                    )
+                )
 
             elif isinstance(event, CircularDependency):
-                severity = SeverityLevel.ERROR if event.severity == "high" else SeverityLevel.WARNING
-                self.issues.append(MigrationIssue(
-                    stage="model",
-                    component="dependency_analysis",
-                    description=f"Circular dependency: {' -> '.join(event.cycle)}",
-                    severity=severity,
-                    suggestion="Refactor to break circular dependency"
-                ))
+                severity = (
+                    SeverityLevel.ERROR
+                    if event.severity == "high"
+                    else SeverityLevel.WARNING
+                )
+                self.issues.append(
+                    MigrationIssue(
+                        stage="model",
+                        component="dependency_analysis",
+                        description=f"Circular dependency: {' -> '.join(event.cycle)}",
+                        severity=severity,
+                        suggestion="Refactor to break circular dependency",
+                    )
+                )
 
             elif isinstance(event, DependencyFound):
                 if event.from_module not in self.dependencies:
@@ -291,8 +343,8 @@ class MigrationReporter:
 
             elif isinstance(event, SymbolTableBuilt):
                 metrics.files_processed += 1
-                metrics.custom_metrics['total_symbols'] = event.total_symbols
-                metrics.custom_metrics['resolution_rate'] = event.resolution_rate
+                metrics.custom_metrics["total_symbols"] = event.total_symbols
+                metrics.custom_metrics["resolution_rate"] = event.resolution_rate
                 metrics.success_rate = event.resolution_rate
 
     def collect_generation_events(self, events: List[FlutterEvent]) -> None:
@@ -303,46 +355,52 @@ class MigrationReporter:
         metrics = self.stages["generate"]
 
         for event in events:
-            self.events.append({
-                'stage': 'generate',
-                'type': type(event).__name__,
-                'data': event.__dict__
-            })
+            self.events.append(
+                {
+                    "stage": "generate",
+                    "type": type(event).__name__,
+                    "data": event.__dict__,
+                }
+            )
 
             if isinstance(event, WidgetGenerated):
-                metrics.custom_metrics['widgets'] = \
-                    metrics.custom_metrics.get('widgets', 0) + 1
-                metrics.custom_metrics['total_loc'] = \
-                    metrics.custom_metrics.get('total_loc', 0) + event.lines_of_code
+                metrics.custom_metrics["widgets"] = (
+                    metrics.custom_metrics.get("widgets", 0) + 1
+                )
+                metrics.custom_metrics["total_loc"] = (
+                    metrics.custom_metrics.get("total_loc", 0) + event.lines_of_code
+                )
 
             elif isinstance(event, DartFileGenerated):
                 metrics.files_processed += 1
-                metrics.custom_metrics[f'{event.file_type}_files'] = \
-                    metrics.custom_metrics.get(f'{event.file_type}_files', 0) + 1
+                metrics.custom_metrics[f"{event.file_type}_files"] = (
+                    metrics.custom_metrics.get(f"{event.file_type}_files", 0) + 1
+                )
 
             elif isinstance(event, ProjectConfigured):
-                metrics.custom_metrics['project_configured'] = True
-                metrics.custom_metrics['total_files'] = event.total_files
-                metrics.custom_metrics['total_widgets'] = event.total_widgets
+                metrics.custom_metrics["project_configured"] = True
+                metrics.custom_metrics["total_files"] = event.total_files
+                metrics.custom_metrics["total_widgets"] = event.total_widgets
 
             elif isinstance(event, GenerationWarning):
                 severity_map = {
-                    'high': SeverityLevel.ERROR,
-                    'medium': SeverityLevel.WARNING,
-                    'low': SeverityLevel.INFO
+                    "high": SeverityLevel.ERROR,
+                    "medium": SeverityLevel.WARNING,
+                    "low": SeverityLevel.INFO,
                 }
-                self.issues.append(MigrationIssue(
-                    stage="generate",
-                    component=event.component,
-                    description=event.issue,
-                    severity=severity_map.get(event.severity, SeverityLevel.WARNING)
-                ))
+                self.issues.append(
+                    MigrationIssue(
+                        stage="generate",
+                        component=event.component,
+                        description=event.issue,
+                        severity=severity_map.get(
+                            event.severity, SeverityLevel.WARNING
+                        ),
+                    )
+                )
 
     def generate_report(
-        self,
-        project_name: str,
-        source_path: str,
-        target_path: str
+        self, project_name: str, source_path: str, target_path: str
     ) -> MigrationReport:
         """Generate complete migration report.
 
@@ -352,20 +410,23 @@ class MigrationReporter:
         total_files = sum(s.files_processed for s in self.stages.values())
         total_errors = sum(s.errors_count for s in self.stages.values())
         total_warnings = sum(s.warnings_count for s in self.stages.values())
-        overall_success_rate = (total_files - total_errors) / total_files if total_files > 0 else 0
+        overall_success_rate = (
+            (total_files - total_errors) / total_files if total_files > 0 else 0
+        )
 
         summary = {
-            'total_files_processed': total_files,
-            'total_errors': total_errors,
-            'total_warnings': total_warnings,
-            'overall_success_rate': overall_success_rate,
-            'critical_issues': len([i for i in self.issues if i.severity == SeverityLevel.CRITICAL]),
-            'stages_completed': len(self.stages),
-            'dependencies_mapped': len(self.dependencies),
-            'circular_dependencies': len([
-                i for i in self.issues
-                if 'circular' in i.description.lower()
-            ])
+            "total_files_processed": total_files,
+            "total_errors": total_errors,
+            "total_warnings": total_warnings,
+            "overall_success_rate": overall_success_rate,
+            "critical_issues": len(
+                [i for i in self.issues if i.severity == SeverityLevel.CRITICAL]
+            ),
+            "stages_completed": len(self.stages),
+            "dependencies_mapped": len(self.dependencies),
+            "circular_dependencies": len(
+                [i for i in self.issues if "circular" in i.description.lower()]
+            ),
         }
 
         return MigrationReport(
@@ -377,7 +438,7 @@ class MigrationReporter:
             issues=self.issues,
             dependencies=self.dependencies,
             summary=summary,
-            events=self.events
+            events=self.events,
         )
 
     def format_report(self, report: MigrationReport, format: ReportFormat) -> str:
@@ -396,37 +457,37 @@ class MigrationReporter:
     def _format_json(self, report: MigrationReport) -> str:
         """Format report as JSON."""
         data = {
-            'project_name': report.project_name,
-            'timestamp': report.timestamp.isoformat(),
-            'source_path': report.source_path,
-            'target_path': report.target_path,
-            'summary': report.summary,
-            'stages': {
+            "project_name": report.project_name,
+            "timestamp": report.timestamp.isoformat(),
+            "source_path": report.source_path,
+            "target_path": report.target_path,
+            "summary": report.summary,
+            "stages": {
                 name: {
-                    'stage_name': metrics.stage_name,
-                    'files_processed': metrics.files_processed,
-                    'objects_extracted': metrics.objects_extracted,
-                    'errors_count': metrics.errors_count,
-                    'warnings_count': metrics.warnings_count,
-                    'success_rate': metrics.success_rate,
-                    'custom_metrics': metrics.custom_metrics
+                    "stage_name": metrics.stage_name,
+                    "files_processed": metrics.files_processed,
+                    "objects_extracted": metrics.objects_extracted,
+                    "errors_count": metrics.errors_count,
+                    "warnings_count": metrics.warnings_count,
+                    "success_rate": metrics.success_rate,
+                    "custom_metrics": metrics.custom_metrics,
                 }
                 for name, metrics in report.stages.items()
             },
-            'issues': [
+            "issues": [
                 {
-                    'stage': issue.stage,
-                    'component': issue.component,
-                    'description': issue.description,
-                    'severity': issue.severity,
-                    'file_path': issue.file_path,
-                    'line_number': issue.line_number,
-                    'suggestion': issue.suggestion
+                    "stage": issue.stage,
+                    "component": issue.component,
+                    "description": issue.description,
+                    "severity": issue.severity,
+                    "file_path": issue.file_path,
+                    "line_number": issue.line_number,
+                    "suggestion": issue.suggestion,
                 }
                 for issue in report.issues
             ],
-            'dependencies': report.dependencies,
-            'events_count': len(report.events)
+            "dependencies": report.dependencies,
+            "events_count": len(report.events),
         }
         return json.dumps(data, indent=2)
 
@@ -436,18 +497,26 @@ class MigrationReporter:
 
         # Header
         lines.append(f"# Migration Report: {report.project_name}")
-        lines.append(f"\n**Generated:** {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(
+            f"\n**Generated:** {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         lines.append(f"**Source:** `{report.source_path}`")
         lines.append(f"**Target:** `{report.target_path}`")
 
         # Summary
         lines.append("\n## Summary")
-        lines.append(f"- **Total Files Processed:** {report.summary['total_files_processed']}")
-        lines.append(f"- **Overall Success Rate:** {report.summary['overall_success_rate']:.1%}")
+        lines.append(
+            f"- **Total Files Processed:** {report.summary['total_files_processed']}"
+        )
+        lines.append(
+            f"- **Overall Success Rate:** {report.summary['overall_success_rate']:.1%}"
+        )
         lines.append(f"- **Total Errors:** {report.summary['total_errors']}")
         lines.append(f"- **Total Warnings:** {report.summary['total_warnings']}")
         lines.append(f"- **Critical Issues:** {report.summary['critical_issues']}")
-        lines.append(f"- **Circular Dependencies:** {report.summary['circular_dependencies']}")
+        lines.append(
+            f"- **Circular Dependencies:** {report.summary['circular_dependencies']}"
+        )
 
         # Stage Metrics
         lines.append("\n## Pipeline Stages")
@@ -471,7 +540,12 @@ class MigrationReporter:
             lines.append("\n## Issues")
 
             # Group by severity
-            for severity in [SeverityLevel.CRITICAL, SeverityLevel.ERROR, SeverityLevel.WARNING, SeverityLevel.INFO]:
+            for severity in [
+                SeverityLevel.CRITICAL,
+                SeverityLevel.ERROR,
+                SeverityLevel.WARNING,
+                SeverityLevel.INFO,
+            ]:
                 issues = [i for i in report.issues if i.severity == severity]
                 if issues:
                     lines.append(f"\n### {severity.value.capitalize()} ({len(issues)})")
@@ -491,7 +565,7 @@ class MigrationReporter:
                 if len(deps) > 5:
                     lines.append(f"  *...and {len(deps) - 5} more*")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _format_html(self, report: MigrationReport) -> str:
         """Format report as HTML."""
@@ -515,14 +589,14 @@ class MigrationReporter:
 </head>
 <body>
     <h1>Migration Report: {report.project_name}</h1>
-    <p>Generated: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Generated: {report.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
 
     <div class="summary">
         <h2>Summary</h2>
-        <div class="metric">Files Processed: <strong>{report.summary['total_files_processed']}</strong></div>
-        <div class="metric">Success Rate: <strong>{report.summary['overall_success_rate']:.1%}</strong></div>
-        <div class="metric error">Errors: <strong>{report.summary['total_errors']}</strong></div>
-        <div class="metric warning">Warnings: <strong>{report.summary['total_warnings']}</strong></div>
+        <div class="metric">Files Processed: <strong>{report.summary["total_files_processed"]}</strong></div>
+        <div class="metric">Success Rate: <strong>{report.summary["overall_success_rate"]:.1%}</strong></div>
+        <div class="metric error">Errors: <strong>{report.summary["total_errors"]}</strong></div>
+        <div class="metric warning">Warnings: <strong>{report.summary["total_warnings"]}</strong></div>
     </div>
 
     <h2>Pipeline Stages</h2>
@@ -563,8 +637,10 @@ class MigrationReporter:
 
         # Data
         for stage_name, metrics in report.stages.items():
-            lines.append(f"{metrics.stage_name},{metrics.files_processed},"
-                        f"{metrics.success_rate:.2f},{metrics.errors_count},"
-                        f"{metrics.warnings_count}")
+            lines.append(
+                f"{metrics.stage_name},{metrics.files_processed},"
+                f"{metrics.success_rate:.2f},{metrics.errors_count},"
+                f"{metrics.warnings_count}"
+            )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)

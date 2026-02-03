@@ -49,19 +49,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Check commit messages
         run: |
           # Get all commits in the PR
           COMMITS=$(git log --format=%s origin/${{ github.base_ref }}..HEAD 2>/dev/null || git log --format=%s HEAD~20..HEAD)
-          
+
           INVALID_COMMITS=""
           while IFS= read -r commit; do
             if ! echo "$commit" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|wip)(\(.+\))?: .+"; then
               INVALID_COMMITS="${INVALID_COMMITS}\n  ❌ $commit"
             fi
           done <<< "$COMMITS"
-          
+
           if [ -n "$INVALID_COMMITS" ]; then
             echo "The following commits don't follow conventional commit format:"
             echo -e "$INVALID_COMMITS"
@@ -70,7 +70,7 @@ jobs:
             echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
             exit 1
           fi
-          
+
           echo "✅ All commit messages follow conventional commit format"
 
   check-files:
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check for large files
         run: |
           # Check for files larger than 1MB
@@ -89,13 +89,13 @@ jobs:
             echo ""
             echo "Consider using Git LFS for large files"
           fi
-      
+
       - name: Check for sensitive files
         run: |
           # Check for potentially sensitive files
           SENSITIVE_PATTERNS=".env|.pem|.key|.crt|.p12|id_rsa|id_dsa|credentials|secret"
           SENSITIVE_FILES=$(find . -type f | grep -E "$SENSITIVE_PATTERNS" | grep -v ".git" || true)
-          
+
           if [ -n "$SENSITIVE_FILES" ]; then
             echo "⚠️ Warning: Potentially sensitive files detected:"
             echo "$SENSITIVE_FILES"
@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Check if CHANGELOG.md was updated
         run: |
           # Check if CHANGELOG.md was modified
@@ -166,16 +166,16 @@ jobs:
     needs: [validate-pr-title, validate-commits, check-files]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "0.5.11"
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.13
-      
+
       - name: Create PR comment
         uses: actions/github-script@v7
         with:
@@ -183,19 +183,19 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const sha = pr.head.sha.substring(0, 7);
-            
+
             // Get changed files
             const { data: files } = await github.rest.pulls.listFiles({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr.number
             });
-            
+
             const pythonFiles = files.filter(f => f.filename.endsWith('.py'));
             const testFiles = files.filter(f => f.filename.includes('test'));
-            
+
             const body = `## PR Validation Report
-            
+
             ### 📋 Summary
             - **Commit SHA**: \`${sha}\`
             - **Files changed**: ${files.length}
@@ -203,37 +203,37 @@ jobs:
             - **Test files**: ${testFiles.length}
             - **Lines added**: +${files.reduce((sum, f) => sum + f.additions, 0)}
             - **Lines removed**: -${files.reduce((sum, f) => sum + f.deletions, 0)}
-            
+
             ### ✅ Checks Passed
             - PR title follows conventional commits
             - Commit messages validated
             - File changes reviewed
-            
+
             ### 📝 Next Steps
             1. Wait for CI checks to complete
             2. Address any review comments
             3. Ensure tests pass
             4. Update documentation if needed
-            
+
             ### 🔗 Quick Links
             - [View CI Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             - [Review Guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
-            
+
             ---
             *This comment is automatically generated and will be updated as the PR changes.*`;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr.number
             });
-            
-            const botComment = comments.find(c => 
-              c.user.type === 'Bot' && 
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' &&
               c.body.includes('PR Validation Report')
             );
-            
+
             if (botComment) {
               // Update existing comment
               await github.rest.issues.updateComment({

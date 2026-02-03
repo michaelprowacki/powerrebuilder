@@ -4,7 +4,7 @@ Pure functions for resolving symbols and building dependency graphs.
 Events track the resolution process for observability.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Set, Union
 from enum import Enum
 
@@ -13,8 +13,10 @@ from enum import Enum
 # SYMBOL TYPES
 # ============================================================================
 
+
 class SymbolType(str, Enum):
     """Types of symbols in PowerBuilder."""
+
     CLASS = "class"
     FUNCTION = "function"
     METHOD = "method"
@@ -27,16 +29,18 @@ class SymbolType(str, Enum):
 
 class ResolutionScope(str, Enum):
     """Scope of symbol resolution."""
-    LOCAL = "local"      # Within same function/method
-    CLASS = "class"      # Within same class
-    MODULE = "module"    # Within same file/module
-    GLOBAL = "global"    # Across entire application
-    IMPORTED = "imported" # From imported module
+
+    LOCAL = "local"  # Within same function/method
+    CLASS = "class"  # Within same class
+    MODULE = "module"  # Within same file/module
+    GLOBAL = "global"  # Across entire application
+    IMPORTED = "imported"  # From imported module
 
 
 @dataclass(frozen=True)
 class Symbol:
     """Resolved symbol information."""
+
     name: str
     type: SymbolType
     scope: ResolutionScope
@@ -48,6 +52,7 @@ class Symbol:
 @dataclass(frozen=True)
 class SymbolReference:
     """Reference to a symbol in code."""
+
     name: str
     location: str  # File/module containing reference
     line_number: int
@@ -57,6 +62,7 @@ class SymbolReference:
 @dataclass(frozen=True)
 class SymbolTable:
     """Collection of resolved symbols."""
+
     symbols: Dict[str, Symbol]
     references: Dict[str, List[SymbolReference]]
     unresolved: List[SymbolReference]
@@ -65,6 +71,7 @@ class SymbolTable:
 @dataclass(frozen=True)
 class DependencyGraph:
     """Graph of module dependencies."""
+
     nodes: Set[str]  # Module names
     edges: Dict[str, Set[str]]  # module -> dependencies
     cycles: List[List[str]]  # Detected circular dependencies
@@ -74,9 +81,11 @@ class DependencyGraph:
 # SYMBOL RESOLUTION EVENTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SymbolResolved:
     """Event emitted when a symbol is successfully resolved."""
+
     symbol_name: str
     resolved_to: str  # Full path to definition
     resolution_scope: ResolutionScope
@@ -86,6 +95,7 @@ class SymbolResolved:
 @dataclass(frozen=True)
 class UnresolvedReference:
     """Event emitted when a reference cannot be resolved."""
+
     reference: str
     from_location: str
     line_number: int
@@ -95,6 +105,7 @@ class UnresolvedReference:
 @dataclass(frozen=True)
 class CircularDependency:
     """Event emitted when circular dependency is detected."""
+
     cycle: List[str]
     severity: str  # "low", "medium", "high"
 
@@ -102,6 +113,7 @@ class CircularDependency:
 @dataclass(frozen=True)
 class DependencyFound:
     """Event emitted when a dependency is discovered."""
+
     from_module: str
     to_module: str
     dependency_type: str  # "import", "inheritance", "reference"
@@ -110,6 +122,7 @@ class DependencyFound:
 @dataclass(frozen=True)
 class SymbolTableBuilt:
     """Event emitted when symbol table is completed."""
+
     total_symbols: int
     resolved_references: int
     unresolved_references: int
@@ -118,8 +131,11 @@ class SymbolTableBuilt:
 
 # Union type for all symbol events
 SymbolEvent = Union[
-    SymbolResolved, UnresolvedReference, CircularDependency,
-    DependencyFound, SymbolTableBuilt
+    SymbolResolved,
+    UnresolvedReference,
+    CircularDependency,
+    DependencyFound,
+    SymbolTableBuilt,
 ]
 
 
@@ -127,9 +143,9 @@ SymbolEvent = Union[
 # SYMBOL RESOLUTION FUNCTIONS
 # ============================================================================
 
+
 def resolve_symbols(
-    references: List[SymbolReference],
-    known_symbols: Dict[str, Symbol]
+    references: List[SymbolReference], known_symbols: Dict[str, Symbol]
 ) -> Tuple[SymbolTable, List[SymbolEvent]]:
     """Resolve symbol references against known symbols.
 
@@ -142,57 +158,61 @@ def resolve_symbols(
     for ref in references:
         # Try to resolve the reference
         symbol = lookup_symbol(ref.name, known_symbols, ref.location)
-        
+
         if symbol:
             # Track resolved reference
             if symbol.name not in resolved_refs:
                 resolved_refs[symbol.name] = []
             resolved_refs[symbol.name].append(ref)
-            
+
             # Emit resolution event
-            events.append(SymbolResolved(
-                symbol_name=ref.name,
-                resolved_to=f"{symbol.defined_in}:{symbol.name}",
-                resolution_scope=symbol.scope,
-                confidence=calculate_confidence(ref, symbol)
-            ))
+            events.append(
+                SymbolResolved(
+                    symbol_name=ref.name,
+                    resolved_to=f"{symbol.defined_in}:{symbol.name}",
+                    resolution_scope=symbol.scope,
+                    confidence=calculate_confidence(ref, symbol),
+                )
+            )
         else:
             # Track unresolved reference
             unresolved.append(ref)
-            
+
             # Find possible matches
             matches = find_similar_symbols(ref.name, known_symbols)
-            
+
             # Emit unresolved event
-            events.append(UnresolvedReference(
-                reference=ref.name,
-                from_location=ref.location,
-                line_number=ref.line_number,
-                possible_matches=matches[:3]  # Top 3 suggestions
-            ))
+            events.append(
+                UnresolvedReference(
+                    reference=ref.name,
+                    from_location=ref.location,
+                    line_number=ref.line_number,
+                    possible_matches=matches[:3],  # Top 3 suggestions
+                )
+            )
 
     # Build symbol table
     table = SymbolTable(
-        symbols=known_symbols,
-        references=resolved_refs,
-        unresolved=unresolved
+        symbols=known_symbols, references=resolved_refs, unresolved=unresolved
     )
 
     # Emit summary event
     total_refs = len(references)
     resolved_count = total_refs - len(unresolved)
-    events.append(SymbolTableBuilt(
-        total_symbols=len(known_symbols),
-        resolved_references=resolved_count,
-        unresolved_references=len(unresolved),
-        resolution_rate=resolved_count / total_refs if total_refs > 0 else 0.0
-    ))
+    events.append(
+        SymbolTableBuilt(
+            total_symbols=len(known_symbols),
+            resolved_references=resolved_count,
+            unresolved_references=len(unresolved),
+            resolution_rate=resolved_count / total_refs if total_refs > 0 else 0.0,
+        )
+    )
 
     return table, events
 
 
 def build_dependency_graph(
-    modules: Dict[str, List[str]]  # module -> imports
+    modules: Dict[str, List[str]],  # module -> imports
 ) -> Tuple[DependencyGraph, List[SymbolEvent]]:
     """Build dependency graph from module imports.
 
@@ -204,37 +224,30 @@ def build_dependency_graph(
 
     for module, imports in modules.items():
         edges[module] = set()
-        
+
         for imported in imports:
             # Add edge
             edges[module].add(imported)
-            
+
             # Add imported as node if not present
             nodes.add(imported)
-            
+
             # Emit dependency event
-            events.append(DependencyFound(
-                from_module=module,
-                to_module=imported,
-                dependency_type="import"
-            ))
+            events.append(
+                DependencyFound(
+                    from_module=module, to_module=imported, dependency_type="import"
+                )
+            )
 
     # Detect circular dependencies
     cycles = detect_cycles(edges)
-    
+
     for cycle in cycles:
         # Emit circular dependency event
         severity = "high" if len(cycle) > 3 else "medium"
-        events.append(CircularDependency(
-            cycle=cycle,
-            severity=severity
-        ))
+        events.append(CircularDependency(cycle=cycle, severity=severity))
 
-    return DependencyGraph(
-        nodes=nodes,
-        edges=edges,
-        cycles=cycles
-    ), events
+    return DependencyGraph(nodes=nodes, edges=edges, cycles=cycles), events
 
 
 def detect_cycles(edges: Dict[str, Set[str]]) -> List[List[str]]:
@@ -271,9 +284,7 @@ def detect_cycles(edges: Dict[str, Set[str]]) -> List[List[str]]:
 
 
 def lookup_symbol(
-    name: str,
-    symbols: Dict[str, Symbol],
-    context: str
+    name: str, symbols: Dict[str, Symbol], context: str
 ) -> Optional[Symbol]:
     """Look up a symbol by name, considering context.
 
@@ -289,8 +300,8 @@ def lookup_symbol(
         return symbols[qualified_name]
 
     # Try parent context
-    if '.' in context:
-        parent_context = context.rsplit('.', 1)[0]
+    if "." in context:
+        parent_context = context.rsplit(".", 1)[0]
         return lookup_symbol(name, symbols, parent_context)
 
     return None
@@ -317,10 +328,7 @@ def calculate_confidence(ref: SymbolReference, symbol: Symbol) -> float:
     return min(confidence, 1.0)
 
 
-def find_similar_symbols(
-    name: str,
-    symbols: Dict[str, Symbol]
-) -> List[str]:
+def find_similar_symbols(name: str, symbols: Dict[str, Symbol]) -> List[str]:
     """Find symbols with similar names.
 
     Pure function for suggestions.

@@ -15,9 +15,11 @@ from datetime import datetime
 # LIBRARY FILE FORMATS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PBLHeader:
     """PowerBuilder Library header structure."""
+
     signature: bytes  # 'PBL' or 'HDR*'
     version: int
     entry_count: int
@@ -28,6 +30,7 @@ class PBLHeader:
 @dataclass(frozen=True)
 class PBLEntry:
     """A single entry in a PowerBuilder library."""
+
     name: str
     object_type: str
     size: int
@@ -40,6 +43,7 @@ class PBLEntry:
 @dataclass(frozen=True)
 class PBDBlock:
     """A block in modern PBD format (HDR* files)."""
+
     signature: bytes  # HDR*, ENT*, DAT*, NOD*, FRE*
     offset: int
     length: int
@@ -49,6 +53,7 @@ class PBDBlock:
 @dataclass(frozen=True)
 class ENTEntry:
     """Entry in the ENT* (Entry Table) block."""
+
     index: int
     name: str
     object_type: str
@@ -59,6 +64,7 @@ class ENTEntry:
 @dataclass(frozen=True)
 class NODBlock:
     """Node block containing tree structure."""
+
     signature: bytes  # NOD*
     entry_index: int
     parent_index: Optional[int]
@@ -70,8 +76,10 @@ class NODBlock:
 # OBJECT TYPES
 # ============================================================================
 
+
 class PBObjectType(str, Enum):
     """PowerBuilder object types."""
+
     APPLICATION = "application"
     DATAWINDOW = "datawindow"
     FUNCTION = "function"
@@ -90,16 +98,18 @@ class PBObjectType(str, Enum):
 @dataclass(frozen=True)
 class LibraryObject:
     """A PowerBuilder object extracted from a library."""
+
     name: str
     type: PBObjectType
     source_code: Optional[str] = None  # If decompiled
-    p_code: Optional[bytes] = None     # If still compiled
+    p_code: Optional[bytes] = None  # If still compiled
     metadata: dict = None
 
 
 @dataclass(frozen=True)
 class LibraryDirectory:
     """Directory listing of a PowerBuilder library."""
+
     path: str
     format: str  # PBL or PBD
     header: PBLHeader
@@ -111,9 +121,11 @@ class LibraryDirectory:
 # COMPILATION UNITS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CompiledObject:
     """A compiled PowerBuilder object (P-code)."""
+
     name: str
     type: PBObjectType
     bytecode: bytes
@@ -126,6 +138,7 @@ class CompiledObject:
 @dataclass(frozen=True)
 class SourceObject:
     """A decompiled PowerBuilder source object."""
+
     name: str
     type: PBObjectType
     source: str
@@ -138,9 +151,11 @@ class SourceObject:
 # DOMAIN EVENTS (Colocated with Library aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class LibraryOpened:
     """Event: A PowerBuilder library was opened."""
+
     library_path: str
     format: str  # PBL or PBD
     entry_count: int
@@ -150,6 +165,7 @@ class LibraryOpened:
 @dataclass(frozen=True)
 class EntryExtracted:
     """Event: An entry was extracted from a library."""
+
     entry: PBLEntry
     library_path: str
     timestamp: datetime
@@ -158,6 +174,7 @@ class EntryExtracted:
 @dataclass(frozen=True)
 class LibraryCorrupted:
     """Event: A library file is corrupted."""
+
     library_path: str
     error_message: str
     offset: Optional[int]
@@ -167,6 +184,7 @@ class LibraryCorrupted:
 @dataclass(frozen=True)
 class ObjectCompiled:
     """Event: A source object was compiled to P-code."""
+
     object_name: str
     object_type: PBObjectType
     bytecode_size: int
@@ -176,6 +194,7 @@ class ObjectCompiled:
 @dataclass(frozen=True)
 class ObjectDecompiled:
     """Event: P-code was decompiled to source."""
+
     compiled_object: CompiledObject
     source_object: SourceObject
     timestamp: datetime

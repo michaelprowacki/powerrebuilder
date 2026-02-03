@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class ObservabilityBackend(str, Enum):
     """Supported observability backends."""
+
     NONE = "none"
     CONSOLE = "console"
     JAEGER = "jaeger"
@@ -47,6 +48,7 @@ class ObservabilityBackend(str, Enum):
 @dataclass
 class TraceContext:
     """Trace context information."""
+
     trace_id: str
     span_id: str
     parent_span_id: Optional[str] = None
@@ -60,6 +62,7 @@ class TraceContext:
 @dataclass
 class MetricPoint:
     """Single metric data point."""
+
     name: str
     value: float
     timestamp: datetime
@@ -70,6 +73,7 @@ class MetricPoint:
 @dataclass
 class SpanInfo:
     """Information about a trace span."""
+
     name: str
     start_time: float
     end_time: Optional[float] = None
@@ -117,11 +121,13 @@ class ObservabilityManager:
     def _initialize_telemetry(self) -> None:
         """Initialize OpenTelemetry providers."""
         # Create resource
-        resource = Resource.create({
-            SERVICE_NAME: self.service_name,
-            "service.version": "1.0.0",
-            "deployment.environment": "production",
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: self.service_name,
+                "service.version": "1.0.0",
+                "deployment.environment": "production",
+            }
+        )
 
         # Initialize tracing
         if self.backend in [ObservabilityBackend.JAEGER, ObservabilityBackend.OTLP]:
@@ -418,9 +424,7 @@ class MetricsCollector:
         return {
             "counters": dict(self.counters),
             "gauges": dict(self.gauges),
-            "histogram_counts": {
-                k: len(v) for k, v in self.histograms.items()
-            },
+            "histogram_counts": {k: len(v) for k, v in self.histograms.items()},
         }
 
 

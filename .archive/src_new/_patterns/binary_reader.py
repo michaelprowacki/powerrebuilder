@@ -14,7 +14,7 @@ import mmap
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 PathLike = Union[str, Path]
 
@@ -22,6 +22,7 @@ PathLike = Union[str, Path]
 @dataclass
 class BinaryHeader:
     """Common binary file header structure."""
+
     signature: bytes
     version: int
     size: int
@@ -47,7 +48,7 @@ class BinaryReader:
         file_path: Optional[PathLike] = None,
         data: Optional[bytes] = None,
         use_mmap: bool = True,
-        endian: str = "little"
+        endian: str = "little",
     ):
         """Initialize reader with file or data.
 
@@ -136,7 +137,7 @@ class BinaryReader:
         if self.offset + size > self.size:
             size = self.remaining
 
-        data = self._data[self.offset:self.offset + size]
+        data = self._data[self.offset : self.offset + size]
         self.offset += size
         return data
 
@@ -144,7 +145,7 @@ class BinaryReader:
         """Read bytes at specific offset without changing position."""
         if offset + size > self.size:
             size = self.size - offset
-        return self._data[offset:offset + size]
+        return self._data[offset : offset + size]
 
     def peek(self, size: int) -> bytes:
         """Read bytes without advancing position."""
@@ -220,20 +221,20 @@ class BinaryReader:
         """Read fixed-size string."""
         data = self.read(size)
         # Remove null terminator if present
-        null_idx = data.find(b'\x00')
+        null_idx = data.find(b"\x00")
         if null_idx >= 0:
             data = data[:null_idx]
-        return data.decode(encoding, errors='replace')
+        return data.decode(encoding, errors="replace")
 
     def read_cstring(self, encoding: str = "utf-8", max_size: int = 1024) -> str:
         """Read null-terminated C string."""
         chars = []
         for _ in range(max_size):
             char = self.read(1)
-            if not char or char == b'\x00':
+            if not char or char == b"\x00":
                 break
             chars.append(char)
-        return b''.join(chars).decode(encoding, errors='replace')
+        return b"".join(chars).decode(encoding, errors="replace")
 
     def read_pascal_string(self, encoding: str = "utf-8") -> str:
         """Read Pascal-style string (length prefix)."""
@@ -243,7 +244,7 @@ class BinaryReader:
     def read_unicode_string(self, size: int) -> str:
         """Read UTF-16 LE string."""
         data = self.read(size * 2)
-        return data.decode('utf-16-le', errors='replace').rstrip('\x00')
+        return data.decode("utf-16-le", errors="replace").rstrip("\x00")
 
     # ============================================================================
     # SEARCH AND PATTERN MATCHING
@@ -280,10 +281,7 @@ class BinaryReader:
     # ============================================================================
 
     def calculate_checksum(
-        self,
-        algorithm: str = "crc32",
-        start: int = 0,
-        size: Optional[int] = None
+        self, algorithm: str = "crc32", start: int = 0, size: Optional[int] = None
     ) -> int:
         """Calculate checksum of data range.
 
@@ -298,19 +296,20 @@ class BinaryReader:
         if size is None:
             size = self.size - start
 
-        data = self._data[start:start + size]
+        data = self._data[start : start + size]
 
         if algorithm == "crc32":
             import zlib
-            return zlib.crc32(data) & 0xffffffff
+
+            return zlib.crc32(data) & 0xFFFFFFFF
         elif algorithm == "sum32":
             # Simple 32-bit sum
             total = 0
             for i in range(0, len(data), 4):
-                chunk = data[i:i+4]
+                chunk = data[i : i + 4]
                 if len(chunk) == 4:
                     total += struct.unpack("<I", chunk)[0]
-            return total & 0xffffffff
+            return total & 0xFFFFFFFF
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
 

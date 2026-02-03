@@ -11,12 +11,13 @@ from enum import Enum
 from datetime import datetime
 
 
-M = TypeVar('M')  # Message type
+M = TypeVar("M")  # Message type
 
 
 # ============================================================================
 # CORE WIDGET CONCEPTS
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Widget(Generic[M]):
@@ -24,15 +25,17 @@ class Widget(Generic[M]):
 
     Manifestation of core UI Component concept.
     """
-    widget_type: 'WidgetType'
-    width: 'Length' = field(default_factory=lambda: Length())
-    height: 'Length' = field(default_factory=lambda: Length())
-    padding: 'Padding' = field(default_factory=lambda: Padding())
+
+    widget_type: "WidgetType"
+    width: "Length" = field(default_factory=lambda: Length())
+    height: "Length" = field(default_factory=lambda: Length())
+    padding: "Padding" = field(default_factory=lambda: Padding())
     id: Optional[str] = None
 
 
 class WidgetType(str, Enum):
     """Types of Iced widgets."""
+
     BUTTON = "button"
     TEXT = "text"
     TEXT_INPUT = "text_input"
@@ -60,15 +63,18 @@ class WidgetType(str, Enum):
 # LAYOUT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Length:
     """Length specification for widgets."""
-    length_type: 'LengthType' = 'LengthType.SHRINK'
+
+    length_type: "LengthType" = "LengthType.SHRINK"
     value: Optional[float] = None  # For fixed length
 
 
 class LengthType(str, Enum):
     """Types of length specifications."""
+
     SHRINK = "shrink"  # Minimum size
     FILL = "fill"  # Fill available space
     FILL_PORTION = "fill_portion"  # Fill with portion
@@ -78,13 +84,14 @@ class LengthType(str, Enum):
 @dataclass(frozen=True)
 class Padding:
     """Padding around widget content."""
+
     top: float = 0
     right: float = 0
     bottom: float = 0
     left: float = 0
 
     @staticmethod
-    def all(value: float) -> 'Padding':
+    def all(value: float) -> "Padding":
         """Uniform padding."""
         return Padding(value, value, value, value)
 
@@ -92,12 +99,14 @@ class Padding:
 @dataclass(frozen=True)
 class Alignment:
     """Alignment of content."""
-    horizontal: 'HorizontalAlignment' = 'HorizontalAlignment.LEFT'
-    vertical: 'VerticalAlignment' = 'VerticalAlignment.TOP'
+
+    horizontal: "HorizontalAlignment" = "HorizontalAlignment.LEFT"
+    vertical: "VerticalAlignment" = "VerticalAlignment.TOP"
 
 
 class HorizontalAlignment(str, Enum):
     """Horizontal alignment options."""
+
     LEFT = "left"
     CENTER = "center"
     RIGHT = "right"
@@ -105,6 +114,7 @@ class HorizontalAlignment(str, Enum):
 
 class VerticalAlignment(str, Enum):
     """Vertical alignment options."""
+
     TOP = "top"
     CENTER = "center"
     BOTTOM = "bottom"
@@ -113,6 +123,7 @@ class VerticalAlignment(str, Enum):
 @dataclass(frozen=True)
 class Spacing:
     """Spacing between elements."""
+
     amount: float = 0
 
 
@@ -120,15 +131,17 @@ class Spacing:
 # INPUT WIDGETS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Button(Widget[M]):
     """A clickable button.
 
     Maps to PowerBuilder CommandButton.
     """
+
     label: str
     on_press: Optional[M] = None
-    style: Optional['ButtonStyle'] = None
+    style: Optional["ButtonStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -137,13 +150,14 @@ class TextInput(Widget[M]):
 
     Maps to PowerBuilder SingleLineEdit/MultiLineEdit.
     """
+
     placeholder: str = ""
     value: str = ""
     on_change: Optional[Callable[[str], M]] = None
     on_submit: Optional[M] = None
     is_password: bool = False
     max_length: Optional[int] = None
-    style: Optional['TextInputStyle'] = None
+    style: Optional["TextInputStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -152,10 +166,11 @@ class Checkbox(Widget[M]):
 
     Maps to PowerBuilder CheckBox.
     """
+
     label: str
     is_checked: bool = False
     on_toggle: Optional[Callable[[bool], M]] = None
-    style: Optional['CheckboxStyle'] = None
+    style: Optional["CheckboxStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -164,11 +179,12 @@ class Radio(Widget[M]):
 
     Maps to PowerBuilder RadioButton.
     """
+
     label: str
     value: Any
     selected: Optional[Any] = None
     on_select: Optional[Callable[[Any], M]] = None
-    style: Optional['RadioStyle'] = None
+    style: Optional["RadioStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -177,12 +193,13 @@ class Slider(Widget[M]):
 
     Maps to PowerBuilder HScrollBar/VScrollBar when used for input.
     """
+
     range: tuple[float, float]
     value: float
     step: float = 1.0
     on_change: Optional[Callable[[float], M]] = None
     on_release: Optional[M] = None
-    style: Optional['SliderStyle'] = None
+    style: Optional["SliderStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -191,25 +208,28 @@ class PickList(Widget[M]):
 
     Maps to PowerBuilder DropDownListBox.
     """
+
     options: List[Any]
     selected: Optional[Any] = None
     placeholder: str = "Select..."
     on_select: Optional[Callable[[Any], M]] = None
-    style: Optional['PickListStyle'] = None
+    style: Optional["PickListStyle"] = None
 
 
 @dataclass(frozen=True)
 class Toggler(Widget[M]):
     """Toggle switch widget."""
+
     label: Optional[str] = None
     is_toggled: bool = False
     on_toggle: Optional[Callable[[bool], M]] = None
-    style: Optional['TogglerStyle'] = None
+    style: Optional["TogglerStyle"] = None
 
 
 # ============================================================================
 # DISPLAY WIDGETS
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Text(Widget[M]):
@@ -217,10 +237,11 @@ class Text(Widget[M]):
 
     Maps to PowerBuilder StaticText.
     """
+
     content: str
     size: Optional[float] = None
     color: Optional[str] = None
-    font: Optional['Font'] = None
+    font: Optional["Font"] = None
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.LEFT
     vertical_alignment: VerticalAlignment = VerticalAlignment.TOP
 
@@ -231,12 +252,14 @@ class Image(Widget[M]):
 
     Maps to PowerBuilder Picture.
     """
+
     source: str  # Path or bytes
-    content_fit: 'ContentFit' = 'ContentFit.CONTAIN'
+    content_fit: "ContentFit" = "ContentFit.CONTAIN"
 
 
 class ContentFit(str, Enum):
     """How image fits in bounds."""
+
     CONTAIN = "contain"  # Maintain aspect ratio, fit inside
     COVER = "cover"  # Maintain aspect ratio, cover area
     FILL = "fill"  # Stretch to fill
@@ -247,20 +270,23 @@ class ContentFit(str, Enum):
 @dataclass(frozen=True)
 class ProgressBar(Widget[M]):
     """Progress bar widget."""
+
     value: float  # 0.0 to 1.0
-    style: Optional['ProgressBarStyle'] = None
+    style: Optional["ProgressBarStyle"] = None
 
 
 @dataclass(frozen=True)
 class Rule(Widget[M]):
     """Horizontal or vertical line."""
+
     is_horizontal: bool = True
-    style: Optional['RuleStyle'] = None
+    style: Optional["RuleStyle"] = None
 
 
 @dataclass(frozen=True)
 class Space(Widget[M]):
     """Empty space for layout."""
+
     width: Length
     height: Length
 
@@ -269,12 +295,14 @@ class Space(Widget[M]):
 # CONTAINER WIDGETS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Container(Widget[M]):
     """Container for a single child widget.
 
     Maps to PowerBuilder GroupBox or general container.
     """
+
     child: Widget[M]
     padding: Padding = field(default_factory=lambda: Padding.all(0))
     width: Length = field(default_factory=lambda: Length())
@@ -283,7 +311,7 @@ class Container(Widget[M]):
     max_height: Optional[float] = None
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.LEFT
     vertical_alignment: VerticalAlignment = VerticalAlignment.TOP
-    style: Optional['ContainerStyle'] = None
+    style: Optional["ContainerStyle"] = None
 
 
 @dataclass(frozen=True)
@@ -292,6 +320,7 @@ class Row(Widget[M]):
 
     Maps to horizontal arrangement in PowerBuilder.
     """
+
     children: List[Widget[M]]
     spacing: float = 0
     padding: Padding = field(default_factory=lambda: Padding.all(0))
@@ -304,6 +333,7 @@ class Column(Widget[M]):
 
     Maps to vertical arrangement in PowerBuilder.
     """
+
     children: List[Widget[M]]
     spacing: float = 0
     padding: Padding = field(default_factory=lambda: Padding.all(0))
@@ -316,16 +346,18 @@ class Scrollable(Widget[M]):
 
     Maps to scrollable areas in PowerBuilder windows.
     """
+
     child: Widget[M]
     horizontal_scroll: bool = False
     vertical_scroll: bool = True
     on_scroll: Optional[Callable[[float], M]] = None
-    style: Optional['ScrollableStyle'] = None
+    style: Optional["ScrollableStyle"] = None
 
 
 # ============================================================================
 # ADVANCED WIDGETS
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class PaneGrid(Widget[M]):
@@ -333,14 +365,16 @@ class PaneGrid(Widget[M]):
 
     Maps to PowerBuilder split windows.
     """
-    panes: List['Pane']
+
+    panes: List["Pane"]
     on_resize: Optional[Callable[[Any], M]] = None
-    style: Optional['PaneGridStyle'] = None
+    style: Optional["PaneGridStyle"] = None
 
 
 @dataclass(frozen=True)
 class Pane:
     """A pane in a PaneGrid."""
+
     content: Widget
     can_resize: bool = True
     min_size: Optional[float] = None
@@ -353,7 +387,8 @@ class Canvas(Widget[M]):
 
     Maps to PowerBuilder drawing areas.
     """
-    program: 'CanvasProgram[M]'
+
+    program: "CanvasProgram[M]"
     width: Length
     height: Length
 
@@ -361,13 +396,15 @@ class Canvas(Widget[M]):
 @dataclass(frozen=True)
 class CanvasProgram(Generic[M]):
     """Drawing program for canvas."""
-    draw_commands: List['DrawCommand']
+
+    draw_commands: List["DrawCommand"]
     on_event: Optional[Callable[[Any], M]] = None
 
 
 @dataclass(frozen=True)
 class DrawCommand:
     """A drawing command."""
+
     command_type: str  # line, rect, circle, text, etc.
     parameters: Dict[str, Any]
 
@@ -375,14 +412,16 @@ class DrawCommand:
 @dataclass(frozen=True)
 class Tooltip(Widget[M]):
     """Tooltip wrapper widget."""
+
     content: Widget[M]
     tooltip: str
-    position: 'TooltipPosition' = 'TooltipPosition.TOP'
-    style: Optional['TooltipStyle'] = None
+    position: "TooltipPosition" = "TooltipPosition.TOP"
+    style: Optional["TooltipStyle"] = None
 
 
 class TooltipPosition(str, Enum):
     """Tooltip positions."""
+
     TOP = "top"
     BOTTOM = "bottom"
     LEFT = "left"
@@ -394,9 +433,11 @@ class TooltipPosition(str, Enum):
 # STYLING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Style:
     """Base style type."""
+
     background: Optional[str] = None  # Color
     text_color: Optional[str] = None
     border_radius: float = 0
@@ -407,6 +448,7 @@ class Style:
 @dataclass(frozen=True)
 class ButtonStyle(Style):
     """Button-specific styling."""
+
     active_background: Optional[str] = None
     hovered_background: Optional[str] = None
     pressed_background: Optional[str] = None
@@ -415,6 +457,7 @@ class ButtonStyle(Style):
 @dataclass(frozen=True)
 class TextInputStyle(Style):
     """Text input styling."""
+
     selection_color: Optional[str] = None
     placeholder_color: Optional[str] = None
 
@@ -422,20 +465,23 @@ class TextInputStyle(Style):
 @dataclass(frozen=True)
 class ContainerStyle(Style):
     """Container styling."""
+
     text_color: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class Font:
     """Font specification."""
+
     family: str = "default"
     size: float = 16
-    weight: 'FontWeight' = 'FontWeight.NORMAL'
-    style: 'FontStyle' = 'FontStyle.NORMAL'
+    weight: "FontWeight" = "FontWeight.NORMAL"
+    style: "FontStyle" = "FontStyle.NORMAL"
 
 
 class FontWeight(str, Enum):
     """Font weights."""
+
     THIN = "thin"
     LIGHT = "light"
     NORMAL = "normal"
@@ -447,6 +493,7 @@ class FontWeight(str, Enum):
 
 class FontStyle(str, Enum):
     """Font styles."""
+
     NORMAL = "normal"
     ITALIC = "italic"
     OBLIQUE = "oblique"
@@ -456,9 +503,11 @@ class FontStyle(str, Enum):
 # DOMAIN EVENTS (Colocated with Widget aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class WidgetCreated:
     """Event: Widget was created."""
+
     widget: Widget
     parent: Optional[Widget]
     timestamp: datetime
@@ -467,6 +516,7 @@ class WidgetCreated:
 @dataclass(frozen=True)
 class WidgetInteraction:
     """Event: User interacted with widget."""
+
     widget: Widget
     interaction_type: str  # click, input, scroll, etc.
     message_produced: Optional[Any]
@@ -476,6 +526,7 @@ class WidgetInteraction:
 @dataclass(frozen=True)
 class WidgetUpdated:
     """Event: Widget properties changed."""
+
     widget: Widget
     changed_properties: Dict[str, Any]
     timestamp: datetime
@@ -484,6 +535,7 @@ class WidgetUpdated:
 @dataclass(frozen=True)
 class LayoutCalculated:
     """Event: Layout was calculated."""
+
     root_widget: Widget
     layout_time_ms: float
     total_widgets: int

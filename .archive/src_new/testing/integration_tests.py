@@ -10,7 +10,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 # Pipeline imports
 from extract import ExtractCoordinator
@@ -20,8 +20,7 @@ from model import ModelCoordinator
 from generate import GenerateCoordinator
 
 # Analysis imports
-from analyze.complexity import ComplexityAnalyzer
-from testing.accuracy_metrics import AccuracyMetrics, StageResult
+from testing.accuracy_metrics import StageResult
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TestCase:
     """Test case for PowerBuilder file."""
+
     name: str
     input_file: Path
     stages: List[str] = field(default_factory=lambda: ["all"])
@@ -39,6 +39,7 @@ class TestCase:
 @dataclass
 class TestResult:
     """Result of a test execution."""
+
     test_name: str
     success: bool
     accuracy: float
@@ -128,75 +129,92 @@ class IntegrationTestSuite:
 
         # PowerBuilder Library test
         if (self.fixtures_dir / "sample.pbl").exists():
-            test_cases.append(TestCase(
-                name="PowerBuilder Library",
-                input_file=self.fixtures_dir / "sample.pbl",
-                stages=["extract", "decompile", "parse"],
-                validation_rules={
-                    "min_extraction_rate": 0.8,
-                    "min_decompile_rate": 0.7,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="PowerBuilder Library",
+                    input_file=self.fixtures_dir / "sample.pbl",
+                    stages=["extract", "decompile", "parse"],
+                    validation_rules={
+                        "min_extraction_rate": 0.8,
+                        "min_decompile_rate": 0.7,
+                    },
+                )
+            )
 
         # Simple Window test
         if (self.fixtures_dir / "simple_window.srw").exists():
-            test_cases.append(TestCase(
-                name="Simple Window",
-                input_file=self.fixtures_dir / "simple_window.srw",
-                stages=["parse", "model", "generate"],
-                validation_rules={
-                    "required_elements": ["cb_save", "dw_main", "clicked", "create"],
-                    "min_model_accuracy": 0.85,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="Simple Window",
+                    input_file=self.fixtures_dir / "simple_window.srw",
+                    stages=["parse", "model", "generate"],
+                    validation_rules={
+                        "required_elements": [
+                            "cb_save",
+                            "dw_main",
+                            "clicked",
+                            "create",
+                        ],
+                        "min_model_accuracy": 0.85,
+                    },
+                )
+            )
 
         # Transaction test
         if (self.fixtures_dir / "transaction_test.srw").exists():
-            test_cases.append(TestCase(
-                name="Database Transaction",
-                input_file=self.fixtures_dir / "transaction_test.srw",
-                stages=["parse", "model", "generate"],
-                validation_rules={
-                    "preserve_transactions": True,
-                    "sql_accuracy": 0.9,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="Database Transaction",
+                    input_file=self.fixtures_dir / "transaction_test.srw",
+                    stages=["parse", "model", "generate"],
+                    validation_rules={
+                        "preserve_transactions": True,
+                        "sql_accuracy": 0.9,
+                    },
+                )
+            )
 
         # Inheritance test
         if (self.fixtures_dir / "inheritance_test.sru").exists():
-            test_cases.append(TestCase(
-                name="Inheritance Pattern",
-                input_file=self.fixtures_dir / "inheritance_test.sru",
-                stages=["parse", "model", "generate"],
-                validation_rules={
-                    "preserve_inheritance": True,
-                    "method_override_accuracy": 0.95,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="Inheritance Pattern",
+                    input_file=self.fixtures_dir / "inheritance_test.sru",
+                    stages=["parse", "model", "generate"],
+                    validation_rules={
+                        "preserve_inheritance": True,
+                        "method_override_accuracy": 0.95,
+                    },
+                )
+            )
 
         # Event handling test
         if (self.fixtures_dir / "event_handling.sru").exists():
-            test_cases.append(TestCase(
-                name="Event Handling",
-                input_file=self.fixtures_dir / "event_handling.sru",
-                stages=["parse", "model", "generate"],
-                validation_rules={
-                    "event_binding_accuracy": 0.9,
-                    "handler_preservation": True,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="Event Handling",
+                    input_file=self.fixtures_dir / "event_handling.sru",
+                    stages=["parse", "model", "generate"],
+                    validation_rules={
+                        "event_binding_accuracy": 0.9,
+                        "handler_preservation": True,
+                    },
+                )
+            )
 
         # Complex DataWindow test
         if (self.fixtures_dir / "complex_datawindow.srd").exists():
-            test_cases.append(TestCase(
-                name="Complex DataWindow",
-                input_file=self.fixtures_dir / "complex_datawindow.srd",
-                stages=["parse", "model", "generate"],
-                validation_rules={
-                    "datawindow_properties": 0.85,
-                    "sql_preservation": True,
-                }
-            ))
+            test_cases.append(
+                TestCase(
+                    name="Complex DataWindow",
+                    input_file=self.fixtures_dir / "complex_datawindow.srd",
+                    stages=["parse", "model", "generate"],
+                    validation_rules={
+                        "datawindow_properties": 0.85,
+                        "sql_preservation": True,
+                    },
+                )
+            )
 
         return test_cases
 
@@ -223,33 +241,27 @@ class IntegrationTestSuite:
             stages = ["extract", "decompile", "parse", "model", "generate"]
 
         for stage_name in stages:
-                logger.debug("Running stage: %s", stage_name)
+            logger.debug("Running stage: %s", stage_name)
 
-                try:
-                    result = self._run_stage(
-                        stage_name,
-                        current_input,
-                        current_output / stage_name,
-                        test_case
-                    )
-                    stage_results[stage_name] = result
+            try:
+                result = self._run_stage(
+                    stage_name, current_input, current_output / stage_name, test_case
+                )
+                stage_results[stage_name] = result
 
-                    # Use output as input for next stage
-                    if result.success:
-                        current_input = current_output / stage_name
-                    else:
-                        logger.error("Stage %s failed, stopping pipeline", stage_name)
-                        break
-
-                except Exception as e:
-                    logger.error("Error in stage %s: %s", stage_name, e)
-                    stage_results[stage_name] = StageResult(
-                        stage_name=stage_name,
-                        success=False,
-                        accuracy=0.0,
-                        errors=[str(e)]
-                    )
+                # Use output as input for next stage
+                if result.success:
+                    current_input = current_output / stage_name
+                else:
+                    logger.error("Stage %s failed, stopping pipeline", stage_name)
                     break
+
+            except Exception as e:
+                logger.error("Error in stage %s: %s", stage_name, e)
+                stage_results[stage_name] = StageResult(
+                    stage_name=stage_name, success=False, accuracy=0.0, errors=[str(e)]
+                )
+                break
 
         # Calculate overall accuracy
         overall_accuracy = self._calculate_overall_accuracy(stage_results)
@@ -257,10 +269,12 @@ class IntegrationTestSuite:
         # Create test result
         result = TestResult(
             test_name=test_case.name,
-            success=all(r.success for r in stage_results.values()) if stage_results else False,
+            success=all(r.success for r in stage_results.values())
+            if stage_results
+            else False,
             accuracy=overall_accuracy,
             execution_time=time.time() - start_time,
-            stage_results=stage_results
+            stage_results=stage_results,
         )
 
         # Validate against rules
@@ -312,10 +326,7 @@ class IntegrationTestSuite:
             Stage result
         """
         try:
-            coordinator = ExtractCoordinator(
-                str(input_path),
-                str(output_path)
-            )
+            coordinator = ExtractCoordinator(str(input_path), str(output_path))
             result = coordinator.process()
 
             # Calculate accuracy
@@ -332,21 +343,18 @@ class IntegrationTestSuite:
             stage_result = StageResult(
                 stage_name="extract",
                 success=result.success,
-                accuracy=accuracy * 100  # Convert to percentage
+                accuracy=accuracy * 100,  # Convert to percentage
             )
             stage_result.add_metric(
                 "files_extracted",
                 result.files_processed,
                 result.files_processed + result.files_failed,
-                "files"
+                "files",
             )
             return stage_result
         except Exception as e:
             return StageResult(
-                stage_name="extract",
-                success=False,
-                accuracy=0.0,
-                errors=[str(e)]
+                stage_name="extract", success=False, accuracy=0.0, errors=[str(e)]
             )
 
     def _run_decompile(self, input_path: Path, output_path: Path) -> StageResult:
@@ -360,10 +368,7 @@ class IntegrationTestSuite:
             Stage result
         """
         try:
-            coordinator = DecompileCoordinator(
-                str(input_path),
-                str(output_path)
-            )
+            coordinator = DecompileCoordinator(str(input_path), str(output_path))
             result = coordinator.process()
 
             # Calculate accuracy based on success rate
@@ -375,27 +380,19 @@ class IntegrationTestSuite:
             stage_result = StageResult(
                 stage_name="decompile",
                 success=result.success,
-                accuracy=accuracy * 100  # Convert to percentage
+                accuracy=accuracy * 100,  # Convert to percentage
             )
-            stage_result.add_metric(
-                "files_processed",
-                processed,
-                total,
-                "files"
-            )
+            stage_result.add_metric("files_processed", processed, total, "files")
             stage_result.add_metric(
                 "lines_decompiled",
                 result.metrics.get("lines_decompiled", 0),
                 None,
-                "lines"
+                "lines",
             )
             return stage_result
         except Exception as e:
             return StageResult(
-                stage_name="decompile",
-                success=False,
-                accuracy=0.0,
-                errors=[str(e)]
+                stage_name="decompile", success=False, accuracy=0.0, errors=[str(e)]
             )
 
     def _run_parse(self, input_path: Path, output_path: Path) -> StageResult:
@@ -409,10 +406,7 @@ class IntegrationTestSuite:
             Stage result
         """
         try:
-            coordinator = ParseCoordinator(
-                str(input_path),
-                str(output_path)
-            )
+            coordinator = ParseCoordinator(str(input_path), str(output_path))
             result = coordinator.process()
 
             # Calculate accuracy
@@ -430,27 +424,14 @@ class IntegrationTestSuite:
             stage_result = StageResult(
                 stage_name="parse",
                 success=result.success,
-                accuracy=accuracy * 100  # Convert to percentage
+                accuracy=accuracy * 100,  # Convert to percentage
             )
-            stage_result.add_metric(
-                "files_parsed",
-                parsed,
-                total,
-                "files"
-            )
-            stage_result.add_metric(
-                "ast_nodes",
-                ast_nodes,
-                expected_nodes,
-                "nodes"
-            )
+            stage_result.add_metric("files_parsed", parsed, total, "files")
+            stage_result.add_metric("ast_nodes", ast_nodes, expected_nodes, "nodes")
             return stage_result
         except Exception as e:
             return StageResult(
-                stage_name="parse",
-                success=False,
-                accuracy=0.0,
-                errors=[str(e)]
+                stage_name="parse", success=False, accuracy=0.0, errors=[str(e)]
             )
 
     def _run_model(self, input_path: Path, output_path: Path) -> StageResult:
@@ -464,10 +445,7 @@ class IntegrationTestSuite:
             Stage result
         """
         try:
-            coordinator = ModelCoordinator(
-                str(input_path),
-                str(output_path)
-            )
+            coordinator = ModelCoordinator(str(input_path), str(output_path))
             result = coordinator.process()
 
             # Calculate accuracy based on semantic elements
@@ -482,33 +460,15 @@ class IntegrationTestSuite:
             stage_result = StageResult(
                 stage_name="model",
                 success=result.success,
-                accuracy=accuracy * 100  # Convert to percentage
+                accuracy=accuracy * 100,  # Convert to percentage
             )
-            stage_result.add_metric(
-                "objects",
-                objects,
-                None,
-                "objects"
-            )
-            stage_result.add_metric(
-                "methods",
-                methods,
-                None,
-                "methods"
-            )
-            stage_result.add_metric(
-                "properties",
-                properties,
-                None,
-                "properties"
-            )
+            stage_result.add_metric("objects", objects, None, "objects")
+            stage_result.add_metric("methods", methods, None, "methods")
+            stage_result.add_metric("properties", properties, None, "properties")
             return stage_result
         except Exception as e:
             return StageResult(
-                stage_name="model",
-                success=False,
-                accuracy=0.0,
-                errors=[str(e)]
+                stage_name="model", success=False, accuracy=0.0, errors=[str(e)]
             )
 
     def _run_generate(self, input_path: Path, output_path: Path) -> StageResult:
@@ -525,13 +485,15 @@ class IntegrationTestSuite:
             coordinator = GenerateCoordinator(
                 str(input_path),
                 str(output_path),
-                target="flutter"  # Default target
+                target="flutter",  # Default target
             )
             result = coordinator.process()
 
             # Calculate accuracy (functional equivalence estimate)
             files_generated = result.files_processed
-            expected_files = result.metrics.get("expected_files", files_generated if files_generated > 0 else 1)
+            expected_files = result.metrics.get(
+                "expected_files", files_generated if files_generated > 0 else 1
+            )
             accuracy = files_generated / expected_files if expected_files > 0 else 0
 
             # Check for functional completeness
@@ -544,32 +506,22 @@ class IntegrationTestSuite:
             stage_result = StageResult(
                 stage_name="generate",
                 success=result.success,
-                accuracy=accuracy * 100  # Convert to percentage
+                accuracy=accuracy * 100,  # Convert to percentage
             )
             stage_result.add_metric(
-                "files_generated",
-                files_generated,
-                expected_files,
-                "files"
+                "files_generated", files_generated, expected_files, "files"
             )
             stage_result.add_metric(
-                "lines_of_code",
-                result.metrics.get("lines_of_code", 0),
-                None,
-                "lines"
+                "lines_of_code", result.metrics.get("lines_of_code", 0), None, "lines"
             )
             return stage_result
         except Exception as e:
             return StageResult(
-                stage_name="generate",
-                success=False,
-                accuracy=0.0,
-                errors=[str(e)]
+                stage_name="generate", success=False, accuracy=0.0, errors=[str(e)]
             )
 
     def _calculate_overall_accuracy(
-        self,
-        stage_results: Dict[str, StageResult]
+        self, stage_results: Dict[str, StageResult]
     ) -> float:
         """Calculate overall accuracy across all stages.
 
@@ -635,7 +587,7 @@ class IntegrationTestSuite:
             "Test: %s - Overall Accuracy: %.1f%% - Time: %.2fs",
             result.test_case.name,
             result.overall_accuracy * 100,
-            result.execution_time
+            result.execution_time,
         )
 
         for stage_name, stage_result in result.stage_results.items():
@@ -643,13 +595,10 @@ class IntegrationTestSuite:
                 logger.info(
                     "  %s: ✓ (%.1f%% accurate)",
                     stage_name.capitalize(),
-                    stage_result.accuracy * 100
+                    stage_result.accuracy * 100,
                 )
             else:
-                logger.error(
-                    "  %s: ✗ (Failed)",
-                    stage_name.capitalize()
-                )
+                logger.error("  %s: ✗ (Failed)", stage_name.capitalize())
 
         if result.warnings:
             for warning in result.warnings:
@@ -685,18 +634,16 @@ class IntegrationTestSuite:
             "total_tests": total_tests,
             "passed_tests": passed_tests,
             "pass_rate": passed_tests / total_tests if total_tests > 0 else 0,
-            "average_accuracy": sum(r.overall_accuracy for r in results) / total_tests if total_tests > 0 else 0,
+            "average_accuracy": sum(r.overall_accuracy for r in results) / total_tests
+            if total_tests > 0
+            else 0,
             "stage_accuracies": stage_accuracies,
             "total_execution_time": sum(r.execution_time for r in results),
             "total_warnings": sum(len(r.warnings) for r in results),
             "total_errors": sum(len(r.errors) for r in results),
         }
 
-    def _save_results(
-        self,
-        results: List[TestResult],
-        summary: Dict[str, Any]
-    ) -> None:
+    def _save_results(self, results: List[TestResult], summary: Dict[str, Any]) -> None:
         """Save test results to file.
 
         Args:
@@ -730,11 +677,15 @@ class IntegrationTestSuite:
 
         # Save to file
         with output_file.open("w") as f:
-            json.dump({
-                "summary": summary,
-                "results": results_data,
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            }, f, indent=2)
+            json.dump(
+                {
+                    "summary": summary,
+                    "results": results_data,
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                },
+                f,
+                indent=2,
+            )
 
         logger.info("Results saved to %s", output_file)
 
@@ -799,7 +750,7 @@ class IntegrationTestSuite:
             avg_accuracy=summary["average_accuracy"],
             total_time=summary["total_execution_time"],
             stage_rows=self._format_stage_rows(summary["stage_accuracies"]),
-            test_results=self._format_test_results(data["results"])
+            test_results=self._format_test_results(data["results"]),
         )
 
         # Save HTML report
@@ -820,7 +771,13 @@ class IntegrationTestSuite:
         """
         rows = []
         for stage, accuracy in stage_accuracies.items():
-            color = "success" if accuracy >= 0.8 else "warning" if accuracy >= 0.6 else "failure"
+            color = (
+                "success"
+                if accuracy >= 0.8
+                else "warning"
+                if accuracy >= 0.6
+                else "failure"
+            )
             rows.append(f"""
                 <tr>
                     <td>{stage.capitalize()}</td>
@@ -888,11 +845,7 @@ class IntegrationTestSuite:
             </table>
         """
 
-    def _format_issues(
-        self,
-        warnings: List[str],
-        errors: List[str]
-    ) -> str:
+    def _format_issues(self, warnings: List[str], errors: List[str]) -> str:
         """Format warnings and errors for HTML.
 
         Args:

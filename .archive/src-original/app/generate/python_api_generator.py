@@ -5,22 +5,20 @@ Uses Parse Don't Validate pattern with factory functions.
 Transforms PowerBuilder domain types to Python API endpoints and models.
 """
 
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List
 from datetime import datetime
 
 from src_new.shared.result import Result, Success, Error
-from src_new.domain.powerbuilder.objects import (
-    DataWindow, UserObject, Window
-)
-from src_new.domain.powerbuilder.database import (
-    DatabaseTable, DatabaseColumn, ForeignKey
-)
+from src_new.domain.powerbuilder.objects import DataWindow
 from src_new.domain.modern.python import (
-    PythonClass, PythonFunction, PythonModule,
-    PydanticModel, SQLModelTable, LitestarController,
-    APIEndpoint, HTTPMethod, APIResponse,
-    ModelGenerated, EndpointCreated
+    PydanticModel,
+    SQLModelTable,
+    LitestarController,
+    APIEndpoint,
+    HTTPMethod,
+    APIResponse,
+    ModelGenerated,
+    EndpointCreated,
 )
 
 
@@ -28,13 +26,15 @@ from src_new.domain.modern.python import (
 # PARSE DON'T VALIDATE - FACTORY FUNCTIONS
 # ============================================================================
 
+
 class _APIGeneratorToken:
     """Hidden token for Parse Don't Validate pattern."""
+
     pass
 
 
 def create_api_from_datawindow(
-    datawindow: DataWindow
+    datawindow: DataWindow,
 ) -> Result[LitestarController, str]:
     """Create a validated API controller from DataWindow.
 
@@ -58,13 +58,15 @@ def create_api_from_datawindow(
     if isinstance(validation_result, Error):
         return validation_result
 
-    return Success(_create_controller_internal(
-        name=f"{_to_pascal_case(datawindow.name)}Controller",
-        model=model_result.value,
-        endpoints=endpoints_result.value,
-        validation=validation_result.value,
-        token=_APIGeneratorToken()
-    ))
+    return Success(
+        _create_controller_internal(
+            name=f"{_to_pascal_case(datawindow.name)}Controller",
+            model=model_result.value,
+            endpoints=endpoints_result.value,
+            validation=validation_result.value,
+            token=_APIGeneratorToken(),
+        )
+    )
 
 
 def _create_controller_internal(
@@ -72,7 +74,7 @@ def _create_controller_internal(
     model: SQLModelTable,
     endpoints: List[APIEndpoint],
     validation: PydanticModel,
-    token: _APIGeneratorToken
+    token: _APIGeneratorToken,
 ) -> LitestarController:
     """Internal factory - requires token."""
     if not isinstance(token, _APIGeneratorToken):
@@ -85,7 +87,7 @@ def _create_controller_internal(
         dependencies=["SQLModel", "Litestar"],
         middleware=["CORS", "Authentication"],
         model=model,
-        validation=validation
+        validation=validation,
     )
 
 
@@ -93,31 +95,38 @@ def _create_controller_internal(
 # MODEL CREATION
 # ============================================================================
 
+
 def _create_data_model(datawindow: DataWindow) -> Result[SQLModelTable, str]:
     """Create SQLModel table from DataWindow."""
     columns = []
 
     for col in datawindow.columns:
-        columns.append({
-            "name": col.name,
-            "type": _pb_to_python_type(col.data_type),
-            "nullable": not col.required,
-            "default": col.default_value
-        })
+        columns.append(
+            {
+                "name": col.name,
+                "type": _pb_to_python_type(col.data_type),
+                "nullable": not col.required,
+                "default": col.default_value,
+            }
+        )
 
     # Add standard fields
-    columns.extend([
-        {"name": "id", "type": "int", "nullable": False, "primary_key": True},
-        {"name": "created_at", "type": "datetime", "nullable": False},
-        {"name": "updated_at", "type": "datetime", "nullable": False}
-    ])
+    columns.extend(
+        [
+            {"name": "id", "type": "int", "nullable": False, "primary_key": True},
+            {"name": "created_at", "type": "datetime", "nullable": False},
+            {"name": "updated_at", "type": "datetime", "nullable": False},
+        ]
+    )
 
-    return Success(SQLModelTable(
-        name=_to_pascal_case(datawindow.name),
-        table_name=_to_snake_case(datawindow.name),
-        columns=columns,
-        relationships=[]
-    ))
+    return Success(
+        SQLModelTable(
+            name=_to_pascal_case(datawindow.name),
+            table_name=_to_snake_case(datawindow.name),
+            columns=columns,
+            relationships=[],
+        )
+    )
 
 
 def _create_validation(datawindow: DataWindow) -> Result[PydanticModel, str]:
@@ -129,99 +138,100 @@ def _create_validation(datawindow: DataWindow) -> Result[PydanticModel, str]:
         if not col.required:
             field_type = f"Optional[{field_type}]"
 
-        fields.append({
-            "name": col.name,
-            "type": field_type,
-            "validators": _get_validators(col)
-        })
+        fields.append(
+            {"name": col.name, "type": field_type, "validators": _get_validators(col)}
+        )
 
-    return Success(PydanticModel(
-        name=f"{_to_pascal_case(datawindow.name)}Schema",
-        fields=fields,
-        config={"validate_assignment": True}
-    ))
+    return Success(
+        PydanticModel(
+            name=f"{_to_pascal_case(datawindow.name)}Schema",
+            fields=fields,
+            config={"validate_assignment": True},
+        )
+    )
 
 
 # ============================================================================
 # ENDPOINT CREATION
 # ============================================================================
 
+
 def _create_crud_endpoints(
-    datawindow: DataWindow,
-    model: SQLModelTable
+    datawindow: DataWindow, model: SQLModelTable
 ) -> Result[List[APIEndpoint], str]:
     """Create CRUD endpoints for DataWindow."""
     endpoints = []
     base_path = f"/{_to_kebab_case(datawindow.name)}"
 
     # GET all
-    endpoints.append(APIEndpoint(
-        path=base_path,
-        method=HTTPMethod.GET,
-        handler_name=f"get_{_to_snake_case(datawindow.name)}_list",
-        parameters=["limit: int = 100", "offset: int = 0"],
-        response=APIResponse(
-            status_code=200,
-            content_type="application/json",
-            schema=f"List[{model.name}]"
-        ),
-        description=f"Get all {datawindow.name} records"
-    ))
+    endpoints.append(
+        APIEndpoint(
+            path=base_path,
+            method=HTTPMethod.GET,
+            handler_name=f"get_{_to_snake_case(datawindow.name)}_list",
+            parameters=["limit: int = 100", "offset: int = 0"],
+            response=APIResponse(
+                status_code=200,
+                content_type="application/json",
+                schema=f"List[{model.name}]",
+            ),
+            description=f"Get all {datawindow.name} records",
+        )
+    )
 
     # GET by ID
-    endpoints.append(APIEndpoint(
-        path=f"{base_path}/{{id:int}}",
-        method=HTTPMethod.GET,
-        handler_name=f"get_{_to_snake_case(datawindow.name)}_by_id",
-        parameters=["id: int"],
-        response=APIResponse(
-            status_code=200,
-            content_type="application/json",
-            schema=model.name
-        ),
-        description=f"Get {datawindow.name} by ID"
-    ))
+    endpoints.append(
+        APIEndpoint(
+            path=f"{base_path}/{{id:int}}",
+            method=HTTPMethod.GET,
+            handler_name=f"get_{_to_snake_case(datawindow.name)}_by_id",
+            parameters=["id: int"],
+            response=APIResponse(
+                status_code=200, content_type="application/json", schema=model.name
+            ),
+            description=f"Get {datawindow.name} by ID",
+        )
+    )
 
     # POST
-    endpoints.append(APIEndpoint(
-        path=base_path,
-        method=HTTPMethod.POST,
-        handler_name=f"create_{_to_snake_case(datawindow.name)}",
-        parameters=[f"data: {model.name}Schema"],
-        response=APIResponse(
-            status_code=201,
-            content_type="application/json",
-            schema=model.name
-        ),
-        description=f"Create new {datawindow.name}"
-    ))
+    endpoints.append(
+        APIEndpoint(
+            path=base_path,
+            method=HTTPMethod.POST,
+            handler_name=f"create_{_to_snake_case(datawindow.name)}",
+            parameters=[f"data: {model.name}Schema"],
+            response=APIResponse(
+                status_code=201, content_type="application/json", schema=model.name
+            ),
+            description=f"Create new {datawindow.name}",
+        )
+    )
 
     # PUT
-    endpoints.append(APIEndpoint(
-        path=f"{base_path}/{{id:int}}",
-        method=HTTPMethod.PUT,
-        handler_name=f"update_{_to_snake_case(datawindow.name)}",
-        parameters=["id: int", f"data: {model.name}Schema"],
-        response=APIResponse(
-            status_code=200,
-            content_type="application/json",
-            schema=model.name
-        ),
-        description=f"Update {datawindow.name}"
-    ))
+    endpoints.append(
+        APIEndpoint(
+            path=f"{base_path}/{{id:int}}",
+            method=HTTPMethod.PUT,
+            handler_name=f"update_{_to_snake_case(datawindow.name)}",
+            parameters=["id: int", f"data: {model.name}Schema"],
+            response=APIResponse(
+                status_code=200, content_type="application/json", schema=model.name
+            ),
+            description=f"Update {datawindow.name}",
+        )
+    )
 
     # DELETE
-    endpoints.append(APIEndpoint(
-        path=f"{base_path}/{{id:int}}",
-        method=HTTPMethod.DELETE,
-        handler_name=f"delete_{_to_snake_case(datawindow.name)}",
-        parameters=["id: int"],
-        response=APIResponse(
-            status_code=204,
-            content_type=None
-        ),
-        description=f"Delete {datawindow.name}"
-    ))
+    endpoints.append(
+        APIEndpoint(
+            path=f"{base_path}/{{id:int}}",
+            method=HTTPMethod.DELETE,
+            handler_name=f"delete_{_to_snake_case(datawindow.name)}",
+            parameters=["id: int"],
+            response=APIResponse(status_code=204, content_type=None),
+            description=f"Delete {datawindow.name}",
+        )
+    )
 
     return Success(endpoints)
 
@@ -229,6 +239,7 @@ def _create_crud_endpoints(
 # ============================================================================
 # CODE GENERATION
 # ============================================================================
+
 
 def generate_controller_code(controller: LitestarController) -> Result[str, str]:
     """Generate Python controller code."""
@@ -261,7 +272,7 @@ def _generate_imports(controller: LitestarController) -> List[str]:
         "from litestar.contrib.sqlalchemy.plugins import SQLAlchemyPlugin",
         "from litestar.exceptions import NotFoundException",
         "from sqlmodel import Field, Session, SQLModel, select",
-        "from pydantic import BaseModel, validator"
+        "from pydantic import BaseModel, validator",
     ]
 
 
@@ -279,9 +290,13 @@ def _generate_model(model: SQLModelTable) -> List[str]:
         default = f", default={col.get('default')}" if col.get("default") else ""
 
         if nullable:
-            lines.append(f"    {col['name']}: Optional[{col_type}] = Field(None{primary_key}{default})")
+            lines.append(
+                f"    {col['name']}: Optional[{col_type}] = Field(None{primary_key}{default})"
+            )
         else:
-            lines.append(f"    {col['name']}: {col_type} = Field(...{primary_key}{default})")
+            lines.append(
+                f"    {col['name']}: {col_type} = Field(...{primary_key}{default})"
+            )
 
     return lines
 
@@ -352,9 +367,10 @@ def _generate_endpoint_method(endpoint: APIEndpoint) -> List[str]:
 # UTILITIES
 # ============================================================================
 
+
 def _to_pascal_case(name: str) -> str:
     """Convert to PascalCase."""
-    return ''.join(p.capitalize() for p in name.split('_'))
+    return "".join(p.capitalize() for p in name.split("_"))
 
 
 def _to_snake_case(name: str) -> str:
@@ -364,7 +380,7 @@ def _to_snake_case(name: str) -> str:
 
 def _to_kebab_case(name: str) -> str:
     """Convert to kebab-case."""
-    return name.lower().replace('_', '-')
+    return name.lower().replace("_", "-")
 
 
 def _pb_to_python_type(pb_type: str) -> str:
@@ -378,7 +394,7 @@ def _pb_to_python_type(pb_type: str) -> str:
         "boolean": "bool",
         "date": "date",
         "datetime": "datetime",
-        "time": "time"
+        "time": "time",
     }
     return type_map.get(pb_type.lower(), "str")
 
@@ -387,13 +403,13 @@ def _get_validators(column) -> List[str]:
     """Get validators for column."""
     validators = []
 
-    if hasattr(column, 'max_length') and column.max_length:
+    if hasattr(column, "max_length") and column.max_length:
         validators.append(f"max_length={column.max_length}")
 
-    if hasattr(column, 'min_value') and column.min_value:
+    if hasattr(column, "min_value") and column.min_value:
         validators.append(f"ge={column.min_value}")
 
-    if hasattr(column, 'max_value') and column.max_value:
+    if hasattr(column, "max_value") and column.max_value:
         validators.append(f"le={column.max_value}")
 
     return validators
@@ -403,20 +419,19 @@ def _get_validators(column) -> List[str]:
 # EVENT EMISSION
 # ============================================================================
 
+
 def emit_model_generated(model: SQLModelTable, source: DataWindow) -> ModelGenerated:
     """Emit model generated event."""
     return ModelGenerated(
         model=model,
         source_type="DataWindow",
         source_name=source.name,
-        timestamp=datetime.now()
+        timestamp=datetime.now(),
     )
 
 
 def emit_endpoint_created(endpoint: APIEndpoint, controller: str) -> EndpointCreated:
     """Emit endpoint created event."""
     return EndpointCreated(
-        endpoint=endpoint,
-        controller_name=controller,
-        timestamp=datetime.now()
+        endpoint=endpoint, controller_name=controller, timestamp=datetime.now()
     )

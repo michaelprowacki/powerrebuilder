@@ -30,18 +30,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Pre-commit cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      
+
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
@@ -50,29 +50,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run ruff check
         run: uv run ruff check src/ tests/
-      
+
       - name: Run ruff format check
         run: uv run ruff format --check src/ tests/
-      
+
       - name: Check import order
         run: uv run python -m importlinter
         continue-on-error: true
-      
+
       - name: Check for dead code
         run: uv run vulture src/ --min-confidence 80
         continue-on-error: true
@@ -85,19 +85,19 @@ jobs:
         tool: [mypy, pyright]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run ${{ matrix.tool }}
         run: |
           if [ "${{ matrix.tool }}" = "mypy" ]; then
@@ -121,22 +121,22 @@ jobs:
             os: macos-latest
           - python-version: "3.11"
             os: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run unit tests
         run: |
           uv run pytest tests/ \
@@ -146,7 +146,7 @@ jobs:
             --cov-report=term-missing \
             --junit-xml=test-results.xml \
             -m "not slow and not integration"
-      
+
       - name: Upload coverage to Codecov
         if: matrix.python-version == env.PYTHON_VERSION && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4
@@ -156,7 +156,7 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -170,19 +170,19 @@ jobs:
     needs: [lint, type-check]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run integration tests
         run: |
           uv run pytest tests/ \
@@ -192,7 +192,7 @@ jobs:
             -m "integration" \
             --maxfail=5
         timeout-minutes: 30
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -208,23 +208,23 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python versions
         run: |
           uv python install 3.10
           uv python install 3.11
           uv python install 3.12
           uv python install 3.13
-      
+
       - name: Install nox
         run: uv tool install nox
-      
+
       - name: Run nox sessions
         run: |
           uv run nox -s tests_ci
@@ -238,26 +238,26 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run benchmarks
         run: |
           uv run pytest tests/benchmarks/ \
             --benchmark-only \
             --benchmark-json=benchmark.json \
             --benchmark-autosave
-      
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -274,23 +274,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Build documentation
         run: |
           uv run mkdocs build --strict --verbose
-      
+
       - name: Upload documentation
         uses: actions/upload-artifact@v4
         with:
@@ -302,31 +302,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-      
+
       - name: Run safety check
         run: |
           uv tool install safety
           uv run safety check --json
         continue-on-error: true
-      
+
       - name: Run bandit security linter
         run: |
           uv tool install bandit[toml]
           uv run bandit -r src/ -ll
         continue-on-error: true
-      
+
       - name: Check for secrets with truffleHog
         uses: trufflesecurity/trufflehog@main
         with:

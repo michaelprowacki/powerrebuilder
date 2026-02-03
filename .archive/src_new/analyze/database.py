@@ -10,13 +10,14 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class SQLType(str, Enum):
     """SQL statement types."""
+
     SELECT = "SELECT"
     INSERT = "INSERT"
     UPDATE = "UPDATE"
@@ -31,6 +32,7 @@ class SQLType(str, Enum):
 
 class DataType(str, Enum):
     """Database column data types."""
+
     INTEGER = "INTEGER"
     BIGINT = "BIGINT"
     DECIMAL = "DECIMAL"
@@ -50,6 +52,7 @@ class DataType(str, Enum):
 @dataclass
 class Column:
     """Database column definition."""
+
     name: str
     data_type: DataType
     length: Optional[int] = None
@@ -66,6 +69,7 @@ class Column:
 @dataclass
 class Index:
     """Database index definition."""
+
     name: str
     columns: List[str]
     unique: bool = False
@@ -76,6 +80,7 @@ class Index:
 @dataclass
 class ForeignKey:
     """Foreign key relationship."""
+
     name: str
     columns: List[str]
     reference_table: str
@@ -87,6 +92,7 @@ class ForeignKey:
 @dataclass
 class Table:
     """Database table definition."""
+
     name: str
     schema: Optional[str] = None
     columns: List[Column] = field(default_factory=list)
@@ -106,6 +112,7 @@ class Table:
 @dataclass
 class StoredProcedure:
     """Stored procedure definition."""
+
     name: str
     parameters: List[Dict[str, Any]] = field(default_factory=list)
     return_type: Optional[str] = None
@@ -116,6 +123,7 @@ class StoredProcedure:
 @dataclass
 class SQLStatement:
     """Parsed SQL statement."""
+
     type: SQLType
     statement: str
     tables: List[str] = field(default_factory=list)
@@ -128,6 +136,7 @@ class SQLStatement:
 @dataclass
 class DatabaseSchema:
     """Complete database schema."""
+
     name: str
     tables: Dict[str, Table] = field(default_factory=dict)
     stored_procedures: Dict[str, StoredProcedure] = field(default_factory=dict)
@@ -152,32 +161,26 @@ class SQLParser:
         """
         return {
             "select": re.compile(
-                r"SELECT\s+(.+?)\s+FROM\s+(\w+(?:\.\w+)?)",
-                re.IGNORECASE | re.DOTALL
+                r"SELECT\s+(.+?)\s+FROM\s+(\w+(?:\.\w+)?)", re.IGNORECASE | re.DOTALL
             ),
             "insert": re.compile(
-                r"INSERT\s+INTO\s+(\w+(?:\.\w+)?)\s*\(([^)]+)\)",
-                re.IGNORECASE
+                r"INSERT\s+INTO\s+(\w+(?:\.\w+)?)\s*\(([^)]+)\)", re.IGNORECASE
             ),
             "update": re.compile(
                 r"UPDATE\s+(\w+(?:\.\w+)?)\s+SET\s+(.+?)(?:\s+WHERE|$)",
-                re.IGNORECASE | re.DOTALL
+                re.IGNORECASE | re.DOTALL,
             ),
-            "delete": re.compile(
-                r"DELETE\s+FROM\s+(\w+(?:\.\w+)?)",
-                re.IGNORECASE
-            ),
+            "delete": re.compile(r"DELETE\s+FROM\s+(\w+(?:\.\w+)?)", re.IGNORECASE),
             "create_table": re.compile(
                 r"CREATE\s+TABLE\s+(\w+(?:\.\w+)?)\s*\((.+?)\)",
-                re.IGNORECASE | re.DOTALL
+                re.IGNORECASE | re.DOTALL,
             ),
             "join": re.compile(
-                r"(?:INNER|LEFT|RIGHT|FULL)?\s*JOIN\s+(\w+(?:\.\w+)?)",
-                re.IGNORECASE
+                r"(?:INNER|LEFT|RIGHT|FULL)?\s*JOIN\s+(\w+(?:\.\w+)?)", re.IGNORECASE
             ),
             "where": re.compile(
                 r"WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+GROUP\s+BY|$)",
-                re.IGNORECASE | re.DOTALL
+                re.IGNORECASE | re.DOTALL,
             ),
         }
 
@@ -318,7 +321,12 @@ class SchemaExtractor:
 
         for file_path in directory.rglob("*"):
             if file_path.is_file() and file_path.suffix in [
-                ".sru", ".srw", ".srm", ".srd", ".pbl", ".sql"
+                ".sru",
+                ".srw",
+                ".srm",
+                ".srd",
+                ".pbl",
+                ".sql",
             ]:
                 self._process_file(file_path)
 

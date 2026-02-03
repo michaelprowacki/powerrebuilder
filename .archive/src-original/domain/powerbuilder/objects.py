@@ -13,9 +13,8 @@ from enum import Enum
 from datetime import datetime
 
 from src_new.domain.core.computation import Computation, Function
-from src_new.domain.core.types import CompositeType, PrimitiveType
+from src_new.domain.core.types import CompositeType
 from src_new.domain.core.binding import Binding, Scope
-from src_new.domain.core.control import ControlFlow
 from src_new.domain.core.effects import SideEffect, IOEffect
 from src_new.domain.core.composition import Module, Interface
 
@@ -24,8 +23,10 @@ from src_new.domain.core.composition import Module, Interface
 # WINDOW OBJECTS
 # ============================================================================
 
+
 class WindowType(str, Enum):
     """Types of PowerBuilder windows."""
+
     MAIN = "main"
     CHILD = "child"
     POPUP = "popup"
@@ -37,6 +38,7 @@ class WindowType(str, Enum):
 @dataclass(frozen=True)
 class WindowControl:
     """A control on a PowerBuilder window."""
+
     name: str
     type: str  # commandbutton, statictext, datawindow, etc.
     x: int
@@ -54,6 +56,7 @@ class Window:
     Manifestation of core Module and Interface concepts.
     Windows are modules that compose controls and handle events.
     """
+
     name: str
     type: WindowType
     title: str
@@ -65,21 +68,27 @@ class Window:
     properties: Dict[str, Any] = field(default_factory=dict)
 
     # These are manifestations of core concepts
-    instance_variables: Dict[str, 'Binding'] = field(default_factory=dict)  # Bindings
-    events: Dict[str, 'Computation'] = field(default_factory=dict)  # Event handlers are computations
-    functions: Dict[str, 'Function'] = field(default_factory=dict)  # Functions with signatures
+    instance_variables: Dict[str, "Binding"] = field(default_factory=dict)  # Bindings
+    events: Dict[str, "Computation"] = field(
+        default_factory=dict
+    )  # Event handlers are computations
+    functions: Dict[str, "Function"] = field(
+        default_factory=dict
+    )  # Functions with signatures
 
     # Window as module
-    module: Optional['Module'] = None
-    interface: Optional['Interface'] = None
+    module: Optional["Module"] = None
+    interface: Optional["Interface"] = None
 
 
 # ============================================================================
 # DATAWINDOW OBJECTS
 # ============================================================================
 
+
 class DataWindowStyle(str, Enum):
     """DataWindow presentation styles."""
+
     FREEFORM = "freeform"
     GRID = "grid"
     TABULAR = "tabular"
@@ -97,6 +106,7 @@ class DataWindowStyle(str, Enum):
 @dataclass(frozen=True)
 class DataWindowColumn:
     """A column in a DataWindow."""
+
     name: str
     datatype: str
     width: int
@@ -113,6 +123,7 @@ class DataWindow:
     Manifestation of core Computation and SideEffect concepts.
     DataWindows perform database I/O (effects) and data transformation (computation).
     """
+
     name: str
     style: DataWindowStyle
     sql: Optional[str]
@@ -123,18 +134,20 @@ class DataWindow:
     properties: Dict[str, Any] = field(default_factory=dict)
 
     # DataWindow as computation with effects
-    retrieve_computation: Optional['Computation'] = None  # SQL query computation
-    update_computation: Optional['Computation'] = None  # Update computation
-    io_effects: List['IOEffect'] = field(default_factory=list)  # Database I/O
+    retrieve_computation: Optional["Computation"] = None  # SQL query computation
+    update_computation: Optional["Computation"] = None  # Update computation
+    io_effects: List["IOEffect"] = field(default_factory=list)  # Database I/O
 
 
 # ============================================================================
 # MENU OBJECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class MenuItem:
     """A menu item in a PowerBuilder menu."""
+
     name: str
     text: str
     enabled: bool = True
@@ -142,12 +155,13 @@ class MenuItem:
     checked: bool = False
     shortcut: Optional[str] = None
     script: Optional[str] = None
-    children: List['MenuItem'] = field(default_factory=list)
+    children: List["MenuItem"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class Menu:
     """A PowerBuilder menu object."""
+
     name: str
     items: List[MenuItem] = field(default_factory=list)
     properties: Dict[str, Any] = field(default_factory=dict)
@@ -157,8 +171,10 @@ class Menu:
 # USER OBJECTS
 # ============================================================================
 
+
 class UserObjectType(str, Enum):
     """Types of user objects."""
+
     STANDARD = "standard"
     VISUAL = "visual"
     CUSTOM = "custom"
@@ -172,26 +188,29 @@ class UserObject:
     Manifestation of core CompositeType concept.
     User objects are custom types that compose other types.
     """
+
     name: str
     type: UserObjectType
     ancestor: Optional[str] = None
     controls: List[WindowControl] = field(default_factory=list)
-    instance_variables: Dict[str, 'Binding'] = field(default_factory=dict)
-    events: Dict[str, 'Computation'] = field(default_factory=dict)
-    functions: Dict[str, 'Function'] = field(default_factory=dict)
+    instance_variables: Dict[str, "Binding"] = field(default_factory=dict)
+    events: Dict[str, "Computation"] = field(default_factory=dict)
+    functions: Dict[str, "Function"] = field(default_factory=dict)
     properties: Dict[str, Any] = field(default_factory=dict)
 
     # User object as composite type
-    composite_type: Optional['CompositeType'] = None
+    composite_type: Optional["CompositeType"] = None
 
 
 # ============================================================================
 # STRUCTURE OBJECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class StructureMember:
     """A member of a PowerBuilder structure."""
+
     name: str
     datatype: str
     array_bounds: Optional[List[int]] = None
@@ -204,14 +223,16 @@ class Structure:
 
     Direct manifestation of core CompositeType (product type).
     """
+
     name: str
     members: List[StructureMember] = field(default_factory=list)
-    scope: 'Scope' = None  # Use core Scope concept
+    scope: "Scope" = None  # Use core Scope concept
 
 
 # ============================================================================
 # APPLICATION OBJECT
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Application:
@@ -219,26 +240,29 @@ class Application:
 
     Top-level module that composes other modules.
     """
+
     name: str
     library_list: List[str] = field(default_factory=list)
     default_font: Optional[str] = None
     default_pitch: Optional[str] = None
     icon: Optional[str] = None
-    open_script: Optional['Computation'] = None  # Startup computation
-    close_script: Optional['Computation'] = None  # Shutdown computation
-    idle_script: Optional['Computation'] = None  # Idle computation
+    open_script: Optional["Computation"] = None  # Startup computation
+    close_script: Optional["Computation"] = None  # Shutdown computation
+    idle_script: Optional["Computation"] = None  # Idle computation
     properties: Dict[str, Any] = field(default_factory=dict)
 
     # Application as top-level module
-    module: Optional['Module'] = None
+    module: Optional["Module"] = None
 
 
 # ============================================================================
 # FUNCTION OBJECTS
 # ============================================================================
 
+
 class AccessModifier(str, Enum):
     """Access modifiers for functions."""
+
     PUBLIC = "public"
     PRIVATE = "private"
     PROTECTED = "protected"
@@ -247,6 +271,7 @@ class AccessModifier(str, Enum):
 @dataclass(frozen=True)
 class FunctionArgument:
     """An argument to a function."""
+
     name: str
     datatype: str
     pass_by: str = "value"  # value, reference
@@ -261,6 +286,7 @@ class PBFunction:
     Note: Renamed to avoid conflict with core Function.
     Direct manifestation of core Function concept.
     """
+
     name: str
     return_type: Optional[str]
     arguments: List[FunctionArgument] = field(default_factory=list)
@@ -269,7 +295,7 @@ class PBFunction:
     throws: List[str] = field(default_factory=list)
 
     # Function as computation
-    computation: Optional['Function'] = None
+    computation: Optional["Function"] = None
 
 
 @dataclass(frozen=True)
@@ -278,6 +304,7 @@ class Event:
 
     Events are computations triggered by external stimuli.
     """
+
     name: str
     arguments: List[FunctionArgument] = field(default_factory=list)
     return_type: Optional[str] = None
@@ -285,17 +312,19 @@ class Event:
     extends: Optional[str] = None  # Parent event
 
     # Event as computation with possible effects
-    computation: Optional['Computation'] = None
-    effects: List['SideEffect'] = field(default_factory=list)
+    computation: Optional["Computation"] = None
+    effects: List["SideEffect"] = field(default_factory=list)
 
 
 # ============================================================================
 # DOMAIN EVENTS (Colocated with PowerBuilder aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class WindowCreated:
     """Event: PowerBuilder window was created."""
+
     window: Window
     timestamp: datetime
 
@@ -303,6 +332,7 @@ class WindowCreated:
 @dataclass(frozen=True)
 class DataWindowRetrieved:
     """Event: DataWindow performed retrieve."""
+
     datawindow: DataWindow
     row_count: int
     timestamp: datetime
@@ -311,6 +341,7 @@ class DataWindowRetrieved:
 @dataclass(frozen=True)
 class DataWindowUpdated:
     """Event: DataWindow performed update."""
+
     datawindow: DataWindow
     rows_affected: int
     timestamp: datetime
@@ -319,6 +350,7 @@ class DataWindowUpdated:
 @dataclass(frozen=True)
 class EventTriggered:
     """Event: PowerBuilder event was triggered."""
+
     event: Event
     source_object: str
     arguments: Dict[str, Any]
@@ -328,6 +360,7 @@ class EventTriggered:
 @dataclass(frozen=True)
 class FunctionCalled:
     """Event: PowerBuilder function was called."""
+
     function: PBFunction
     caller: str
     arguments: Dict[str, Any]
@@ -337,6 +370,7 @@ class FunctionCalled:
 @dataclass(frozen=True)
 class UserObjectInstantiated:
     """Event: User object was instantiated."""
+
     user_object: UserObject
     parent: Optional[str]
     timestamp: datetime
@@ -345,6 +379,7 @@ class UserObjectInstantiated:
 @dataclass(frozen=True)
 class ApplicationStarted:
     """Event: PowerBuilder application started."""
+
     application: Application
     timestamp: datetime
 
@@ -352,6 +387,7 @@ class ApplicationStarted:
 @dataclass(frozen=True)
 class MenuItemClicked:
     """Event: Menu item was clicked."""
+
     menu_item: MenuItem
     window: str
     timestamp: datetime

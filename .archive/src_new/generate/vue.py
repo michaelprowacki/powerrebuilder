@@ -7,7 +7,7 @@ TypeScript support, and Pinia state management.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from src_new._core.models import (
     ApplicationModel,
@@ -49,9 +49,7 @@ class VueGenerator(BaseCodeGenerator):
             Generated project
         """
         project = GeneratedProject(
-            name=model.name,
-            target=TargetLanguage.JAVASCRIPT,
-            files=[]
+            name=model.name, target=TargetLanguage.JAVASCRIPT, files=[]
         )
 
         # Generate project structure
@@ -80,9 +78,7 @@ class VueGenerator(BaseCodeGenerator):
         return project
 
     def _generate_package_json(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate package.json file.
 
@@ -100,7 +96,7 @@ class VueGenerator(BaseCodeGenerator):
                 "preview": "vite preview",
                 "type-check": "vue-tsc --noEmit",
                 "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
-                "format": "prettier --write ."
+                "format": "prettier --write .",
             },
             "dependencies": {
                 "vue": "^3.3.0",
@@ -108,7 +104,7 @@ class VueGenerator(BaseCodeGenerator):
                 "pinia": "^2.1.0",
                 "axios": "^1.6.0",
                 "@vueuse/core": "^10.7.0",
-                "element-plus": "^2.4.0"
+                "element-plus": "^2.4.0",
             },
             "devDependencies": {
                 "@vitejs/plugin-vue": "^4.5.0",
@@ -119,8 +115,8 @@ class VueGenerator(BaseCodeGenerator):
                 "@types/node": "^20.10.0",
                 "eslint": "^8.55.0",
                 "eslint-plugin-vue": "^9.19.0",
-                "prettier": "^3.1.0"
-            }
+                "prettier": "^3.1.0",
+            },
         }
 
         project.files.append(
@@ -132,9 +128,7 @@ class VueGenerator(BaseCodeGenerator):
         )
 
     def _generate_vite_config(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate Vite configuration.
 
@@ -174,9 +168,7 @@ export default defineConfig({
         )
 
     def _generate_tsconfig(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate TypeScript configuration.
 
@@ -191,11 +183,9 @@ export default defineConfig({
             "compilerOptions": {
                 "composite": True,
                 "baseUrl": ".",
-                "paths": {
-                    "@/*": ["./src/*"]
-                },
-                "types": ["element-plus/global"]
-            }
+                "paths": {"@/*": ["./src/*"]},
+                "types": ["element-plus/global"],
+            },
         }
 
         project.files.append(
@@ -207,9 +197,7 @@ export default defineConfig({
         )
 
     def _generate_app_vue(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate main App.vue component.
 
@@ -217,7 +205,7 @@ export default defineConfig({
             model: Application model
             project: Generated project
         """
-        app_content = f"""<template>
+        app_content = """<template>
   <el-config-provider :locale="locale">
     <div id="app">
       <el-container>
@@ -229,7 +217,7 @@ export default defineConfig({
             <AppSidebar />
           </el-aside>
           <el-main>
-            <router-view v-slot="{{ Component, route }}">
+            <router-view v-slot="{ Component, route }">
               <transition name="fade" mode="out-in">
                 <component :is="Component" :key="route.path" />
               </transition>
@@ -242,12 +230,12 @@ export default defineConfig({
 </template>
 
 <script setup lang="ts">
-import {{ ref, computed }} from 'vue'
-import {{ ElConfigProvider, ElContainer, ElHeader, ElAside, ElMain }} from 'element-plus'
-import {{ useRouter }} from 'vue-router'
+import { ref, computed } from 'vue'
+import { ElConfigProvider, ElContainer, ElHeader, ElAside, ElMain } from 'element-plus'
+import { useRouter } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
-import {{ useAppStore }} from '@/stores/app'
+import { useAppStore } from '@/stores/app'
 import en from 'element-plus/es/locale/lang/en'
 
 const appStore = useAppStore()
@@ -258,38 +246,38 @@ const showSidebar = computed(() => appStore.showSidebar)
 </script>
 
 <style scoped>
-#app {{
+#app {
   height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-}}
+}
 
-.el-header {{
+.el-header {
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
   display: flex;
   align-items: center;
   padding: 0 20px;
-}}
+}
 
-.el-aside {{
+.el-aside {
   background-color: #f5f5f5;
   border-right: 1px solid #e6e6e6;
-}}
+}
 
-.el-main {{
+.el-main {
   background-color: #fafafa;
   padding: 20px;
-}}
+}
 
 .fade-enter-active,
-.fade-leave-active {{
+.fade-leave-active {
   transition: opacity 0.3s ease;
-}}
+}
 
 .fade-enter-from,
-.fade-leave-to {{
+.fade-leave-to {
   opacity: 0;
-}}
+}
 </style>"""
 
         project.files.append(
@@ -301,9 +289,7 @@ const showSidebar = computed(() => appStore.showSidebar)
         )
 
     def _generate_main_ts(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate main.ts entry point.
 
@@ -343,9 +329,7 @@ app.mount('#app')"""
         )
 
     def _generate_component(
-        self,
-        obj: SemanticObject,
-        project: GeneratedProject
+        self, obj: SemanticObject, project: GeneratedProject
     ) -> None:
         """Generate Vue component for an object.
 
@@ -396,23 +380,25 @@ app.mount('#app')"""
         """
         template_parts = [
             f'  <div class="{obj.name.lower()}-container">',
-            f'    <el-card>',
-            f'      <template #header>',
-            f'        <div class="card-header">',
-            f'          <span>{obj.name}</span>',
-            f'        </div>',
-            f'      </template>',
+            "    <el-card>",
+            "      <template #header>",
+            '        <div class="card-header">',
+            f"          <span>{obj.name}</span>",
+            "        </div>",
+            "      </template>",
         ]
 
         # Add form fields for properties
         if obj.properties:
-            template_parts.append('      <el-form :model="formData" label-width="120px">')
+            template_parts.append(
+                '      <el-form :model="formData" label-width="120px">'
+            )
 
             for prop in obj.properties:
                 field = self._generate_form_field(prop)
                 template_parts.append(field)
 
-            template_parts.append('      </el-form>')
+            template_parts.append("      </el-form>")
 
         # Add action buttons for methods
         if obj.methods:
@@ -422,14 +408,11 @@ app.mount('#app')"""
                     template_parts.append(
                         f'        <el-button @click="{method.name}">{self._format_label(method.name)}</el-button>'
                     )
-            template_parts.append('      </div>')
+            template_parts.append("      </div>")
 
-        template_parts.extend([
-            '    </el-card>',
-            '  </div>'
-        ])
+        template_parts.extend(["    </el-card>", "  </div>"])
 
-        return '\n'.join(template_parts)
+        return "\n".join(template_parts)
 
     def _generate_form_field(self, prop: Property) -> str:
         """Generate form field for a property.
@@ -507,7 +490,7 @@ app.mount('#app')"""
         script_parts.append("  console.log('Component mounted')")
         script_parts.append("})")
 
-        return '\n'.join(script_parts)
+        return "\n".join(script_parts)
 
     def _generate_method(self, method: Method) -> str:
         """Generate method implementation.
@@ -519,8 +502,7 @@ app.mount('#app')"""
             TypeScript method code
         """
         params = ", ".join(
-            f"{p.name}: {self._map_to_ts_type(p.data_type)}"
-            for p in method.parameters
+            f"{p.name}: {self._map_to_ts_type(p.data_type)}" for p in method.parameters
         )
 
         return f"""const {method.name} = async ({params}) => {{
@@ -562,9 +544,7 @@ app.mount('#app')"""
 }}"""
 
     def _generate_data_table(
-        self,
-        obj: SemanticObject,
-        project: GeneratedProject
+        self, obj: SemanticObject, project: GeneratedProject
     ) -> None:
         """Generate data table component for DataWindow.
 
@@ -703,15 +683,11 @@ onMounted(() => {{
         columns = []
         for prop in obj.properties[:6]:  # Limit to first 6 columns
             label = self._format_label(prop.name)
-            columns.append(
-                f'<el-table-column prop="{prop.name}" label="{label}" />'
-            )
-        return '\n      '.join(columns)
+            columns.append(f'<el-table-column prop="{prop.name}" label="{label}" />')
+        return "\n      ".join(columns)
 
     def _generate_stores(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate Pinia stores.
 
@@ -768,9 +744,7 @@ export const useAppStore = defineStore('app', () => {
         )
 
     def _generate_router(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate Vue Router configuration.
 
@@ -808,9 +782,7 @@ export default router"""
         )
 
     def _generate_styles(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate global styles.
 
@@ -901,7 +873,8 @@ body {
         """
         # Convert camelCase or snake_case to Title Case
         import re
-        words = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)', name)
+
+        words = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)", name)
         if not words:
-            words = name.split('_')
-        return ' '.join(word.capitalize() for word in words)
+            words = name.split("_")
+        return " ".join(word.capitalize() for word in words)

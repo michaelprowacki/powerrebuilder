@@ -5,11 +5,11 @@ It's the only place that coordinates I/O with domain logic.
 """
 
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from enum import Enum
 
 from src_new.domain.extract import extract_pbl, extract_pbd
-from src_new.domain.extract.shared import PBLEntry, ExtractionError
+from src_new.domain.extract.shared import ExtractionError
 from .ports import IFileReader, IObjectWriter
 
 
@@ -21,6 +21,7 @@ from .ports import IFileReader, IObjectWriter
 @dataclass
 class ExtractLibraryDTO:
     """Input DTO for library extraction workflow."""
+
     library_path: str
     output_dir: str
     validate_only: bool = False
@@ -30,6 +31,7 @@ class ExtractLibraryDTO:
 @dataclass
 class ExtractResult:
     """Output from extraction workflow."""
+
     success: bool
     library_path: str
     objects_extracted: int
@@ -45,6 +47,7 @@ class ExtractResult:
 
 class ExtractEventType(Enum):
     """Types of extraction events."""
+
     LIBRARY_VALIDATED = "library_validated"
     EXTRACTION_STARTED = "extraction_started"
     EXTRACTION_COMPLETED = "extraction_completed"
@@ -55,6 +58,7 @@ class ExtractEventType(Enum):
 @dataclass
 class ExtractEvent:
     """Event from extraction workflow."""
+
     type: ExtractEventType
     library_path: str
     data: dict
@@ -91,12 +95,13 @@ async def run(
             success=False,
             library_path=dto.library_path,
             objects_extracted=0,
-            errors=[ExtractionError(
-                entry_name="<file>",
-                message=f"File not found: {dto.library_path}"
-            )],
+            errors=[
+                ExtractionError(
+                    entry_name="<file>", message=f"File not found: {dto.library_path}"
+                )
+            ],
             format="unknown",
-            metadata={}
+            metadata={},
         ), events
 
     try:
@@ -106,12 +111,13 @@ async def run(
             success=False,
             library_path=dto.library_path,
             objects_extracted=0,
-            errors=[ExtractionError(
-                entry_name="<file>",
-                message=f"Failed to read file: {str(e)}"
-            )],
+            errors=[
+                ExtractionError(
+                    entry_name="<file>", message=f"Failed to read file: {str(e)}"
+                )
+            ],
             format="unknown",
-            metadata={}
+            metadata={},
         ), events
 
     # Determine format and validate
@@ -119,35 +125,41 @@ async def run(
     is_pbd = extract_pbd.validate_pbd_format(data)
 
     if not is_pbl and not is_pbd:
-        events.append(ExtractEvent(
-            type=ExtractEventType.EXTRACTION_FAILED,
-            library_path=dto.library_path,
-            data={"reason": "Invalid library format"}
-        ))
+        events.append(
+            ExtractEvent(
+                type=ExtractEventType.EXTRACTION_FAILED,
+                library_path=dto.library_path,
+                data={"reason": "Invalid library format"},
+            )
+        )
         return ExtractResult(
             success=False,
             library_path=dto.library_path,
             objects_extracted=0,
-            errors=[ExtractionError(
-                entry_name="<format>",
-                message="Not a valid PBL or PBD file"
-            )],
+            errors=[
+                ExtractionError(
+                    entry_name="<format>", message="Not a valid PBL or PBD file"
+                )
+            ],
             format="unknown",
-            metadata={}
+            metadata={},
         ), events
 
     format_type = "PBL" if is_pbl else "PBD"
 
-    events.append(ExtractEvent(
-        type=ExtractEventType.LIBRARY_VALIDATED,
-        library_path=dto.library_path,
-        data={"format": format_type}
-    ))
+    events.append(
+        ExtractEvent(
+            type=ExtractEventType.LIBRARY_VALIDATED,
+            library_path=dto.library_path,
+            data={"format": format_type},
+        )
+    )
 
     # Stop here if validate only
     if dto.validate_only:
         metadata = (
-            extract_pbl.get_library_info(data) if is_pbl
+            extract_pbl.get_library_info(data)
+            if is_pbl
             else {"format": "PBD", "valid": True}
         )
         return ExtractResult(
@@ -156,15 +168,17 @@ async def run(
             objects_extracted=0,
             errors=[],
             format=format_type,
-            metadata=metadata
+            metadata=metadata,
         ), events
 
     # Extract objects using appropriate domain function
-    events.append(ExtractEvent(
-        type=ExtractEventType.EXTRACTION_STARTED,
-        library_path=dto.library_path,
-        data={"format": format_type}
-    ))
+    events.append(
+        ExtractEvent(
+            type=ExtractEventType.EXTRACTION_STARTED,
+            library_path=dto.library_path,
+            data={"format": format_type},
+        )
+    )
 
     if is_pbl:
         entries, errors = extract_pbl.extract_objects(data)
@@ -182,48 +196,48 @@ async def run(
                 "format": format_type,
                 "objects_extracted": len(entries),
                 "errors_encountered": len(errors),
-                "preserve_structure": dto.preserve_structure
+                "preserve_structure": dto.preserve_structure,
             }
             await object_writer.write_metadata(dto.output_dir, metadata)
 
         except Exception as e:
-            errors.append(ExtractionError(
-                entry_name="<write>",
-                message=f"Failed to write objects: {str(e)}"
-            ))
+            errors.append(
+                ExtractionError(
+                    entry_name="<write>", message=f"Failed to write objects: {str(e)}"
+                )
+            )
 
     # Generate object extracted events
     for entry in entries[:10]:  # Limit events for performance
-        events.append(ExtractEvent(
-            type=ExtractEventType.OBJECT_EXTRACTED,
-            library_path=dto.library_path,
-            data={
-                "name": entry.name,
-                "type": entry.type.value,
-                "size": entry.size
-            }
-        ))
+        events.append(
+            ExtractEvent(
+                type=ExtractEventType.OBJECT_EXTRACTED,
+                library_path=dto.library_path,
+                data={"name": entry.name, "type": entry.type.value, "size": entry.size},
+            )
+        )
 
     # Final event
     if errors:
-        events.append(ExtractEvent(
-            type=ExtractEventType.EXTRACTION_COMPLETED,
-            library_path=dto.library_path,
-            data={
-                "objects": len(entries),
-                "errors": len(errors),
-                "partial_success": True
-            }
-        ))
+        events.append(
+            ExtractEvent(
+                type=ExtractEventType.EXTRACTION_COMPLETED,
+                library_path=dto.library_path,
+                data={
+                    "objects": len(entries),
+                    "errors": len(errors),
+                    "partial_success": True,
+                },
+            )
+        )
     else:
-        events.append(ExtractEvent(
-            type=ExtractEventType.EXTRACTION_COMPLETED,
-            library_path=dto.library_path,
-            data={
-                "objects": len(entries),
-                "success": True
-            }
-        ))
+        events.append(
+            ExtractEvent(
+                type=ExtractEventType.EXTRACTION_COMPLETED,
+                library_path=dto.library_path,
+                data={"objects": len(entries), "success": True},
+            )
+        )
 
     return ExtractResult(
         success=len(entries) > 0,
@@ -231,10 +245,7 @@ async def run(
         objects_extracted=len(entries),
         errors=errors,
         format=format_type,
-        metadata={
-            "entries": len(entries),
-            "errors": len(errors)
-        }
+        metadata={"entries": len(entries), "errors": len(errors)},
     ), events
 
 
@@ -252,10 +263,7 @@ async def run_batch(
     all_events = []
 
     for library_path in libraries:
-        dto = ExtractLibraryDTO(
-            library_path=library_path,
-            output_dir=output_dir
-        )
+        dto = ExtractLibraryDTO(library_path=library_path, output_dir=output_dir)
         result, events = await run(dto, file_reader, object_writer)
         results.append(result)
         all_events.extend(events)

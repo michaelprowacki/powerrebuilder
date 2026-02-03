@@ -5,7 +5,6 @@ Generates Tauri desktop applications from PowerBuilder semantic models.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from src_new._core.models import (
     ApplicationModel,
@@ -13,7 +12,6 @@ from src_new._core.models import (
     GeneratedProject,
     Method,
     ObjectType,
-    Property,
     SemanticObject,
     TargetLanguage,
 )
@@ -33,6 +31,7 @@ class TauriGenerator(BaseCodeGenerator):
             output_path: Output directory for Tauri app
         """
         from src_new._core.models import TargetLanguage
+
         super().__init__(TargetLanguage.TAURI)
         self.input_path = input_path
         self.output_path = output_path
@@ -51,9 +50,7 @@ class TauriGenerator(BaseCodeGenerator):
         self.app_name = data.name.lower().replace(" ", "_")
 
         project = GeneratedProject(
-            name=self.app_name,
-            target=TargetLanguage.TAURI,
-            files=[]
+            name=self.app_name, target=TargetLanguage.TAURI, files=[]
         )
 
         # Generate Cargo.toml
@@ -114,11 +111,7 @@ lto = true
 opt-level = "s"
 strip = true
 '''
-        return GeneratedFile(
-            path=Path("Cargo.toml"),
-            content=content,
-            language="toml"
-        )
+        return GeneratedFile(path=Path("Cargo.toml"), content=content, language="toml")
 
     def _generate_main_rs(self, app: ApplicationModel) -> GeneratedFile:
         """Generate main.rs file."""
@@ -160,18 +153,13 @@ fn main() {{
         .expect("error while running tauri application");
 }}
 '''
-        return GeneratedFile(
-            path=Path("src/main.rs"),
-            content=content,
-            language="rust"
-        )
+        return GeneratedFile(path=Path("src/main.rs"), content=content, language="rust")
 
     def _generate_lib_rs(self, app: ApplicationModel) -> GeneratedFile:
         """Generate lib.rs with commands."""
         # Find business objects
         business_objects = [
-            obj for obj in app.objects
-            if obj.type == ObjectType.USER_OBJECT
+            obj for obj in app.objects if obj.type == ObjectType.USER_OBJECT
         ]
 
         commands = []
@@ -240,9 +228,7 @@ pub fn set_property(
 {"".join(commands)}
 '''
         return GeneratedFile(
-            path=Path("src/commands.rs"),
-            content=content,
-            language="rust"
+            path=Path("src/commands.rs"), content=content, language="rust"
         )
 
     def _generate_command(self, obj: SemanticObject, method: Method) -> str:
@@ -253,9 +239,11 @@ pub fn set_property(
             rust_type = self._pb_to_rust_type(param.data_type)
             param_types.append(f"{param.name}: {rust_type}")
 
-        return_type = self._pb_to_rust_type(method.return_type) if method.return_type else "()"
+        return_type = (
+            self._pb_to_rust_type(method.return_type) if method.return_type else "()"
+        )
 
-        return f'''
+        return f"""
 /// {method.description or method.name}
 #[tauri::command]
 pub async fn {obj.name.lower()}_{method.name}(
@@ -265,7 +253,7 @@ pub async fn {obj.name.lower()}_{method.name}(
     // TODO: Implement {obj.name}.{method.name}
     Ok(Default::default())
 }}
-'''
+"""
 
     def _generate_model(self, obj: SemanticObject) -> GeneratedFile:
         """Generate a Rust model struct."""
@@ -274,7 +262,7 @@ pub async fn {obj.name.lower()}_{method.name}(
             rust_type = self._pb_to_rust_type(prop.data_type)
             fields.append(f"    pub {prop.name}: {rust_type},")
 
-        content = f'''//! {obj.name} Model
+        content = f"""//! {obj.name} Model
 //! Generated from PowerBuilder {obj.type.value}
 
 use serde::{{Deserialize, Serialize}};
@@ -283,7 +271,7 @@ use chrono::{{DateTime, Utc}};
 /// {obj.description or obj.name}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct {obj.name} {{
-{'\n'.join(fields)}
+{"\n".join(fields)}
 }}
 
 impl {obj.name} {{
@@ -300,11 +288,11 @@ impl Default for {obj.name} {{
         Self::new()
     }}
 }}
-'''
+"""
         return GeneratedFile(
             path=Path(f"src/models/{obj.name.lower()}.rs"),
             content=content,
-            language="rust"
+            language="rust",
         )
 
     def _generate_window(self, obj: SemanticObject) -> GeneratedFile:
@@ -332,7 +320,7 @@ pub fn init_{obj.name.lower()}(window: &Window) -> Result<(), String> {{
         return GeneratedFile(
             path=Path(f"src/windows/{obj.name.lower()}.rs"),
             content=content,
-            language="rust"
+            language="rust",
         )
 
     def _generate_tauri_config(self, app: ApplicationModel) -> GeneratedFile:
@@ -348,7 +336,7 @@ pub fn init_{obj.name.lower()}(window: &Window) -> Result<(), String> {{
                 "beforeDevCommand": "",
                 "beforeBuildCommand": "",
                 "devUrl": "../index.html",
-                "frontendDist": "../index.html"
+                "frontendDist": "../index.html",
             },
             "app": {
                 "windows": [
@@ -357,12 +345,10 @@ pub fn init_{obj.name.lower()}(window: &Window) -> Result<(), String> {{
                         "width": 1200,
                         "height": 800,
                         "resizable": True,
-                        "fullscreen": False
+                        "fullscreen": False,
                     }
                 ],
-                "security": {
-                    "csp": None
-                }
+                "security": {"csp": None},
             },
             "bundle": {
                 "active": True,
@@ -372,20 +358,20 @@ pub fn init_{obj.name.lower()}(window: &Window) -> Result<(), String> {{
                     "icons/128x128.png",
                     "icons/128x128@2x.png",
                     "icons/icon.icns",
-                    "icons/icon.ico"
-                ]
-            }
+                    "icons/icon.ico",
+                ],
+            },
         }
 
         return GeneratedFile(
             path=Path("tauri.conf.json"),
             content=json.dumps(config, indent=2),
-            language="json"
+            language="json",
         )
 
     def _generate_index_html(self, app: ApplicationModel) -> GeneratedFile:
         """Generate basic HTML frontend."""
-        content = f'''<!DOCTYPE html>
+        content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -461,12 +447,8 @@ pub fn init_{obj.name.lower()}(window: &Window) -> Result<(), String> {{
     </script>
 </body>
 </html>
-'''
-        return GeneratedFile(
-            path=Path("index.html"),
-            content=content,
-            language="html"
-        )
+"""
+        return GeneratedFile(path=Path("index.html"), content=content, language="html")
 
     def _pb_to_rust_type(self, pb_type: str) -> str:
         """Convert PowerBuilder type to Rust type."""

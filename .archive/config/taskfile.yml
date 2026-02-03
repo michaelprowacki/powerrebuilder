@@ -12,7 +12,7 @@ output:
     end: '::endgroup::'
 
 # Load .env files automatically
-dotenv: 
+dotenv:
   - '.env'
   - '.env.local'
 
@@ -42,13 +42,13 @@ tasks:
     cmds:
       - |
         # Load environment files if present (with safety checks)
-        if [ -f .env ] && [ -r .env ]; then 
+        if [ -f .env ] && [ -r .env ]; then
           set -a; . ./.env; set +a
         fi
-        if [ -f .env.local ] && [ -r .env.local ]; then 
+        if [ -f .env.local ] && [ -r .env.local ]; then
           set -a; . ./.env.local; set +a
         fi
-        if [ -f .envrc ] && [ -r .envrc ]; then 
+        if [ -f .envrc ] && [ -r .envrc ]; then
           set -a; . ./.envrc; set +a
         fi
         # Project-local Python venv (if present)
@@ -152,14 +152,14 @@ tasks:
       - |
         set -euo pipefail
         MODE="{{.MODE}}"
-        
+
         if [ -f "pyproject.toml" ]; then
           if [ "$MODE" = "update" ]; then
             uv lock --upgrade || true
           fi
           uv sync
         fi
-        
+
         if [ -f "Cargo.toml" ]; then
           if [ "$MODE" = "update" ]; then
             cargo update
@@ -167,7 +167,7 @@ tasks:
             cargo fetch
           fi
         fi
-        
+
         if [ -f "package.json" ]; then
           if [ -f "pnpm-lock.yaml" ]; then
             pnpm install --frozen-lockfile || pnpm install

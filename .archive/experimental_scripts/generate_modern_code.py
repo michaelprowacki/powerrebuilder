@@ -6,7 +6,8 @@ Generate modern Flutter and Python code from object model.
 import json
 from pathlib import Path
 import sys
-from typing import Dict, List
+from typing import Dict
+
 
 class FlutterGenerator:
     """Generate Flutter/Dart code from object model."""
@@ -22,7 +23,7 @@ class FlutterGenerator:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(model_file, 'r') as f:
+        with open(model_file, "r") as f:
             self.model = json.load(f)
 
     def generate(self):
@@ -35,7 +36,7 @@ class FlutterGenerator:
 
     def _generate_main(self):
         """Generate main.dart."""
-        code = '''import 'package:flutter/material.dart';
+        code = """import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -58,19 +59,19 @@ class DentalClinicApp extends StatelessWidget {
     );
   }
 }
-'''
-        output_file = self.output_dir / 'lib' / 'main.dart'
+"""
+        output_file = self.output_dir / "lib" / "main.dart"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text(code)
         print(f"Generated: {output_file}")
 
     def _generate_screens(self):
         """Generate screen files."""
-        screens_dir = self.output_dir / 'lib' / 'screens'
+        screens_dir = self.output_dir / "lib" / "screens"
         screens_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate home screen with navigation to all screens
-        home_code = '''import 'package:flutter/material.dart';
+        home_code = """import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -146,13 +147,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-'''
-        home_file = screens_dir / 'home_screen.dart'
+"""
+        home_file = screens_dir / "home_screen.dart"
         home_file.write_text(home_code)
         print(f"Generated: {home_file}")
 
         # Generate screens from model
-        for screen in self.model['screens'][:5]:  # First 5 screens
+        for screen in self.model["screens"][:5]:  # First 5 screens
             screen_code = self._generate_screen_code(screen)
             screen_file = screens_dir / f"{screen['name'].lower()}_screen.dart"
             screen_file.write_text(screen_code)
@@ -161,34 +162,34 @@ class HomeScreen extends StatelessWidget {
     def _generate_screen_code(self, screen: Dict) -> str:
         """Generate code for a single screen."""
         widgets_code = []
-        for widget in screen['widgets'][:10]:  # First 10 widgets
-            if widget['type'] == 'ElevatedButton':
-                widgets_code.append(f'''
+        for widget in screen["widgets"][:10]:  # First 10 widgets
+            if widget["type"] == "ElevatedButton":
+                widgets_code.append(f"""
             ElevatedButton(
               onPressed: () {{}},
               child: const Text('{widget["name"]}'),
-            ),''')
-            elif widget['type'] == 'Text':
-                widgets_code.append(f'''
-            const Text('{widget["name"]}'),''')
-            elif widget['type'] == 'TextField':
-                widgets_code.append(f'''
+            ),""")
+            elif widget["type"] == "Text":
+                widgets_code.append(f"""
+            const Text('{widget["name"]}'),""")
+            elif widget["type"] == "TextField":
+                widgets_code.append(f"""
             TextField(
               decoration: const InputDecoration(
                 labelText: '{widget["name"]}',
               ),
-            ),''')
+            ),""")
 
-        return f'''import 'package:flutter/material.dart';
+        return f"""import 'package:flutter/material.dart';
 
-class {screen['name']}Screen extends StatefulWidget {{
-  const {screen['name']}Screen({{super.key}});
+class {screen["name"]}Screen extends StatefulWidget {{
+  const {screen["name"]}Screen({{super.key}});
 
   @override
-  State<{screen['name']}Screen> createState() => _{screen['name']}ScreenState();
+  State<{screen["name"]}Screen> createState() => _{screen["name"]}ScreenState();
 }}
 
-class _{screen['name']}ScreenState extends State<{screen['name']}Screen> {{
+class _{screen["name"]}ScreenState extends State<{screen["name"]}Screen> {{
   @override
   Widget build(BuildContext context) {{
     return Scaffold(
@@ -199,22 +200,22 @@ class _{screen['name']}ScreenState extends State<{screen['name']}Screen> {{
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            {''.join(widgets_code)}
+            {"".join(widgets_code)}
           ],
         ),
       ),
     );
   }}
 }}
-'''
+"""
 
     def _generate_widgets(self):
         """Generate custom widget files."""
-        widgets_dir = self.output_dir / 'lib' / 'widgets'
+        widgets_dir = self.output_dir / "lib" / "widgets"
         widgets_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate a data table widget
-        table_code = '''import 'package:flutter/material.dart';
+        table_code = """import 'package:flutter/material.dart';
 
 class CustomDataTable extends StatelessWidget {
   final List<Map<String, dynamic>> data;
@@ -243,18 +244,18 @@ class CustomDataTable extends StatelessWidget {
     );
   }
 }
-'''
-        table_file = widgets_dir / 'custom_data_table.dart'
+"""
+        table_file = widgets_dir / "custom_data_table.dart"
         table_file.write_text(table_code)
         print(f"Generated: {table_file}")
 
     def _generate_models(self):
         """Generate data model files."""
-        models_dir = self.output_dir / 'lib' / 'models'
+        models_dir = self.output_dir / "lib" / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate patient model
-        patient_code = '''class Patient {
+        patient_code = """class Patient {
   final int id;
   final String firstName;
   final String lastName;
@@ -297,14 +298,14 @@ class CustomDataTable extends StatelessWidget {
     };
   }
 }
-'''
-        patient_file = models_dir / 'patient.dart'
+"""
+        patient_file = models_dir / "patient.dart"
         patient_file.write_text(patient_code)
         print(f"Generated: {patient_file}")
 
     def _generate_pubspec(self):
         """Generate pubspec.yaml."""
-        pubspec = '''name: dental_clinic_app
+        pubspec = """name: dental_clinic_app
 description: Dental Clinic Management System
 publish_to: 'none'
 version: 1.0.0+1
@@ -327,8 +328,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-'''
-        pubspec_file = self.output_dir / 'pubspec.yaml'
+"""
+        pubspec_file = self.output_dir / "pubspec.yaml"
         pubspec_file.write_text(pubspec)
         print(f"Generated: {pubspec_file}")
 
@@ -347,7 +348,7 @@ class PythonGenerator:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(model_file, 'r') as f:
+        with open(model_file, "r") as f:
             self.model = json.load(f)
 
     def generate(self):
@@ -392,13 +393,13 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 '''
-        main_file = self.output_dir / 'main.py'
+        main_file = self.output_dir / "main.py"
         main_file.write_text(code)
         print(f"Generated: {main_file}")
 
     def _generate_models(self):
         """Generate model files."""
-        models_dir = self.output_dir / 'models'
+        models_dir = self.output_dir / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate patient model
@@ -427,7 +428,7 @@ class Patient(BaseModel):
         """Pydantic configuration."""
         orm_mode = True
 '''
-        patient_file = models_dir / 'patient.py'
+        patient_file = models_dir / "patient.py"
         patient_file.write_text(patient_code)
         print(f"Generated: {patient_file}")
 
@@ -452,13 +453,13 @@ class Appointment(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 '''
-        appointment_file = models_dir / 'appointment.py'
+        appointment_file = models_dir / "appointment.py"
         appointment_file.write_text(appointment_code)
         print(f"Generated: {appointment_file}")
 
     def _generate_services(self):
         """Generate service files."""
-        services_dir = self.output_dir / 'services'
+        services_dir = self.output_dir / "services"
         services_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate patient service
@@ -507,13 +508,13 @@ class PatientService:
             return True
         return False
 '''
-        patient_service_file = services_dir / 'patient_service.py'
+        patient_service_file = services_dir / "patient_service.py"
         patient_service_file.write_text(patient_service_code)
         print(f"Generated: {patient_service_file}")
 
     def _generate_api(self):
         """Generate API controller files."""
-        api_dir = self.output_dir / 'api'
+        api_dir = self.output_dir / "api"
         api_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate patient API
@@ -572,12 +573,12 @@ class PatientController(Controller):
             raise ValueError(f"Patient {patient_id} not found")
         return {"message": f"Patient {patient_id} deleted"}
 '''
-        patient_api_file = api_dir / 'patient_api.py'
+        patient_api_file = api_dir / "patient_api.py"
         patient_api_file.write_text(patient_api_code)
         print(f"Generated: {patient_api_file}")
 
         # Generate stub files for other APIs
-        for api_name in ['appointment_api', 'billing_api']:
+        for api_name in ["appointment_api", "billing_api"]:
             stub_code = f'''"""Stub for {api_name}."""
 
 from litestar import Controller
@@ -588,20 +589,20 @@ class {api_name.replace("_api", "").capitalize()}Controller(Controller):
 
     # TODO: Implement endpoints
 '''
-            stub_file = api_dir / f'{api_name}.py'
+            stub_file = api_dir / f"{api_name}.py"
             stub_file.write_text(stub_code)
             print(f"Generated: {stub_file}")
 
     def _generate_requirements(self):
         """Generate requirements.txt."""
-        requirements = '''litestar==2.0.0
+        requirements = """litestar==2.0.0
 uvicorn==0.23.0
 pydantic==2.0.0
 python-dotenv==1.0.0
 sqlalchemy==2.0.0
 alembic==1.11.0
-'''
-        req_file = self.output_dir / 'requirements.txt'
+"""
+        req_file = self.output_dir / "requirements.txt"
         req_file.write_text(requirements)
         print(f"Generated: {req_file}")
 
@@ -613,31 +614,33 @@ def main():
         sys.exit(1)
 
     model_dir = Path(sys.argv[1])
-    output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('output/generated_code')
+    output_dir = (
+        Path(sys.argv[2]) if len(sys.argv) > 2 else Path("output/generated_code")
+    )
 
     # Generate Flutter code
-    flutter_model = model_dir / 'flutter_model.json'
+    flutter_model = model_dir / "flutter_model.json"
     if flutter_model.exists():
-        flutter_output = output_dir / 'flutter_app'
+        flutter_output = output_dir / "flutter_app"
         flutter_gen = FlutterGenerator(flutter_model, flutter_output)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Generating Flutter Application")
-        print("="*60)
+        print("=" * 60)
         flutter_gen.generate()
 
     # Generate Python code
-    python_model = model_dir / 'python_model.json'
+    python_model = model_dir / "python_model.json"
     if python_model.exists():
-        python_output = output_dir / 'python_api'
+        python_output = output_dir / "python_api"
         python_gen = PythonGenerator(python_model, python_output)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Generating Python/Litestar API")
-        print("="*60)
+        print("=" * 60)
         python_gen.generate()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Code Generation Complete!")
-    print("="*60)
+    print("=" * 60)
     print("\nTo run the Flutter app:")
     print(f"  cd {output_dir}/flutter_app")
     print("  flutter run")
@@ -646,5 +649,6 @@ def main():
     print("  pip install -r requirements.txt")
     print("  python main.py")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -4,7 +4,6 @@ This module handles parsing of PowerBuilder source code to Abstract Syntax Trees
 Uses Lark parser with EBNF grammars for accurate parsing.
 """
 
-import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -21,9 +20,8 @@ from src_new._patterns import (
     BaseCoordinator,
     BaseParser,
     FileHandler,
-    ParseResult,
 )
-from .grammar import load_grammar, get_grammar_for_type
+from .grammar import get_grammar_for_type
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +64,9 @@ class ASTBuilder:
             )
 
             # Get position if available
-            if hasattr(node.meta, 'line'):
+            if hasattr(node.meta, "line"):
                 ast_node.line = node.meta.line
-            if hasattr(node.meta, 'column'):
+            if hasattr(node.meta, "column"):
                 ast_node.column = node.meta.column
 
             # Convert children
@@ -86,8 +84,8 @@ class ASTBuilder:
                 value=node.value,
                 children=[],
                 attributes={},
-                line=getattr(node, 'line', None),
-                column=getattr(node, 'column', None),
+                line=getattr(node, "line", None),
+                column=getattr(node, "column", None),
             )
 
         else:
@@ -136,8 +134,8 @@ class PowerBuilderParser(BaseParser[ParsedObject]):
         grammar = get_grammar_for_type(self.object_type)
         self.lark_parser = Lark(
             grammar,
-            start='start',
-            parser='lalr',
+            start="start",
+            parser="lalr",
             propagate_positions=True,
         )
 
@@ -147,7 +145,7 @@ class PowerBuilderParser(BaseParser[ParsedObject]):
         except LarkParseError as e:
             self.add_error(f"Parse error: {e}")
             # Try to create partial AST
-            tree = Tree('error', [])
+            tree = Tree("error", [])
 
         # Build AST
         ast = self.ast_builder.build(tree)
@@ -213,12 +211,12 @@ class PowerBuilderParser(BaseParser[ParsedObject]):
         import re
 
         # Look for type declaration
-        match = re.search(r'type\s+(\w+)\s+from', source, re.IGNORECASE)
+        match = re.search(r"type\s+(\w+)\s+from", source, re.IGNORECASE)
         if match:
             return match.group(1)
 
         # Look for global declaration
-        match = re.search(r'global\s+\w+\s+(\w+)', source, re.IGNORECASE)
+        match = re.search(r"global\s+\w+\s+(\w+)", source, re.IGNORECASE)
         if match:
             return match.group(1)
 
@@ -273,9 +271,24 @@ class PowerBuilderParser(BaseParser[ParsedObject]):
             True if primitive
         """
         primitives = {
-            "integer", "int", "long", "ulong", "decimal", "dec",
-            "real", "double", "float", "string", "char", "boolean",
-            "bool", "date", "time", "datetime", "blob", "any",
+            "integer",
+            "int",
+            "long",
+            "ulong",
+            "decimal",
+            "dec",
+            "real",
+            "double",
+            "float",
+            "string",
+            "char",
+            "boolean",
+            "bool",
+            "date",
+            "time",
+            "datetime",
+            "blob",
+            "any",
         }
         return type_name.lower() in primitives
 

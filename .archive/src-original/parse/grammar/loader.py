@@ -308,7 +308,7 @@ class GrammarManager:
 
     def set_grammar_path(self, grammar_path: Path | str) -> None:
         """Set the grammar directory path.
-        
+
         Args:
             grammar_path: Path to the directory containing grammar files
         """
@@ -316,7 +316,7 @@ class GrammarManager:
         if not self.grammar_dir.exists():
             msg = f"Grammar directory not found: {self.grammar_dir}"
             raise GrammarNotFoundError(msg)
-            
+
         # Clear caches since path changed
         self.clear_cache()
         logger.debug("Grammar directory updated to: %s", self.grammar_dir)

@@ -2,30 +2,30 @@ type m_main from menu {
     m_file: menuitem {
         text = "File"
         enabled = true
-        
+
         on clicked() {
             // File menu clicked
         }
     };
-    
+
     m_new: menuitem {
         text = "New"
         enabled = true
         shortcut = "Ctrl+N"
-        
+
         on clicked() {
             w_new.show();
         }
     };
-    
+
     separator;
-    
+
     m_exit: menuitem {
         text = "Exit"
         enabled = true
-        
+
         on clicked() {
             close(parent);
         }
     };
-} 
+}

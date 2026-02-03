@@ -14,8 +14,10 @@ from enum import Enum
 # AST NODE TYPES
 # ============================================================================
 
+
 class NodeType(str, Enum):
     """Types of AST nodes."""
+
     # Root
     MODULE = "module"
     COMPILATION_UNIT = "compilation_unit"
@@ -85,19 +87,22 @@ class NodeType(str, Enum):
 # AST NODE STRUCTURE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ASTNode:
     """Abstract Syntax Tree node."""
+
     type: NodeType
     value: Optional[Any] = None
-    children: List['ASTNode'] = field(default_factory=list)
+    children: List["ASTNode"] = field(default_factory=list)
     attributes: Dict[str, Any] = field(default_factory=dict)
-    location: Optional['SourceLocation'] = None
+    location: Optional["SourceLocation"] = None
 
 
 @dataclass(frozen=True)
 class SourceLocation:
     """Source code location information."""
+
     file: str
     line: int
     column: int
@@ -109,9 +114,11 @@ class SourceLocation:
 # SPECIALIZED AST NODES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ModuleNode:
     """Root node for a PowerBuilder module."""
+
     name: str
     type: str  # window, datawindow, function, etc.
     declarations: List[ASTNode]
@@ -122,6 +129,7 @@ class ModuleNode:
 @dataclass(frozen=True)
 class ClassNode:
     """Class/Object declaration node."""
+
     name: str
     ancestor: Optional[str]
     variables: List[ASTNode]
@@ -133,6 +141,7 @@ class ClassNode:
 @dataclass(frozen=True)
 class FunctionNode:
     """Function declaration node."""
+
     name: str
     return_type: Optional[str]
     parameters: List[ASTNode]
@@ -144,6 +153,7 @@ class FunctionNode:
 @dataclass(frozen=True)
 class VariableNode:
     """Variable declaration node."""
+
     name: str
     datatype: str
     initial_value: Optional[ASTNode] = None
@@ -154,6 +164,7 @@ class VariableNode:
 @dataclass(frozen=True)
 class BinaryOpNode:
     """Binary operation node."""
+
     operator: str
     left: ASTNode
     right: ASTNode
@@ -163,6 +174,7 @@ class BinaryOpNode:
 @dataclass(frozen=True)
 class CallNode:
     """Function/method call node."""
+
     name: str
     arguments: List[ASTNode]
     object: Optional[ASTNode] = None  # For method calls
@@ -172,6 +184,7 @@ class CallNode:
 @dataclass(frozen=True)
 class LiteralNode:
     """Literal value node."""
+
     value: Any
     datatype: str
 
@@ -179,6 +192,7 @@ class LiteralNode:
 @dataclass(frozen=True)
 class IdentifierNode:
     """Identifier (variable/function name) node."""
+
     name: str
     qualified: bool = False  # True if includes namespace/object
     parts: List[str] = field(default_factory=list)  # For qualified names
@@ -188,9 +202,11 @@ class IdentifierNode:
 # CONTROL FLOW NODES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class IfNode:
     """IF statement node."""
+
     condition: ASTNode
     then_branch: List[ASTNode]
     elseif_branches: List[tuple[ASTNode, List[ASTNode]]] = field(default_factory=list)
@@ -200,6 +216,7 @@ class IfNode:
 @dataclass(frozen=True)
 class ForNode:
     """FOR loop node."""
+
     variable: str
     start: ASTNode
     end: ASTNode
@@ -210,6 +227,7 @@ class ForNode:
 @dataclass(frozen=True)
 class WhileNode:
     """WHILE loop node."""
+
     condition: ASTNode
     body: List[ASTNode]
 
@@ -217,6 +235,7 @@ class WhileNode:
 @dataclass(frozen=True)
 class ChooseNode:
     """CHOOSE CASE statement node."""
+
     expression: ASTNode
     cases: List[tuple[List[ASTNode], List[ASTNode]]]  # (values, statements)
     default_case: Optional[List[ASTNode]] = None
@@ -226,9 +245,11 @@ class ChooseNode:
 # SQL NODES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SQLNode:
     """SQL statement node."""
+
     type: str  # SELECT, INSERT, UPDATE, DELETE
     sql: str
     into_variables: Optional[List[str]] = None
@@ -240,9 +261,11 @@ class SQLNode:
 # AST METADATA
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ASTMetadata:
     """Metadata about the AST."""
+
     source_file: str
     parse_time: float
     node_count: int
@@ -254,6 +277,7 @@ class ASTMetadata:
 @dataclass(frozen=True)
 class ParsedModule:
     """A fully parsed PowerBuilder module."""
+
     ast: ASTNode
     metadata: ASTMetadata
     source: Optional[str] = None  # Original source code

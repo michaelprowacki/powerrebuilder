@@ -16,11 +16,8 @@ from lark import Tree
 
 # Import shared types to avoid circular dependencies
 from .types import (
-    ConfigDict,
     ExtractionStatsDict,
-    ObjectType,
     PipelineStage as SharedPipelineStage,
-    TaskID,
 )
 
 # ========== Logger Interfaces ==========
@@ -873,7 +870,7 @@ class IResourceMonitor(Protocol):
 
 class IProgressTracker(Protocol):
     """Interface for progress tracking.
-    
+
     This interface supports both incremental and absolute progress updates
     to accommodate different usage patterns across the codebase.
     """
@@ -884,16 +881,16 @@ class IProgressTracker(Protocol):
 
     def update(self, n: int = 1, description: str | None = None) -> None:
         """Update progress incrementally by n items.
-        
+
         Args:
             n: Number of items to increment progress by (default: 1)
             description: Optional description/item name for this update
         """
         ...
-    
+
     def set_progress(self, value: int, description: str | None = None) -> None:
         """Set progress to an absolute value.
-        
+
         Args:
             value: Absolute progress value
             description: Optional description/item name for this update
@@ -1685,7 +1682,9 @@ class IModelPersistence(Protocol):
         ...
 
     @abstractmethod
-    def save_model_by_type(self, model_type: str, model: dict[str, Any], file_path: Path) -> None:
+    def save_model_by_type(
+        self, model_type: str, model: dict[str, Any], file_path: Path
+    ) -> None:
         """Save model by type to file."""
         ...
 
@@ -1704,7 +1703,9 @@ class IRelationshipManager(Protocol):
     """Interface for relationship management."""
 
     @abstractmethod
-    def add_relationship(self, source: Any, target: Any, relationship_type: str) -> None:
+    def add_relationship(
+        self, source: Any, target: Any, relationship_type: str
+    ) -> None:
         """Add a relationship between entities."""
         ...
 

@@ -13,13 +13,9 @@ from typing import List
 # Import workflows from app layer
 from src_new.app.extract.extract_library import (
     run as extract_workflow,
-    ExtractLibraryDTO
+    ExtractLibraryDTO,
 )
-from src_new.app.parse.parse_to_ast import (
-    run as parse_workflow,
-    ParseToASTDTO,
-    ASTNode
-)
+from src_new.app.parse.parse_to_ast import run as parse_workflow, ParseToASTDTO, ASTNode
 
 # Import adapters
 from src_new.adapters.filesystem import FilesystemAdapter
@@ -52,6 +48,7 @@ class SimpleASTWriter:
     async def write_ast_json(self, path: str, ast_dict: dict) -> None:
         """Write AST as JSON."""
         import json
+
         output_path = Path(path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(ast_dict, indent=2))
@@ -73,7 +70,7 @@ async def run_full_pipeline(input_path: str, output_path: str) -> int:
     extract_dto = ExtractLibraryDTO(
         library_path=input_path,
         output_dir=f"{output_path}/extracted",
-        validate_only=False
+        validate_only=False,
     )
 
     extract_result, extract_events = await extract_workflow(
@@ -83,7 +80,7 @@ async def run_full_pipeline(input_path: str, output_path: str) -> int:
     if extract_result.success:
         print(f"  ✓ Extracted {extract_result.objects_extracted} objects")
     else:
-        print(f"  ✗ Extraction failed")
+        print("  ✗ Extraction failed")
         return 1
 
     # Stage 2: Decompile
@@ -97,7 +94,7 @@ async def run_full_pipeline(input_path: str, output_path: str) -> int:
 
     parse_dto = ParseToASTDTO(
         source_path=f"{output_path}/extracted/mock.sru",
-        output_path=f"{output_path}/parsed/mock.ast.json"
+        output_path=f"{output_path}/parsed/mock.ast.json",
     )
 
     parse_result, parse_events = await parse_workflow(
@@ -114,28 +111,22 @@ async def run_full_pipeline(input_path: str, output_path: str) -> int:
     # Create mock AST for demo
     mock_ast = ASTNode(
         type=NodeType.MODULE,
-        children=(
-            ASTNode(
-                type=NodeType.FUNCTION,
-                value="main",
-                children=()
-            ),
-        )
+        children=(ASTNode(type=NodeType.FUNCTION, value="main", children=()),),
     )
 
     model_result = build_model(mock_ast)
-    if hasattr(model_result, 'model'):
+    if hasattr(model_result, "model"):
         print(f"  ✓ Built model with {len(model_result.model.symbols)} symbols")
         semantic_model = model_result.model
     else:
-        print(f"  ✗ Model building failed")
+        print("  ✗ Model building failed")
         return 1
 
     # Stage 5: Generate
     print("\n✨ Stage 5: Generate")
     generate_result = generate_flutter(semantic_model)
 
-    if hasattr(generate_result, 'project'):
+    if hasattr(generate_result, "project"):
         project = generate_result.project
         print(f"  ✓ Generated {len(project.files)} files")
 
@@ -147,7 +138,7 @@ async def run_full_pipeline(input_path: str, output_path: str) -> int:
             file_path.write_text(file.content)
             print(f"    📄 {file.path}")
     else:
-        print(f"  ✗ Generation failed")
+        print("  ✗ Generation failed")
         return 1
 
     print("\n" + "=" * 50)
@@ -183,9 +174,7 @@ async def main(args: List[str]) -> int:
         filesystem = FilesystemAdapter()
 
         dto = ExtractLibraryDTO(
-            library_path=input_path,
-            output_dir=output_path,
-            validate_only=False
+            library_path=input_path, output_dir=output_path, validate_only=False
         )
 
         result, events = await extract_workflow(dto, filesystem)
@@ -197,7 +186,9 @@ async def main(args: List[str]) -> int:
             if result.errors:
                 print(f"  Warnings: {len(result.errors)} issues encountered")
         else:
-            print(f"✗ Extraction failed: {result.errors[0] if result.errors else 'Unknown error'}")
+            print(
+                f"✗ Extraction failed: {result.errors[0] if result.errors else 'Unknown error'}"
+            )
             return 1
 
         # Print events (in real app, these would be published)
@@ -211,10 +202,7 @@ async def main(args: List[str]) -> int:
         source_reader = SimpleSourceReader()
         ast_writer = SimpleASTWriter()
 
-        dto = ParseToASTDTO(
-            source_path=input_path,
-            output_path=output_path
-        )
+        dto = ParseToASTDTO(source_path=input_path, output_path=output_path)
 
         result, events = await parse_workflow(dto, source_reader, ast_writer)
 

@@ -19,7 +19,7 @@ from src_new._core.models import (
     Property,
     Parameter,
     Event,
-    ObjectType
+    ObjectType,
 )
 
 
@@ -47,26 +47,26 @@ def main():
                         name="title",
                         type="string",
                         default_value="Customer Management System",
-                        access="public"
+                        access="public",
                     ),
                     Property(
                         name="width",
                         type="integer",
                         default_value=1200,
-                        access="public"
+                        access="public",
                     ),
                     Property(
                         name="height",
                         type="integer",
                         default_value=800,
-                        access="public"
+                        access="public",
                     ),
                     Property(
                         name="resizable",
                         type="boolean",
                         default_value=True,
-                        access="public"
-                    )
+                        access="public",
+                    ),
                 ],
                 methods=[
                     Method(
@@ -74,65 +74,57 @@ def main():
                         return_type="void",
                         parameters=[],
                         body="this.loadCustomers(); this.setupUI();",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="loadCustomers",
                         return_type="void",
                         parameters=[],
                         body="// Load customers from database",
-                        access="private"
+                        access="private",
                     ),
                     Method(
                         name="setupUI",
                         return_type="void",
                         parameters=[],
                         body="// Setup user interface components",
-                        access="private"
+                        access="private",
                     ),
                     Method(
                         name="saveCustomer",
                         return_type="boolean",
                         parameters=[
                             Parameter(name="customerId", type="integer"),
-                            Parameter(name="data", type="object")
+                            Parameter(name="data", type="object"),
                         ],
                         body="// Save customer data to database",
-                        access="public"
-                    )
+                        access="public",
+                    ),
                 ],
                 events=[
                     Event(
                         name="clicked",
                         parameters=[
                             Parameter(name="sender", type="object"),
-                            Parameter(name="e", type="EventArgs")
-                        ]
+                            Parameter(name="e", type="EventArgs"),
+                        ],
                     ),
-                    Event(
-                        name="closed",
-                        parameters=[]
-                    )
-                ]
+                    Event(name="closed", parameters=[]),
+                ],
             ),
-
             # Customer data service
             SemanticObject(
                 name="n_customer_service",
                 type=ObjectType.USER_OBJECT,
                 parent="nonvisualobject",
                 properties=[
-                    Property(
-                        name="connectionString",
-                        type="string",
-                        access="private"
-                    ),
+                    Property(name="connectionString", type="string", access="private"),
                     Property(
                         name="timeout",
                         type="integer",
                         default_value=30,
-                        access="public"
-                    )
+                        access="public",
+                    ),
                 ],
                 methods=[
                     Method(
@@ -140,53 +132,46 @@ def main():
                         return_type="boolean",
                         parameters=[],
                         body="// Establish database connection",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="disconnect",
                         return_type="void",
                         parameters=[],
                         body="// Close database connection",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="getCustomerById",
                         return_type="Customer",
-                        parameters=[
-                            Parameter(name="id", type="integer")
-                        ],
+                        parameters=[Parameter(name="id", type="integer")],
                         body="// Retrieve customer by ID",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="getAllCustomers",
                         return_type="Customer[]",
                         parameters=[],
                         body="// Retrieve all customers",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="updateCustomer",
                         return_type="boolean",
-                        parameters=[
-                            Parameter(name="customer", type="Customer")
-                        ],
+                        parameters=[Parameter(name="customer", type="Customer")],
                         body="// Update customer in database",
-                        access="public"
+                        access="public",
                     ),
                     Method(
                         name="deleteCustomer",
                         return_type="boolean",
-                        parameters=[
-                            Parameter(name="id", type="integer")
-                        ],
+                        parameters=[Parameter(name="id", type="integer")],
                         body="// Delete customer from database",
-                        access="public"
-                    )
+                        access="public",
+                    ),
                 ],
-                events=[]
+                events=[],
             ),
-
             # Customer data model
             SemanticObject(
                 name="Customer",
@@ -201,15 +186,25 @@ def main():
                     Property(name="city", type="string", access="public"),
                     Property(name="state", type="string", access="public"),
                     Property(name="zipCode", type="string", access="public"),
-                    Property(name="country", type="string", default_value="USA", access="public"),
+                    Property(
+                        name="country",
+                        type="string",
+                        default_value="USA",
+                        access="public",
+                    ),
                     Property(name="createdDate", type="datetime", access="public"),
                     Property(name="modifiedDate", type="datetime", access="public"),
-                    Property(name="isActive", type="boolean", default_value=True, access="public")
+                    Property(
+                        name="isActive",
+                        type="boolean",
+                        default_value=True,
+                        access="public",
+                    ),
                 ],
                 methods=[],
-                events=[]
-            )
-        ]
+                events=[],
+            ),
+        ],
     )
 
     print(f"  ✓ Created application model: {app.name}")

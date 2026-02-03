@@ -4,20 +4,19 @@ This module handles Docker containerization for the PowerRebuilder pipeline,
 including multi-stage builds, optimization, and orchestration.
 """
 
-import json
 import logging
-import shutil
 import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ContainerType(str, Enum):
     """Types of containers."""
+
     PIPELINE = "pipeline"
     WEB_APP = "web_app"
     API = "api"
@@ -28,6 +27,7 @@ class ContainerType(str, Enum):
 
 class BaseImage(str, Enum):
     """Base Docker images."""
+
     PYTHON_SLIM = "python:3.11-slim"
     PYTHON_ALPINE = "python:3.11-alpine"
     NODE_ALPINE = "node:20-alpine"
@@ -41,6 +41,7 @@ class BaseImage(str, Enum):
 @dataclass
 class DockerConfig:
     """Docker configuration."""
+
     name: str
     base_image: str
     container_type: ContainerType
@@ -57,6 +58,7 @@ class DockerConfig:
 @dataclass
 class ComposeService:
     """Docker Compose service definition."""
+
     name: str
     image: str
     build: Optional[Dict[str, str]] = None
@@ -179,7 +181,7 @@ RUN chmod +x /entrypoint.sh
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV PIPELINE_STAGES="{','.join(stages)}"
+ENV PIPELINE_STAGES="{",".join(stages)}"
 
 # Create directories
 RUN mkdir -p /input /output /tmp/cache
@@ -309,7 +311,9 @@ fi"""
         config = DockerConfig(
             name=f"powerrebuilder-{app_type}",
             base_image=base_image,
-            container_type=ContainerType.WEB_APP if app_type == "web" else ContainerType.API,
+            container_type=ContainerType.WEB_APP
+            if app_type == "web"
+            else ContainerType.API,
             ports=ports,
             environment={
                 "NODE_ENV": "production" if "node" in base_image else "",
@@ -450,7 +454,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]"""
         Returns:
             Dockerfile content
         """
-        return f"""# Flutter web application
+        return """# Flutter web application
 FROM ubuntu:22.04 AS builder
 
 # Install dependencies
@@ -481,13 +485,13 @@ FROM nginx:alpine
 COPY --from=builder /app/build/web /usr/share/nginx/html
 
 # Nginx configuration
-RUN echo 'server {{ \\
+RUN echo 'server { \\
     listen 80; \\
-    location / {{ \\
+    location / { \\
         root /usr/share/nginx/html; \\
         try_files $uri $uri/ /index.html; \\
-    }} \\
-}}' > /etc/nginx/conf.d/default.conf
+    } \\
+}' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
@@ -564,6 +568,7 @@ CMD ["/bin/sh"]"""
         compose_path = output_dir / "docker-compose.yml"
         with compose_path.open("w") as f:
             import yaml
+
             yaml.dump(compose, f, default_flow_style=False)
 
         logger.info("Created Docker Compose file: %s", compose_path)
@@ -643,17 +648,17 @@ CMD ["/bin/sh"]"""
                         },
                     },
                     "spec": {
-                        "containers": [{
-                            "name": config.name,
-                            "image": f"{config.name}:latest",
-                            "ports": [
-                                {"containerPort": p} for p in config.ports
-                            ],
-                            "env": [
-                                {"name": k, "value": v}
-                                for k, v in config.environment.items()
-                            ],
-                        }],
+                        "containers": [
+                            {
+                                "name": config.name,
+                                "image": f"{config.name}:latest",
+                                "ports": [{"containerPort": p} for p in config.ports],
+                                "env": [
+                                    {"name": k, "value": v}
+                                    for k, v in config.environment.items()
+                                ],
+                            }
+                        ],
                     },
                 },
             },
@@ -674,7 +679,8 @@ CMD ["/bin/sh"]"""
                     {
                         "port": p,
                         "targetPort": p,
-                    } for p in config.ports
+                    }
+                    for p in config.ports
                 ],
                 "type": "LoadBalancer",
             },
@@ -705,10 +711,7 @@ CMD ["/bin/sh"]"""
         optimizations = []
 
         # Add --no-cache-dir to pip installs
-        dockerfile = dockerfile.replace(
-            "pip install",
-            "pip install --no-cache-dir"
-        )
+        dockerfile = dockerfile.replace("pip install", "pip install --no-cache-dir")
 
         # Combine RUN commands
         lines = dockerfile.split("\n")

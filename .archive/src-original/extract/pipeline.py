@@ -35,13 +35,16 @@ def create_coordinator_for_pipeline(
         Configured ExtractCoordinator
     """
     # Use the factory to create a coordinator with default components
-    return cast(ExtractCoordinator, ExtractCoordinatorFactory.create_simple(
-        input_path=input_path,
-        output_path=output_path,
-        enable_byte_recovery=enable_byte_recovery,
-        extract_resources=extract_resources,
-        show_progress=show_progress,
-    ))
+    return cast(
+        ExtractCoordinator,
+        ExtractCoordinatorFactory.create_simple(
+            input_path=input_path,
+            output_path=output_path,
+            enable_byte_recovery=enable_byte_recovery,
+            extract_resources=extract_resources,
+            show_progress=show_progress,
+        ),
+    )
 
 
 # For backward compatibility with existing pipeline code
@@ -184,6 +187,9 @@ def ExtractCoordinator(
             input_path=input_path, output_dir=output_dir, **kwargs
         )
     # New-style call or no parameters
-    return cast(ExtractCoordinator, create_extract_coordinator(
-        input_path=input_path, output_path=kwargs.get("output_path"), **kwargs
-    ))
+    return cast(
+        ExtractCoordinator,
+        create_extract_coordinator(
+            input_path=input_path, output_path=kwargs.get("output_path"), **kwargs
+        ),
+    )

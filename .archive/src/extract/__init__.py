@@ -14,7 +14,7 @@ from .unified_extract import (
 
 __all__ = [
     "RESOURCE_EXTENSIONS",
-    "SOURCE_EXTENSIONS", 
+    "SOURCE_EXTENSIONS",
     "ExtractCoordinator",
     "Library",
     "extract_pbl_file",

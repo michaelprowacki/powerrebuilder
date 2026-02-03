@@ -5,7 +5,7 @@ Consolidates all filesystem operations into a single adapter.
 
 import json
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Dict
 import asyncio
 
 
@@ -47,7 +47,7 @@ class FilesystemAdapter:
         except Exception as e:
             raise IOError(f"Failed to read file: {str(e)}")
 
-    async def read_text(self, path: str, encoding: str = 'utf-8') -> str:
+    async def read_text(self, path: str, encoding: str = "utf-8") -> str:
         """Read text file contents.
 
         Args:
@@ -68,8 +68,7 @@ class FilesystemAdapter:
         try:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
-                None,
-                lambda: file_path.read_text(encoding=encoding)
+                None, lambda: file_path.read_text(encoding=encoding)
             )
         except Exception as e:
             raise IOError(f"Failed to read file: {str(e)}")
@@ -106,7 +105,9 @@ class FilesystemAdapter:
         except Exception as e:
             raise IOError(f"Failed to write file: {str(e)}")
 
-    async def write_text(self, path: str, content: str, encoding: str = 'utf-8') -> None:
+    async def write_text(
+        self, path: str, content: str, encoding: str = "utf-8"
+    ) -> None:
         """Write text content to file.
 
         Args:
@@ -123,8 +124,7 @@ class FilesystemAdapter:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
-                None,
-                lambda: file_path.write_text(content, encoding=encoding)
+                None, lambda: file_path.write_text(content, encoding=encoding)
             )
         except Exception as e:
             raise IOError(f"Failed to write file: {str(e)}")
@@ -174,7 +174,9 @@ class FilesystemAdapter:
         if not dir_path.exists():
             return []
 
-        return [str(p.relative_to(dir_path)) for p in dir_path.glob(pattern) if p.is_file()]
+        return [
+            str(p.relative_to(dir_path)) for p in dir_path.glob(pattern) if p.is_file()
+        ]
 
     async def create_directory(self, path: str) -> None:
         """Create directory if it doesn't exist.
@@ -207,13 +209,15 @@ class MemoryFilesystem:
         """Write to memory."""
         self.files[path] = data
 
-    async def read_text(self, path: str, encoding: str = 'utf-8') -> str:
+    async def read_text(self, path: str, encoding: str = "utf-8") -> str:
         """Read text from memory."""
         if path not in self.text_files:
             raise IOError(f"File not found: {path}")
         return self.text_files[path]
 
-    async def write_text(self, path: str, content: str, encoding: str = 'utf-8') -> None:
+    async def write_text(
+        self, path: str, content: str, encoding: str = "utf-8"
+    ) -> None:
         """Write text to memory."""
         self.text_files[path] = content
 
@@ -241,7 +245,7 @@ class MemoryFilesystem:
         matching = []
         for file_path in all_files:
             if file_path.startswith(path_prefix):
-                rel_path = file_path[len(path_prefix):]
+                rel_path = file_path[len(path_prefix) :]
                 if fnmatch(rel_path, pattern):
                     matching.append(rel_path)
 

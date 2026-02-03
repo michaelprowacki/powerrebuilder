@@ -20,6 +20,7 @@ from .ports import ISourceReader, IASTWriter
 @dataclass
 class ParseToASTDTO:
     """Input DTO for parsing workflow."""
+
     source_path: str
     output_path: str
     validate_only: bool = False
@@ -29,6 +30,7 @@ class ParseToASTDTO:
 @dataclass
 class ParseResult:
     """Output from parsing workflow."""
+
     success: bool
     source_path: str
     output_path: str
@@ -44,6 +46,7 @@ class ParseResult:
 
 class ParseEventType(Enum):
     """Types of parse events."""
+
     PARSE_STARTED = "parse_started"
     PARSE_COMPLETED = "parse_completed"
     PARSE_FAILED = "parse_failed"
@@ -54,6 +57,7 @@ class ParseEventType(Enum):
 @dataclass
 class ParseEvent:
     """Event from parse workflow."""
+
     type: ParseEventType
     source_path: str
     data: dict
@@ -84,11 +88,13 @@ async def run(
     events = []
 
     # Start event
-    events.append(ParseEvent(
-        type=ParseEventType.PARSE_STARTED,
-        source_path=dto.source_path,
-        data={'output': dto.output_path}
-    ))
+    events.append(
+        ParseEvent(
+            type=ParseEventType.PARSE_STARTED,
+            source_path=dto.source_path,
+            data={"output": dto.output_path},
+        )
+    )
 
     try:
         # Read source through port
@@ -96,18 +102,20 @@ async def run(
         encoding = await source_reader.get_encoding(dto.source_path)
 
     except Exception as e:
-        events.append(ParseEvent(
-            type=ParseEventType.PARSE_FAILED,
-            source_path=dto.source_path,
-            data={'error': str(e)}
-        ))
+        events.append(
+            ParseEvent(
+                type=ParseEventType.PARSE_FAILED,
+                source_path=dto.source_path,
+                data={"error": str(e)},
+            )
+        )
         return ParseResult(
             success=False,
             source_path=dto.source_path,
             output_path=dto.output_path,
             node_count=0,
             errors=[f"Failed to read source: {str(e)}"],
-            warnings=[]
+            warnings=[],
         ), events
 
     # Parse using domain function
@@ -122,14 +130,13 @@ async def run(
         node_count = count_nodes(ast)
 
         # Generate AST event
-        events.append(ParseEvent(
-            type=ParseEventType.AST_GENERATED,
-            source_path=dto.source_path,
-            data={
-                'nodes': node_count,
-                'warnings': len(warnings)
-            }
-        ))
+        events.append(
+            ParseEvent(
+                type=ParseEventType.AST_GENERATED,
+                source_path=dto.source_path,
+                data={"nodes": node_count, "warnings": len(warnings)},
+            )
+        )
 
         # Write AST if not validate only
         if not dto.validate_only:
@@ -139,30 +146,30 @@ async def run(
                 await ast_writer.write_ast_json(dto.output_path, ast_dict)
 
             except Exception as e:
-                events.append(ParseEvent(
-                    type=ParseEventType.PARSE_FAILED,
-                    source_path=dto.source_path,
-                    data={'error': f"Failed to write AST: {str(e)}"}
-                ))
+                events.append(
+                    ParseEvent(
+                        type=ParseEventType.PARSE_FAILED,
+                        source_path=dto.source_path,
+                        data={"error": f"Failed to write AST: {str(e)}"},
+                    )
+                )
                 return ParseResult(
                     success=False,
                     source_path=dto.source_path,
                     output_path=dto.output_path,
                     node_count=node_count,
                     errors=[f"Failed to write AST: {str(e)}"],
-                    warnings=warnings
+                    warnings=warnings,
                 ), events
 
         # Success event
-        events.append(ParseEvent(
-            type=ParseEventType.PARSE_COMPLETED,
-            source_path=dto.source_path,
-            data={
-                'success': True,
-                'nodes': node_count,
-                'encoding': encoding
-            }
-        ))
+        events.append(
+            ParseEvent(
+                type=ParseEventType.PARSE_COMPLETED,
+                source_path=dto.source_path,
+                data={"success": True, "nodes": node_count, "encoding": encoding},
+            )
+        )
 
         return ParseResult(
             success=True,
@@ -170,20 +177,22 @@ async def run(
             output_path=dto.output_path,
             node_count=node_count,
             errors=[],
-            warnings=warnings
+            warnings=warnings,
         ), events
 
     elif isinstance(result, ParseFailed):
         # Syntax error event
-        events.append(ParseEvent(
-            type=ParseEventType.SYNTAX_ERROR,
-            source_path=dto.source_path,
-            data={
-                'error': result.error,
-                'line': result.line,
-                'column': result.column
-            }
-        ))
+        events.append(
+            ParseEvent(
+                type=ParseEventType.SYNTAX_ERROR,
+                source_path=dto.source_path,
+                data={
+                    "error": result.error,
+                    "line": result.line,
+                    "column": result.column,
+                },
+            )
+        )
 
         return ParseResult(
             success=False,
@@ -191,7 +200,7 @@ async def run(
             output_path=dto.output_path,
             node_count=0,
             errors=[f"{result.error} at {result.line}:{result.column}"],
-            warnings=[]
+            warnings=[],
         ), events
 
     else:
@@ -216,20 +225,19 @@ def ast_to_dict(node: ASTNode, include_metadata: bool = True) -> dict:
     Pure function for serialization.
     """
     result = {
-        'type': node.type.value,
+        "type": node.type.value,
     }
 
     if node.value is not None:
-        result['value'] = node.value
+        result["value"] = node.value
 
     if node.children:
-        result['children'] = [
-            ast_to_dict(child, include_metadata)
-            for child in node.children
+        result["children"] = [
+            ast_to_dict(child, include_metadata) for child in node.children
         ]
 
     if include_metadata and node.metadata:
-        result['metadata'] = node.metadata
+        result["metadata"] = node.metadata
 
     return result
 
@@ -249,13 +257,10 @@ async def run_batch(
 
     for source_path in source_files:
         # Generate output path
-        source_name = source_path.split('/')[-1].replace('.sru', '.ast.json')
+        source_name = source_path.split("/")[-1].replace(".sru", ".ast.json")
         output_path = f"{output_dir}/{source_name}"
 
-        dto = ParseToASTDTO(
-            source_path=source_path,
-            output_path=output_path
-        )
+        dto = ParseToASTDTO(source_path=source_path, output_path=output_path)
 
         result, events = await run(dto, source_reader, ast_writer)
         results.append(result)

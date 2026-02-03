@@ -18,7 +18,6 @@ OPCODES: Dict[int, str] = {
     0x03: "JUMPFALSE",
     0x04: "JUMP",
     0x12: "HALT",
-
     # Database operations
     0x05: "DBSTART",
     0x06: "DBCOMMIT",
@@ -41,7 +40,6 @@ OPCODES: Dict[int, str] = {
     0x1B: "DBUPDATEBLOB",
     0x1C: "DBSELECTCLOB",
     0x1D: "DBUPDATECLOB",
-
     # Stack operations - Variables
     0x1E: "PUSH_LOCAL_VAR",
     0x1F: "PUSH_SHARED_VAR",
@@ -53,7 +51,6 @@ OPCODES: Dict[int, str] = {
     0x2F: "PUSH_SHARED_VAR2",
     0x30: "PUSH_LOCAL_ARGREF",
     0x31: "PUSH_SHARED_GLOBREF",
-
     # Stack operations - Constants
     0x32: "PUSH_CONST_INT",
     0x33: "PUSH_CONST_UINT",
@@ -67,29 +64,24 @@ OPCODES: Dict[int, str] = {
     0x3B: "PUSH_CONST_STRING",
     0x3C: "PUSH_CONST_BOOL",
     0x3D: "PUSH_CONST_ENUM",
-
     # Logical operations
     0x24: "AND",
     0x25: "OR",
     0x26: "NOT",
-
     # Object operations
     0x11: "DESTROY",
     0x13: "EVENTCALL",
     0x14: "LVALUE_EXPR",
     0x27: "DOT",
     0x28: "INDEX",
-
     # Function calls
     0x29: "GLOBFUNCCALL",
     0x2A: "CALL_FUNCTION",
     0x2B: "DLLFUNCCALL",
     0x2C: "DOTFUNCCALL",
-
     # Array operations
     0x2E: "ARRAYLIST",
     0x7F: "ASSIGN_ARRAY",
-
     # Type conversions
     0x3E: "CNV_INT_TO_UINT",
     0x3F: "CNV_INT_TO_LONG",
@@ -112,7 +104,6 @@ OPCODES: Dict[int, str] = {
     0x50: "CNV_DEC_TO_FLOAT",
     0x51: "CNV_DEC_TO_DOUBLE",
     0x52: "CNV_FLOAT_TO_DOUBLE",
-
     # Arithmetic operations - Addition
     0x53: "ADD_INT",
     0x54: "ADD_UINT",
@@ -122,7 +113,6 @@ OPCODES: Dict[int, str] = {
     0x58: "ADD_FLOAT",
     0x59: "ADD_DOUBLE",
     0x7C: "ADD",
-
     # Arithmetic operations - Subtraction
     0x5A: "SUB_INT",
     0x5B: "SUB_UINT",
@@ -131,7 +121,6 @@ OPCODES: Dict[int, str] = {
     0x5E: "SUB",
     0x5F: "SUB_FLOAT",
     0x60: "SUB_DOUBLE",
-
     # Arithmetic operations - Multiplication
     0x61: "MULT_INT",
     0x62: "MULT_UINT",
@@ -140,7 +129,6 @@ OPCODES: Dict[int, str] = {
     0x65: "MULT_DEC",
     0x66: "MULT_FLOAT",
     0x67: "MULT_DOUBLE",
-
     # Arithmetic operations - Division
     0x68: "DIV_INT",
     0x69: "DIV_UINT",
@@ -149,7 +137,6 @@ OPCODES: Dict[int, str] = {
     0x6C: "DIV",
     0x6D: "DIV_FLOAT",
     0x6E: "DIV_DOUBLE",
-
     # Arithmetic operations - Power
     0x6F: "POWER_INT",
     0x70: "POWER_UINT",
@@ -158,7 +145,6 @@ OPCODES: Dict[int, str] = {
     0x73: "POWER_DEC",
     0x74: "POWER_FLOAT",
     0x75: "POWER_DOUBLE",
-
     # Arithmetic operations - Negation
     0x76: "NEGATE_INT",
     0x77: "NEGATE_UINT",
@@ -166,11 +152,9 @@ OPCODES: Dict[int, str] = {
     0x79: "NEGATE_ULONG",
     0x7A: "NEGATE_DEC",
     0x7B: "NEGATE_FLOAT",
-
     # String operations
     0x7D: "CAT_STRING",
     0x7E: "CAT_BINARY",
-
     # Assignment operations
     0x80: "ASSIGN_INT",
     0x81: "ASSIGN_UINT",
@@ -185,7 +169,6 @@ OPCODES: Dict[int, str] = {
     0x8A: "ASSIGN_TIME",
     0x8B: "ASSIGN_DATETIME",
     0x8C: "ASSIGN",
-
     # Comparison operations
     0x90: "EQ",
     0x91: "NE",
@@ -193,21 +176,18 @@ OPCODES: Dict[int, str] = {
     0x93: "LE",
     0x94: "GT",
     0x95: "GE",
-
     # Extended opcodes (PowerBuilder 10+)
     0xA0: "TRY",
     0xA1: "CATCH",
     0xA2: "FINALLY",
     0xA3: "THROW",
     0xA4: "RETHROW",
-
     # Extended opcodes (PowerBuilder 11+)
     0xB0: "LAMBDA",
     0xB1: "CLOSURE",
     0xB2: "YIELD",
     0xB3: "ASYNC",
     0xB4: "AWAIT",
-
     # Extended opcodes (PowerBuilder 12+)
     0xC0: "NAMESPACE",
     0xC1: "USING",
@@ -243,7 +223,6 @@ OPCODE_OPERANDS = {
     "AND": 0,
     "OR": 0,
     "NOT": 0,
-
     # Single operand
     "JUMP": 1,
     "JUMPTRUE": 1,
@@ -252,12 +231,10 @@ OPCODE_OPERANDS = {
     "PUSH_GLOBAL_VAR": 1,
     "PUSH_CONST_INT": 1,
     "PUSH_CONST_STRING": 1,
-
     # Two operands
     "CALL_FUNCTION": 2,
     "GLOBFUNCCALL": 2,
     "DOTFUNCCALL": 2,
-
     # Variable operands
     "ARRAYLIST": -1,  # Variable count
 }
@@ -266,6 +243,7 @@ OPCODE_OPERANDS = {
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def get_opcode_name(opcode: int) -> Optional[str]:
     """Get the name of an opcode.

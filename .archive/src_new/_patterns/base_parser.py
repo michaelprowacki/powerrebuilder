@@ -19,6 +19,7 @@ T = TypeVar("T")
 @dataclass
 class ParseResult:
     """Standard result from parsing operations."""
+
     success: bool
     data: Any
     errors: List[str]
@@ -95,7 +96,7 @@ class BaseParser(ABC, Generic[T]):
                 data=None,
                 errors=self.errors.copy(),
                 warnings=self.warnings.copy(),
-                position=e.position if hasattr(e, 'position') else 0,
+                position=e.position if hasattr(e, "position") else 0,
             )
         except Exception as e:
             self.errors.append(f"Unexpected error: {e}")
@@ -177,7 +178,7 @@ class TokenParser(BaseParser[List[Dict[str, Any]]]):
             Token list
         """
         if isinstance(data, bytes):
-            data = data.decode('utf-8', errors='replace')
+            data = data.decode("utf-8", errors="replace")
 
         self.tokens = self.tokenize(data)
         return self.tokens
@@ -206,7 +207,7 @@ class RecursiveDescentParser(BaseParser[Dict[str, Any]]):
             Parse tree
         """
         if isinstance(data, bytes):
-            data = data.decode('utf-8', errors='replace')
+            data = data.decode("utf-8", errors="replace")
 
         self.input = data
         self.position = 0
@@ -246,7 +247,7 @@ class RecursiveDescentParser(BaseParser[Dict[str, Any]]):
         Returns:
             Consumed string
         """
-        result = self.input[self.position:self.position + count]
+        result = self.input[self.position : self.position + count]
         self.position += len(result)
         return result
 
@@ -265,8 +266,7 @@ class RecursiveDescentParser(BaseParser[Dict[str, Any]]):
         actual = self.consume(len(expected))
         if actual != expected:
             raise ParseError(
-                f"Expected '{expected}' but got '{actual}'",
-                self.position - len(actual)
+                f"Expected '{expected}' but got '{actual}'", self.position - len(actual)
             )
         return actual
 

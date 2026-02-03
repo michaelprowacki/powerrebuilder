@@ -129,7 +129,8 @@ COMMENT: "//" /[^\\n]*/
 """
 
 
-WINDOW_GRAMMAR = """
+WINDOW_GRAMMAR = (
+    """
 // Window-specific grammar extensions
 
 // Override the main object declaration for windows
@@ -166,10 +167,13 @@ property_value: literal | expression
 // Event declarations
 event_declarations: event_decl*
 
-""" + BASE_GRAMMAR
+"""
+    + BASE_GRAMMAR
+)
 
 
-DATAWINDOW_GRAMMAR = """
+DATAWINDOW_GRAMMAR = (
+    """
 // DataWindow-specific grammar
 
 start: datawindow_declaration
@@ -200,7 +204,9 @@ text_property: property_name "=" property_value
 property_name: IDENTIFIER
 property_value: literal | STRING | NUMBER
 
-""" + BASE_GRAMMAR
+"""
+    + BASE_GRAMMAR
+)
 
 
 # ============================================================================
@@ -290,7 +296,7 @@ def validate_grammar(grammar: str) -> bool:
         from lark import Lark
 
         # Try to create parser - will raise if invalid
-        Lark(grammar, parser='lalr')
+        Lark(grammar, parser="lalr")
         return True
     except Exception as e:
         logger.error(f"Invalid grammar: {e}")

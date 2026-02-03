@@ -5,7 +5,6 @@ PowerBuilder object structures better.
 """
 
 import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +13,12 @@ class PCodeSection:
     """Information about a single P-code section."""
 
     def __init__(
-        self, offset: int = 0, length: int = 0, confidence: float = 0.0,
-        pattern_matches: int = 0, metadata: dict | None = None
+        self,
+        offset: int = 0,
+        length: int = 0,
+        confidence: float = 0.0,
+        pattern_matches: int = 0,
+        metadata: dict | None = None,
     ) -> None:
         self.offset = offset
         self.length = length
@@ -40,7 +43,7 @@ class PCodeInfo:
         detection_time: float = 0.0,
         tiers_used: list[int] | None = None,
         file_size: int = 0,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Initialize P-code information.
 
@@ -286,11 +289,11 @@ class PCodeDetector:
     @classmethod
     def _calculate_pcode_confidence(cls, data: bytes) -> float:
         """Calculate confidence that data contains P-code.
-        
+
         ENHANCED ALGORITHM: This confidence calculation was significantly improved
         to better distinguish P-code from other binary data, reducing false positives
         and improving detection accuracy.
-        
+
         Key improvements:
         1. Extended opcode dictionary with all known PowerBuilder instructions
         2. Better handling of small P-code sections (getters/setters)
@@ -859,10 +862,12 @@ class PCodeDetector:
         max_iterations = len(data) * 2  # Safety limit to prevent infinite loops
         iterations = 0
         processed_regions = set()  # Track processed regions to avoid re-analysis
-        
-        while i <= len(data) - 2 and iterations < max_iterations:  # Need at least 2 bytes for minimal P-code
+
+        while (
+            i <= len(data) - 2 and iterations < max_iterations
+        ):  # Need at least 2 bytes for minimal P-code
             iterations += 1
-            
+
             # Skip UTF-16 strings
             if cls._is_utf16_string(data, i):
                 i += 2  # Skip UTF-16 character
@@ -891,7 +896,9 @@ class PCodeDetector:
                 section_length = section_end - section_start
 
                 # Add this region to processed set
-                for offset in range(section_start, min(section_end, section_start + 50)):
+                for offset in range(
+                    section_start, min(section_end, section_start + 50)
+                ):
                     processed_regions.add(offset)
 
                 # Include sections that are at least 2 bytes (minimum for minimal P-code)
@@ -919,12 +926,12 @@ class PCodeDetector:
                     i = max(i + 1, section_start + 2)
             else:
                 i += 1
-                
+
         # Log if we hit the iteration limit (indicates potential infinite loop)
         if iterations >= max_iterations:
             logger.warning(
                 "P-code detection hit maximum iteration limit (%d), stopping to prevent infinite loop",
-                max_iterations
+                max_iterations,
             )
 
         # Sort sections by offset
@@ -1026,24 +1033,28 @@ class PCodeDetector:
         """
         if start_offset < 0 or start_offset >= len(data):
             return len(data)
-            
+
         i = start_offset
         last_valid_pcode = start_offset
         low_confidence_bytes = 0
-        max_scan_length = min(2048, len(data) - start_offset)  # Limit scan to prevent excessive processing
+        max_scan_length = min(
+            2048, len(data) - start_offset
+        )  # Limit scan to prevent excessive processing
 
         while i < len(data) and (i - start_offset) < max_scan_length:
             # Check if we're entering a UTF-16 string region
             if cls._is_utf16_string(data, i):
                 # We've hit a string section, P-code ends here
                 logger.debug("Found UTF-16 string at 0x%04x, ending P-code section", i)
-                return max(last_valid_pcode + 1, start_offset + 1)  # Ensure minimum advance
+                return max(
+                    last_valid_pcode + 1, start_offset + 1
+                )  # Ensure minimum advance
 
             # Calculate confidence for next chunk
             chunk_size = min(50, len(data) - i)
             if chunk_size < 1:  # Safety check
                 break
-                
+
             confidence = cls._calculate_pcode_confidence(data[i : i + chunk_size])
 
             if confidence < 0.3:
@@ -1053,7 +1064,9 @@ class PCodeDetector:
                     logger.debug(
                         "Low confidence region at 0x%04x, ending P-code section", i
                     )
-                    return max(last_valid_pcode + 1, start_offset + 1)  # Ensure minimum advance
+                    return max(
+                        last_valid_pcode + 1, start_offset + 1
+                    )  # Ensure minimum advance
             else:
                 # Reset counter and update last valid position
                 low_confidence_bytes = 0
@@ -1064,12 +1077,16 @@ class PCodeDetector:
                 # Multiple consecutive nulls (but not UTF-16 pattern)
                 if data[i : i + 8] == b"\x00" * 8 and not cls._is_utf16_string(data, i):
                     logger.debug("Found null padding at 0x%04x", i)
-                    return max(last_valid_pcode + 1, start_offset + 1)  # LOOP SAFETY: Ensure minimum advance
+                    return max(
+                        last_valid_pcode + 1, start_offset + 1
+                    )  # LOOP SAFETY: Ensure minimum advance
 
                 # Multiple consecutive 0xFF (padding pattern)
                 if data[i : i + 8] == b"\xff" * 8:
                     logger.debug("Found 0xFF padding at 0x%04x", i)
-                    return max(last_valid_pcode + 1, start_offset + 1)  # LOOP SAFETY: Ensure minimum advance
+                    return max(
+                        last_valid_pcode + 1, start_offset + 1
+                    )  # LOOP SAFETY: Ensure minimum advance
 
             # Check for specific end patterns
             # PowerBuilder sometimes uses specific patterns to mark end of code
@@ -1085,7 +1102,9 @@ class PCodeDetector:
                     and data[i : i + len(pattern)] == pattern
                 ):
                     logger.debug("Found end pattern %s at 0x%04x", pattern.hex(), i)
-                    return max(i, start_offset + 1)  # LOOP SAFETY: Ensure minimum advance
+                    return max(
+                        i, start_offset + 1
+                    )  # LOOP SAFETY: Ensure minimum advance
 
             i += 1
 

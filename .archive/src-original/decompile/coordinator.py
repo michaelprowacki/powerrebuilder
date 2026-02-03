@@ -24,7 +24,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union, TYPE_CHECKING, Callable
+from typing import Any, Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
@@ -262,7 +262,11 @@ class ExtractedFileDecompiler:
         Returns:
             True if successful, False otherwise
         """
-        logger.info("Decompiling extracted file: %s (output_dir: %s)", file_path, self.output_dir)
+        logger.info(
+            "Decompiling extracted file: %s (output_dir: %s)",
+            file_path,
+            self.output_dir,
+        )
 
         try:
             # Read the file
@@ -290,8 +294,12 @@ class ExtractedFileDecompiler:
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
-                logger.warning("No P-code found in object %s (offset: %s, data_len: %s)", 
-                              file_path, pb_object.pcode_offset, len(pb_object.pcode_data) if pb_object.pcode_data else 0)
+                logger.warning(
+                    "No P-code found in object %s (offset: %s, data_len: %s)",
+                    file_path,
+                    pb_object.pcode_offset,
+                    len(pb_object.pcode_data) if pb_object.pcode_data else 0,
+                )
                 return self._generate_stub(file_path, "No P-code found in object")
 
             # Ensure pcode_offset is an integer for logging
@@ -353,21 +361,29 @@ class ExtractedFileDecompiler:
                 logger.warning("No instructions decoded from %s", file_path)
                 return self._generate_stub(file_path, "No instructions decoded")
 
-            logger.debug("Decoded %d instructions from %s", len(decoded_obj.instructions), file_path)
+            logger.debug(
+                "Decoded %d instructions from %s",
+                len(decoded_obj.instructions),
+                file_path,
+            )
 
             # Step 5: Analyze control flow
             if self.control_flow_analyzer:
-                if hasattr(self.control_flow_analyzer, 'analyze_legacy'):
+                if hasattr(self.control_flow_analyzer, "analyze_legacy"):
                     # Use legacy method for backward compatibility
                     control_blocks = self.control_flow_analyzer.analyze_legacy(
                         decoded_obj.instructions
                     )
                 else:
                     # Fallback for interface compliance - extract blocks from dict result
-                    result = self.control_flow_analyzer.analyze(decoded_obj.instructions)
+                    result = self.control_flow_analyzer.analyze(
+                        decoded_obj.instructions
+                    )
                     if isinstance(result, dict) and "blocks" in result:
                         # Convert dict blocks back to ControlBlock objects
-                        control_blocks = self._convert_dict_blocks_to_objects(result["blocks"])
+                        control_blocks = self._convert_dict_blocks_to_objects(
+                            result["blocks"]
+                        )
                     else:
                         control_blocks = []
             else:
@@ -415,9 +431,13 @@ class ExtractedFileDecompiler:
             # Validate that we got output
             if not output_lines:
                 logger.warning("OutputFormatter produced no output for %s", file_path)
-                return self._generate_stub(file_path, "Output formatter produced no output")
+                return self._generate_stub(
+                    file_path, "Output formatter produced no output"
+                )
 
-            logger.debug("Generated %d lines of output for %s", len(output_lines), file_path)
+            logger.debug(
+                "Generated %d lines of output for %s", len(output_lines), file_path
+            )
 
             # Step 8: Validate the output format
             validator = None
@@ -503,25 +523,38 @@ class ExtractedFileDecompiler:
 
                 # Validate content before writing
                 if content is None:
-                    logger.error("_format_output returned None for %s (format: %s, ext: %s)", 
-                                object_name, self.output_format, file_ext)
+                    logger.error(
+                        "_format_output returned None for %s (format: %s, ext: %s)",
+                        object_name,
+                        self.output_format,
+                        file_ext,
+                    )
                     content = "\n".join(output_lines)  # Fallback to unformatted content
 
                 logger.debug("Writing %d characters to %s", len(content), output_path)
                 with output_path.open("w", encoding="utf-8") as f:
                     f.write(content)
-                
+
                 # Verify file was written successfully
                 if output_path.exists() and output_path.stat().st_size > 0:
-                    logger.info("Wrote decompiled source to %s (%d bytes)", output_path, output_path.stat().st_size)
+                    logger.info(
+                        "Wrote decompiled source to %s (%d bytes)",
+                        output_path,
+                        output_path.stat().st_size,
+                    )
                 else:
-                    logger.error("Failed to write output file %s or file is empty", output_path)
+                    logger.error(
+                        "Failed to write output file %s or file is empty", output_path
+                    )
                     return False
             else:
                 # Output to stdout
                 try:
                     print(formatted_output)
-                    logger.info("Printed decompiled source to stdout (%d characters)", len(formatted_output))
+                    logger.info(
+                        "Printed decompiled source to stdout (%d characters)",
+                        len(formatted_output),
+                    )
                 except Exception as e:
                     logger.error("Failed to print to stdout: %s", e)
                     return False
@@ -746,7 +779,9 @@ end on
             # Output stub to stdout
             try:
                 print(stub_content)
-                logger.info("Printed stub content to stdout (%d characters)", len(stub_content))
+                logger.info(
+                    "Printed stub content to stdout (%d characters)", len(stub_content)
+                )
             except Exception as e:
                 logger.error("Failed to print stub to stdout: %s", e)
                 return False
@@ -893,8 +928,10 @@ class PowerBuilderDecompiler:
                     )
                 )
             else:
-                obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info_extended(
-                    object_name,
+                obj_type_name, contains_pcode = (
+                    ObjectTypeDetector.get_object_info_extended(
+                        object_name,
+                    )
                 )
 
             # Check if it's a DataWindow (special handling)
@@ -957,9 +994,15 @@ class PowerBuilderDecompiler:
                 try:
                     output_content = "\n".join(output_lines)
                     print(output_content)
-                    logger.debug("Printed object %s to stdout (%d lines)", object_name, len(output_lines))
+                    logger.debug(
+                        "Printed object %s to stdout (%d lines)",
+                        object_name,
+                        len(output_lines),
+                    )
                 except Exception as e:
-                    logger.error("Failed to print object %s to stdout: %s", object_name, e)
+                    logger.error(
+                        "Failed to print object %s to stdout: %s", object_name, e
+                    )
                     return False
 
             return True
@@ -1009,9 +1052,15 @@ class PowerBuilderDecompiler:
                     # Print to stdout
                     try:
                         print(output_text)
-                        logger.debug("Printed DataWindow %s syntax to stdout", entry.objectname)
+                        logger.debug(
+                            "Printed DataWindow %s syntax to stdout", entry.objectname
+                        )
                     except Exception as e:
-                        logger.error("Failed to print DataWindow %s to stdout: %s", entry.objectname, e)
+                        logger.error(
+                            "Failed to print DataWindow %s to stdout: %s",
+                            entry.objectname,
+                            e,
+                        )
                         return False
 
                 return True
@@ -1054,9 +1103,15 @@ class PowerBuilderDecompiler:
                     # Print to stdout
                     try:
                         print(output_text)
-                        logger.debug("Printed DataWindow %s metadata to stdout", entry.objectname)
+                        logger.debug(
+                            "Printed DataWindow %s metadata to stdout", entry.objectname
+                        )
                     except Exception as e:
-                        logger.error("Failed to print DataWindow %s metadata to stdout: %s", entry.objectname, e)
+                        logger.error(
+                            "Failed to print DataWindow %s metadata to stdout: %s",
+                            entry.objectname,
+                            e,
+                        )
                         return False
 
                 return True
@@ -1737,8 +1792,10 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
             # Find the output file
             # The decompiler creates files based on input extension mapping
-            expected_output_path = self._get_expected_output_path(file_path, temp_output_dir)
-            
+            expected_output_path = self._get_expected_output_path(
+                file_path, temp_output_dir
+            )
+
             # Look for the expected output file first
             output_files = []
             if expected_output_path and expected_output_path.exists():
@@ -1750,15 +1807,19 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     output_files = list(temp_output_dir.rglob(f"*{ext}"))
                     if output_files:
                         break
-                
+
                 # Last resort: get any non-empty file
                 if not output_files:
                     all_files = list(temp_output_dir.rglob("*"))
-                    output_files = [f for f in all_files if f.is_file() and f.stat().st_size > 0]
+                    output_files = [
+                        f for f in all_files if f.is_file() and f.stat().st_size > 0
+                    ]
 
             if not output_files:
                 # Check if decompilation actually succeeded
-                logger.error("No output files found in temp directory: %s", temp_output_dir)
+                logger.error(
+                    "No output files found in temp directory: %s", temp_output_dir
+                )
                 logger.error("Directory contents: %s", list(temp_output_dir.rglob("*")))
                 raise RuntimeError(
                     f"No output file found after decompiling {file_path}. "
@@ -1864,7 +1925,9 @@ class DecompileCoordinator(IDecompilerCoordinator):
             logger.warning("Could not determine output path for %s: %s", pcode_file, e)
             return None
 
-    def _get_expected_output_path(self, input_file: Path, output_dir: Path) -> Path | None:
+    def _get_expected_output_path(
+        self, input_file: Path, output_dir: Path
+    ) -> Path | None:
         """Get the expected output file path for a given input file."""
         try:
             # Map input extension to expected output extension
@@ -1879,28 +1942,30 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 ".apf": ".sru",  # application function -> source user object
                 ".udo": ".sru",  # user-defined object -> source user object
             }
-            
+
             input_ext = input_file.suffix.lower()
             output_ext = ext_mapping.get(input_ext, ".sru")  # default to .sru
             output_filename = input_file.stem + output_ext
-            
+
             # Try to find where the file would be placed
             # The decompiler preserves directory structure
             possible_paths = [
                 output_dir / output_filename,  # Direct in output dir
                 output_dir / input_file.stem / output_filename,  # In subdirectory
             ]
-            
+
             # Also search recursively for the filename
             for path in output_dir.rglob(output_filename):
                 if path.is_file():
                     return path
-                    
+
             # Return the most likely path even if it doesn't exist yet
             return possible_paths[0]
-            
+
         except Exception as e:
-            logger.warning("Could not determine expected output path for %s: %s", input_file, e)
+            logger.warning(
+                "Could not determine expected output path for %s: %s", input_file, e
+            )
             return None
 
     def extract_schemas(
@@ -1970,25 +2035,25 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
     def _convert_dict_blocks_to_objects(self, dict_blocks: list[dict]) -> list[Any]:
         """Convert dictionary blocks back to ControlBlock objects.
-        
+
         This is a helper method for backward compatibility when dealing with
         interface requirements vs. internal implementation needs.
-        
+
         Args:
             dict_blocks: List of block dictionaries
-            
+
         Returns:
             List of ControlBlock objects
         """
         from src.decompile.types import ControlBlock, BlockType
-        
+
         control_blocks = []
-        
+
         for block_dict in dict_blocks:
             try:
                 # Convert type string back to enum
                 block_type = BlockType[block_dict.get("type", "BASIC")]
-                
+
                 # Create ControlBlock object
                 control_block = ControlBlock(
                     type=block_type,
@@ -1998,13 +2063,13 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     statements=block_dict.get("statements", []),
                     metadata=block_dict.get("metadata", {}),
                 )
-                
+
                 control_blocks.append(control_block)
-                
+
             except (KeyError, ValueError) as e:
                 logger.warning("Failed to convert dict block to ControlBlock: %s", e)
                 continue
-                
+
         return control_blocks
 
 

@@ -5,8 +5,7 @@ Single source of truth for contracts between components.
 """
 
 from abc import abstractmethod
-from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union
+from typing import Any, Dict, List, Optional, Protocol
 
 from .models import (
     ApplicationModel,
@@ -15,7 +14,6 @@ from .models import (
     ExtractedObject,
     GeneratedProject,
     ParsedObject,
-    PBLFile,
     SemanticObject,
 )
 from .types import PathLike
@@ -120,7 +118,9 @@ class IOpcodeDecoder(Protocol):
     """Interface for decoding P-code opcodes."""
 
     @abstractmethod
-    def decode_instruction(self, data: bytes, offset: int) -> tuple[int, List[Any], int]:
+    def decode_instruction(
+        self, data: bytes, offset: int
+    ) -> tuple[int, List[Any], int]:
         """Decode a single P-code instruction.
 
         Args:
@@ -359,7 +359,9 @@ class IProgressReporter(Protocol):
     """Interface for progress reporting."""
 
     @abstractmethod
-    def start_task(self, task_id: str, description: str, total: Optional[int] = None) -> None:
+    def start_task(
+        self, task_id: str, description: str, total: Optional[int] = None
+    ) -> None:
         """Start a new task."""
         ...
 

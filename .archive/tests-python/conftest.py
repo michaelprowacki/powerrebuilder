@@ -215,19 +215,29 @@ def all_pbd_files() -> List[Path]:
 @pytest.fixture
 def sample_pcode_bytes() -> bytes:
     """Sample P-code bytes for testing."""
-    return bytes([
-        0x01, 0x00,  # Version
-        0x10, 0x00,  # Function count
-        0x20, 0x00, 0x00, 0x00,  # Code offset
-        0x30, 0x00, 0x00, 0x00,  # Data offset
-        # Sample opcodes
-        0x01,  # PUSH
-        0x02,  # POP
-        0x10,  # LOAD
-        0x20,  # STORE
-        0x30,  # CALL
-        0xFF,  # END
-    ])
+    return bytes(
+        [
+            0x01,
+            0x00,  # Version
+            0x10,
+            0x00,  # Function count
+            0x20,
+            0x00,
+            0x00,
+            0x00,  # Code offset
+            0x30,
+            0x00,
+            0x00,
+            0x00,  # Data offset
+            # Sample opcodes
+            0x01,  # PUSH
+            0x02,  # POP
+            0x10,  # LOAD
+            0x20,  # STORE
+            0x30,  # CALL
+            0xFF,  # END
+        ]
+    )
 
 
 @pytest.fixture
@@ -245,14 +255,14 @@ def sample_ast_dict() -> Dict[str, Any]:
                     "text": "Save",
                     "enabled": True,
                     "visible": True,
-                }
+                },
             },
             {
                 "node_type": "event",
                 "name": "clicked",
-                "handler": "MessageBox('Info', 'Button clicked')"
-            }
-        ]
+                "handler": "MessageBox('Info', 'Button clicked')",
+            },
+        ],
     }
 
 
@@ -387,10 +397,12 @@ def benchmark_timer():
         def report(self):
             if not self.times:
                 return "No measurements"
-            return (f"Times: {self.times}\n"
-                   f"Average: {self.average():.4f}s\n"
-                   f"Min: {min(self.times):.4f}s\n"
-                   f"Max: {max(self.times):.4f}s")
+            return (
+                f"Times: {self.times}\n"
+                f"Average: {self.average():.4f}s\n"
+                f"Min: {min(self.times):.4f}s\n"
+                f"Max: {max(self.times):.4f}s"
+            )
 
     return Timer()
 
@@ -403,22 +415,26 @@ def benchmark_timer():
 @pytest.fixture
 def assert_valid_ast():
     """Assertion helper for AST validation."""
+
     def _assert(ast_node):
         assert ast_node is not None
         assert hasattr(ast_node, "node_type")
         assert hasattr(ast_node, "children")
         assert isinstance(ast_node.children, list)
+
     return _assert
 
 
 @pytest.fixture
 def assert_valid_pbd():
     """Assertion helper for PBD validation."""
+
     def _assert(pbd_data):
         assert pbd_data is not None
         assert isinstance(pbd_data, bytes) or hasattr(pbd_data, "signature")
         if isinstance(pbd_data, bytes):
             assert len(pbd_data) > 0
+
     return _assert
 
 
@@ -430,6 +446,7 @@ def assert_valid_pbd():
 @pytest.fixture
 def create_test_pbd_file():
     """Factory for creating test PBD files."""
+
     def _create(path: Path, size: int = 1024):
         """Create a test PBD file with specified size."""
         # PBD signature
@@ -447,15 +464,13 @@ def create_test_pbd_file():
 @pytest.fixture
 def create_test_ast():
     """Factory for creating test AST nodes."""
+
     def _create(node_type="window", name="test", children=None):
         """Create a test AST node."""
         from _core import ASTNode
 
         node = ASTNode(
-            node_type=node_type,
-            value=name,
-            children=children or [],
-            attributes={}
+            node_type=node_type, value=name, children=children or [], attributes={}
         )
         return node
 

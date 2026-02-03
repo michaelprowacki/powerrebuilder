@@ -10,7 +10,7 @@ sequences that may occur due to:
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from src.decompile.pcode.decoder import PCodeInstruction
 

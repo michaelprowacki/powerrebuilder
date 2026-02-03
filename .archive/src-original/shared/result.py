@@ -9,15 +9,16 @@ from typing import TypeVar, Generic, Callable, Union, List, Optional, Any
 from abc import ABC, abstractmethod
 
 # Type variables for generic Result
-T = TypeVar('T')  # Success type
-E = TypeVar('E')  # Error type
-U = TypeVar('U')  # Transformed success type
-F = TypeVar('F')  # Transformed error type
+T = TypeVar("T")  # Success type
+E = TypeVar("E")  # Error type
+U = TypeVar("U")  # Transformed success type
+F = TypeVar("F")  # Transformed error type
 
 
 # ============================================================================
 # RESULT ALGEBRAIC DATA TYPE
 # ============================================================================
+
 
 class Result(ABC, Generic[T, E]):
     """Abstract base for Result monad.
@@ -47,7 +48,7 @@ class Result(ABC, Generic[T, E]):
         """Get the error if Failure, None if Success."""
         ...
 
-    def map(self, func: Callable[[T], U]) -> 'Result[U, E]':
+    def map(self, func: Callable[[T], U]) -> "Result[U, E]":
         """Transform the success value.
 
         If Success: applies function to value
@@ -61,7 +62,7 @@ class Result(ABC, Generic[T, E]):
                 return Failure(e)  # type: ignore
         return self  # type: ignore
 
-    def map_error(self, func: Callable[[E], F]) -> 'Result[T, F]':
+    def map_error(self, func: Callable[[E], F]) -> "Result[T, F]":
         """Transform the error value.
 
         If Success: passes through unchanged
@@ -71,7 +72,7 @@ class Result(ABC, Generic[T, E]):
             return Failure(func(self.error()))
         return self  # type: ignore
 
-    def bind(self, func: Callable[[T], 'Result[U, E]']) -> 'Result[U, E]':
+    def bind(self, func: Callable[[T], "Result[U, E]"]) -> "Result[U, E]":
         """Monadic bind (flatMap).
 
         Chains operations that return Results.
@@ -82,7 +83,7 @@ class Result(ABC, Generic[T, E]):
             return func(self.value())
         return self  # type: ignore
 
-    def tee(self, func: Callable[[T], None]) -> 'Result[T, E]':
+    def tee(self, func: Callable[[T], None]) -> "Result[T, E]":
         """Execute side effect without changing the value.
 
         Useful for logging, notifications, etc.
@@ -101,11 +102,7 @@ class Result(ABC, Generic[T, E]):
             return self.value()
         return func(self.error())
 
-    def match(
-        self,
-        success: Callable[[T], U],
-        failure: Callable[[E], U]
-    ) -> U:
+    def match(self, success: Callable[[T], U], failure: Callable[[E], U]) -> U:
         """Pattern match on Result.
 
         Exhaustive pattern matching for both cases.
@@ -118,6 +115,7 @@ class Result(ABC, Generic[T, E]):
 @dataclass(frozen=True)
 class Success(Result[T, E]):
     """Success case of Result."""
+
     _value: T
 
     def is_success(self) -> bool:
@@ -139,6 +137,7 @@ class Success(Result[T, E]):
 @dataclass(frozen=True)
 class Failure(Result[T, E]):
     """Failure case of Result."""
+
     _error: E
 
     def is_success(self) -> bool:
@@ -161,67 +160,52 @@ class Failure(Result[T, E]):
 # RESULT WITH EVENTS (for observability)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class EventfulResult(Generic[T, E]):
     """Result that also carries events for observability.
 
     Combines Result monad with event accumulation.
     """
+
     result: Result[T, E]
     events: List[Any]
 
-    def map(self, func: Callable[[T], U]) -> 'EventfulResult[U, E]':
+    def map(self, func: Callable[[T], U]) -> "EventfulResult[U, E]":
         """Map over the value, preserving events."""
-        return EventfulResult(
-            self.result.map(func),
-            self.events
-        )
+        return EventfulResult(self.result.map(func), self.events)
 
     def bind(
-        self,
-        func: Callable[[T], 'EventfulResult[U, E]']
-    ) -> 'EventfulResult[U, E]':
+        self, func: Callable[[T], "EventfulResult[U, E]"]
+    ) -> "EventfulResult[U, E]":
         """Bind that accumulates events."""
         if self.result.is_success():
             next_result = func(self.result.value())
             # Combine events from both results
-            return EventfulResult(
-                next_result.result,
-                self.events + next_result.events
-            )
+            return EventfulResult(next_result.result, self.events + next_result.events)
         return EventfulResult(self.result, self.events)  # type: ignore
 
-    def add_event(self, event: Any) -> 'EventfulResult[T, E]':
+    def add_event(self, event: Any) -> "EventfulResult[T, E]":
         """Add an event to the result."""
-        return EventfulResult(
-            self.result,
-            self.events + [event]
-        )
+        return EventfulResult(self.result, self.events + [event])
 
     @staticmethod
-    def success(value: T, events: List[Any] = None) -> 'EventfulResult[T, E]':
+    def success(value: T, events: List[Any] = None) -> "EventfulResult[T, E]":
         """Create a successful EventfulResult."""
-        return EventfulResult(
-            Success(value),
-            events or []
-        )
+        return EventfulResult(Success(value), events or [])
 
     @staticmethod
-    def failure(error: E, events: List[Any] = None) -> 'EventfulResult[T, E]':
+    def failure(error: E, events: List[Any] = None) -> "EventfulResult[T, E]":
         """Create a failed EventfulResult."""
-        return EventfulResult(
-            Failure(error),
-            events or []
-        )
+        return EventfulResult(Failure(error), events or [])
 
 
 # ============================================================================
 # COMBINATORS AND UTILITIES
 # ============================================================================
 
-def traverse(
-    results: List[Result[T, E]]
-) -> Result[List[T], E]:
+
+def traverse(results: List[Result[T, E]]) -> Result[List[T], E]:
     """Convert list of Results to Result of list.
 
     If all are Success: returns Success with list of values
@@ -235,16 +219,13 @@ def traverse(
     return Success(values)
 
 
-def sequence(
-    results: List[Result[T, E]]
-) -> Result[List[T], E]:
+def sequence(results: List[Result[T, E]]) -> Result[List[T], E]:
     """Alias for traverse (common in FP)."""
     return traverse(results)
 
 
 def try_catch(
-    func: Callable[[], T],
-    error_mapper: Callable[[Exception], E] = None
+    func: Callable[[], T], error_mapper: Callable[[Exception], E] = None
 ) -> Result[T, Union[E, Exception]]:
     """Execute function and wrap result in Result.
 
@@ -264,6 +245,7 @@ def pipeline(*functions: Callable) -> Callable:
     Functions are applied left to right.
     Useful for building data transformation pipelines.
     """
+
     def piped(value):
         result = value
         for func in functions:
@@ -272,12 +254,14 @@ def pipeline(*functions: Callable) -> Callable:
             else:
                 result = func(result)
         return result
+
     return piped
 
 
 # ============================================================================
 # RAILWAY OPERATORS (for ergonomic chaining)
 # ============================================================================
+
 
 class Railway:
     """Builder for railway-oriented pipelines.
@@ -288,30 +272,26 @@ class Railway:
     def __init__(self, result: Result[T, E]):
         self.result = result
 
-    def map(self, func: Callable[[T], U]) -> 'Railway[U, E]':
+    def map(self, func: Callable[[T], U]) -> "Railway[U, E]":
         """Transform success value."""
         return Railway(self.result.map(func))
 
-    def bind(self, func: Callable[[T], Result[U, E]]) -> 'Railway[U, E]':
+    def bind(self, func: Callable[[T], Result[U, E]]) -> "Railway[U, E]":
         """Chain operation returning Result."""
         return Railway(self.result.bind(func))
 
-    def tee(self, func: Callable[[T], None]) -> 'Railway[T, E]':
+    def tee(self, func: Callable[[T], None]) -> "Railway[T, E]":
         """Execute side effect."""
         return Railway(self.result.tee(func))
 
-    def validate(
-        self,
-        predicate: Callable[[T], bool],
-        error: E
-    ) -> 'Railway[T, E]':
+    def validate(self, predicate: Callable[[T], bool], error: E) -> "Railway[T, E]":
         """Validate value with predicate."""
         if self.result.is_success():
             if not predicate(self.result.value()):
                 return Railway(Failure(error))
         return self
 
-    def recover(self, func: Callable[[E], T]) -> 'Railway[T, E]':
+    def recover(self, func: Callable[[E], T]) -> "Railway[T, E]":
         """Recover from failure."""
         if self.result.is_failure():
             return Railway(Success(func(self.result.error())))
@@ -320,8 +300,8 @@ class Railway:
     def switch(
         self,
         cases: dict[Any, Callable[[T], Result[U, E]]],
-        default: Callable[[T], Result[U, E]] = None
-    ) -> 'Railway[U, E]':
+        default: Callable[[T], Result[U, E]] = None,
+    ) -> "Railway[U, E]":
         """Switch on value (pattern matching)."""
         if self.result.is_success():
             value = self.result.value()
@@ -340,7 +320,6 @@ class Railway:
 # ============================================================================
 
 from typing import Awaitable
-import asyncio
 
 
 class AsyncResult(Generic[T, E]):
@@ -354,10 +333,7 @@ class AsyncResult(Generic[T, E]):
         result = await self.awaitable
         return result.map(func)
 
-    async def bind(
-        self,
-        func: Callable[[T], Awaitable[Result[U, E]]]
-    ) -> Result[U, E]:
+    async def bind(self, func: Callable[[T], Awaitable[Result[U, E]]]) -> Result[U, E]:
         """Async bind."""
         result = await self.awaitable
         if result.is_success():
@@ -372,6 +348,7 @@ class AsyncResult(Generic[T, E]):
 # ============================================================================
 # EXAMPLES AND USAGE PATTERNS
 # ============================================================================
+
 
 def example_usage():
     """Example of railway-oriented programming."""
@@ -400,8 +377,7 @@ def example_usage():
 
     # Pattern matching
     message = result.match(
-        success=lambda v: f"Got value: {v}",
-        failure=lambda e: f"Got error: {e}"
+        success=lambda v: f"Got value: {v}", failure=lambda e: f"Got error: {e}"
     )
 
     # EventfulResult for tracking

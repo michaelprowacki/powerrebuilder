@@ -71,7 +71,7 @@ if not ib_transaction_active then
 end if
 
 // Update sequence
-UPDATE customers 
+UPDATE customers
 SET last_modified = CURRENT TIMESTAMP,
     modified_by = USER
 WHERE customer_id = :dw_customer.GetItemNumber(1, "customer_id")
@@ -166,11 +166,11 @@ end event
 event closequery;// Check for pending changes
 if dw_customer.ModifiedCount() > 0 or dw_customer.DeletedCount() > 0 then
     integer li_response
-    
+
     li_response = MessageBox("Unsaved Changes", &
         "Do you want to save your changes?", &
         Question!, YesNoCancel!)
-    
+
     choose case li_response
         case 1 // Yes
             if of_commit_transaction() = -1 then

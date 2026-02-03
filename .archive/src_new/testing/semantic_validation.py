@@ -7,19 +7,12 @@ ensuring that the transformation preserves business logic and functionality.
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Set
 from enum import Enum
-from pathlib import Path
-import json
 import logging
 
 from src_new._core import (
-    ASTNode,
-    Method,
-    Property,
     Event,
     PBObject,
     ObjectType,
-    DataType,
-    AccessModifier,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,14 +20,16 @@ logger = logging.getLogger(__name__)
 
 class ValidationSeverity(str, Enum):
     """Severity levels for validation issues."""
-    ERROR = "error"      # Critical issue that breaks functionality
+
+    ERROR = "error"  # Critical issue that breaks functionality
     WARNING = "warning"  # Issue that may affect behavior
-    INFO = "info"        # Informational notice
+    INFO = "info"  # Informational notice
 
 
 @dataclass
 class ValidationIssue:
     """A single validation issue."""
+
     severity: ValidationSeverity
     category: str
     message: str
@@ -47,6 +42,7 @@ class ValidationIssue:
 @dataclass
 class ValidationResult:
     """Result of semantic validation."""
+
     valid: bool
     issues: List[ValidationIssue] = field(default_factory=list)
     metrics: Dict[str, Any] = field(default_factory=dict)
@@ -54,12 +50,16 @@ class ValidationResult:
     @property
     def error_count(self) -> int:
         """Count of error-level issues."""
-        return sum(1 for issue in self.issues if issue.severity == ValidationSeverity.ERROR)
+        return sum(
+            1 for issue in self.issues if issue.severity == ValidationSeverity.ERROR
+        )
 
     @property
     def warning_count(self) -> int:
         """Count of warning-level issues."""
-        return sum(1 for issue in self.issues if issue.severity == ValidationSeverity.WARNING)
+        return sum(
+            1 for issue in self.issues if issue.severity == ValidationSeverity.WARNING
+        )
 
     def add_issue(self, issue: ValidationIssue):
         """Add a validation issue."""
@@ -125,38 +125,46 @@ class SemanticValidator:
         """Validate basic object structure."""
         # Check for required fields
         if not pb_object.name:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.ERROR,
-                category="structure",
-                message="Object missing name"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.ERROR,
+                    category="structure",
+                    message="Object missing name",
+                )
+            )
 
         if not pb_object.object_type:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.ERROR,
-                category="structure",
-                message="Object missing type"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.ERROR,
+                    category="structure",
+                    message="Object missing type",
+                )
+            )
 
         # Check for duplicate method names
         method_names = [m.name for m in pb_object.methods]
         duplicates = [name for name in method_names if method_names.count(name) > 1]
         for dup in set(duplicates):
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.ERROR,
-                category="structure",
-                message=f"Duplicate method name: {dup}"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.ERROR,
+                    category="structure",
+                    message=f"Duplicate method name: {dup}",
+                )
+            )
 
         # Check for duplicate property names
         prop_names = [p.name for p in pb_object.properties]
         duplicates = [name for name in prop_names if prop_names.count(name) > 1]
         for dup in set(duplicates):
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.ERROR,
-                category="structure",
-                message=f"Duplicate property name: {dup}"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.ERROR,
+                    category="structure",
+                    message=f"Duplicate property name: {dup}",
+                )
+            )
 
     def _validate_window(self, pb_object: PBObject, result: ValidationResult):
         """Validate window-specific semantics."""
@@ -164,102 +172,122 @@ class SemanticValidator:
         event_names = [e.name for e in pb_object.events]
 
         if "open" not in event_names and "constructor" not in event_names:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.WARNING,
-                category="window",
-                message="Window missing open/constructor event"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.WARNING,
+                    category="window",
+                    message="Window missing open/constructor event",
+                )
+            )
 
         # Check for controls
         if not pb_object.controls:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.INFO,
-                category="window",
-                message="Window has no controls"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.INFO,
+                    category="window",
+                    message="Window has no controls",
+                )
+            )
 
     def _validate_datawindow(self, pb_object: PBObject, result: ValidationResult):
         """Validate DataWindow-specific semantics."""
         # Check for data object
         has_dataobject = any(p.name == "dataobject" for p in pb_object.properties)
         if not has_dataobject:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.WARNING,
-                category="datawindow",
-                message="DataWindow missing dataobject property"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.WARNING,
+                    category="datawindow",
+                    message="DataWindow missing dataobject property",
+                )
+            )
 
         # Check for retrieve method
         has_retrieve = any(m.name == "retrieve" for m in pb_object.methods)
         if not has_retrieve:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.INFO,
-                category="datawindow",
-                message="DataWindow missing retrieve method"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.INFO,
+                    category="datawindow",
+                    message="DataWindow missing retrieve method",
+                )
+            )
 
     def _validate_user_object(self, pb_object: PBObject, result: ValidationResult):
         """Validate user object semantics."""
         # User objects should have a constructor
         has_constructor = any(e.name == "constructor" for e in pb_object.events)
         if not has_constructor:
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.INFO,
-                category="user_object",
-                message="User object missing constructor"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.INFO,
+                    category="user_object",
+                    message="User object missing constructor",
+                )
+            )
 
     def _validate_methods(self, pb_object: PBObject, result: ValidationResult):
         """Validate method semantics."""
         for method in pb_object.methods:
             # Check return type
             if method.return_type and method.return_type not in self._get_valid_types():
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    category="method",
-                    message=f"Unknown return type '{method.return_type}' in method {method.name}",
-                    location=f"{pb_object.name}.{method.name}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        category="method",
+                        message=f"Unknown return type '{method.return_type}' in method {method.name}",
+                        location=f"{pb_object.name}.{method.name}",
+                    )
+                )
 
             # Check parameter types
             for param in method.parameters:
                 if param.data_type and param.data_type not in self._get_valid_types():
-                    result.add_issue(ValidationIssue(
-                        severity=ValidationSeverity.WARNING,
-                        category="method",
-                        message=f"Unknown parameter type '{param.data_type}' in method {method.name}",
-                        location=f"{pb_object.name}.{method.name}"
-                    ))
+                    result.add_issue(
+                        ValidationIssue(
+                            severity=ValidationSeverity.WARNING,
+                            category="method",
+                            message=f"Unknown parameter type '{param.data_type}' in method {method.name}",
+                            location=f"{pb_object.name}.{method.name}",
+                        )
+                    )
 
             # Check for empty implementation
             if not method.implementation or method.implementation.strip() == "":
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.INFO,
-                    category="method",
-                    message=f"Empty method implementation: {method.name}",
-                    location=f"{pb_object.name}.{method.name}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.INFO,
+                        category="method",
+                        message=f"Empty method implementation: {method.name}",
+                        location=f"{pb_object.name}.{method.name}",
+                    )
+                )
 
     def _validate_properties(self, pb_object: PBObject, result: ValidationResult):
         """Validate property semantics."""
         for prop in pb_object.properties:
             # Check property type
             if prop.type and prop.type not in self._get_valid_types():
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    category="property",
-                    message=f"Unknown property type '{prop.type}' for {prop.name}",
-                    location=f"{pb_object.name}.{prop.name}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        category="property",
+                        message=f"Unknown property type '{prop.type}' for {prop.name}",
+                        location=f"{pb_object.name}.{prop.name}",
+                    )
+                )
 
             # Check for uninitialized required properties
             if prop.required and prop.initial_value is None:
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    category="property",
-                    message=f"Required property not initialized: {prop.name}",
-                    location=f"{pb_object.name}.{prop.name}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        category="property",
+                        message=f"Required property not initialized: {prop.name}",
+                        location=f"{pb_object.name}.{prop.name}",
+                    )
+                )
 
     def _validate_events(self, pb_object: PBObject, result: ValidationResult):
         """Validate event semantics."""
@@ -268,51 +296,61 @@ class SemanticValidator:
             if event.name in self._get_standard_events():
                 expected_sig = self._get_standard_events()[event.name]
                 if not self._matches_signature(event, expected_sig):
-                    result.add_issue(ValidationIssue(
-                        severity=ValidationSeverity.WARNING,
-                        category="event",
-                        message=f"Non-standard signature for event {event.name}",
-                        location=f"{pb_object.name}.{event.name}"
-                    ))
+                    result.add_issue(
+                        ValidationIssue(
+                            severity=ValidationSeverity.WARNING,
+                            category="event",
+                            message=f"Non-standard signature for event {event.name}",
+                            location=f"{pb_object.name}.{event.name}",
+                        )
+                    )
 
             # Check for empty event handlers
             if not event.handler or event.handler.strip() == "":
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.INFO,
-                    category="event",
-                    message=f"Empty event handler: {event.name}",
-                    location=f"{pb_object.name}.{event.name}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.INFO,
+                        category="event",
+                        message=f"Empty event handler: {event.name}",
+                        location=f"{pb_object.name}.{event.name}",
+                    )
+                )
 
     def _validate_inheritance(self, pb_object: PBObject, result: ValidationResult):
         """Validate inheritance chain."""
         if pb_object.parent_class:
             # Check if parent exists
             if pb_object.parent_class not in self._get_known_classes():
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    category="inheritance",
-                    message=f"Unknown parent class: {pb_object.parent_class}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        category="inheritance",
+                        message=f"Unknown parent class: {pb_object.parent_class}",
+                    )
+                )
 
             # Check for circular inheritance
             if self._has_circular_inheritance(pb_object):
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.ERROR,
-                    category="inheritance",
-                    message="Circular inheritance detected"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.ERROR,
+                        category="inheritance",
+                        message="Circular inheritance detected",
+                    )
+                )
 
     def _validate_dependencies(self, pb_object: PBObject, result: ValidationResult):
         """Validate object dependencies."""
         for dep in pb_object.dependencies:
             # Check if dependency exists
             if dep not in self._get_known_classes():
-                result.add_issue(ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    category="dependency",
-                    message=f"Unknown dependency: {dep}"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        category="dependency",
+                        message=f"Unknown dependency: {dep}",
+                    )
+                )
 
     def _calculate_metrics(self, pb_object: PBObject) -> Dict[str, Any]:
         """Calculate semantic metrics."""
@@ -390,11 +428,27 @@ class SemanticValidator:
     def _get_valid_types(self) -> Set[str]:
         """Get set of valid PowerBuilder types."""
         return {
-            "integer", "long", "decimal", "real", "double",
-            "boolean", "string", "char", "date", "datetime",
-            "time", "blob", "any", "powerobject",
-            "window", "datawindow", "menu", "userobject",
-            "transaction", "application", "structure"
+            "integer",
+            "long",
+            "decimal",
+            "real",
+            "double",
+            "boolean",
+            "string",
+            "char",
+            "date",
+            "datetime",
+            "time",
+            "blob",
+            "any",
+            "powerobject",
+            "window",
+            "datawindow",
+            "menu",
+            "userobject",
+            "transaction",
+            "application",
+            "structure",
         }
 
     def _get_standard_events(self) -> Dict[str, Dict]:
@@ -407,17 +461,33 @@ class SemanticValidator:
             "close": {"parameters": []},
             "activate": {"parameters": []},
             "deactivate": {"parameters": []},
-            "resize": {"parameters": [("sizetype", "integer"), ("newwidth", "integer"), ("newheight", "integer")]},
+            "resize": {
+                "parameters": [
+                    ("sizetype", "integer"),
+                    ("newwidth", "integer"),
+                    ("newheight", "integer"),
+                ]
+            },
         }
 
     def _get_known_classes(self) -> Set[str]:
         """Get known PowerBuilder classes."""
         # In real implementation, would load from project
         return {
-            "window", "datawindow", "menu", "userobject",
-            "transaction", "application", "commandbutton",
-            "statictext", "singlelineedit", "multilineedit",
-            "listbox", "dropdownlistbox", "checkbox", "radiobutton"
+            "window",
+            "datawindow",
+            "menu",
+            "userobject",
+            "transaction",
+            "application",
+            "commandbutton",
+            "statictext",
+            "singlelineedit",
+            "multilineedit",
+            "listbox",
+            "dropdownlistbox",
+            "checkbox",
+            "radiobutton",
         }
 
     def _has_circular_inheritance(self, pb_object: PBObject) -> bool:
@@ -482,11 +552,13 @@ class CrossStageValidator:
 
         # Check file count consistency
         if len(extract_files) != len(decompile_files):
-            result.add_issue(ValidationIssue(
-                severity=ValidationSeverity.WARNING,
-                category="cross-stage",
-                message=f"File count mismatch: {len(extract_files)} extracted, {len(decompile_files)} decompiled"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity=ValidationSeverity.WARNING,
+                    category="cross-stage",
+                    message=f"File count mismatch: {len(extract_files)} extracted, {len(decompile_files)} decompiled",
+                )
+            )
 
     def _validate_decompile_parse(self, result: ValidationResult):
         """Validate decompile to parse transition."""

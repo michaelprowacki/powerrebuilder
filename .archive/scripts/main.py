@@ -1394,7 +1394,9 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
 )
 @click.option(
     "--target",
-    type=click.Choice(["python", "flutter", "react-typescript", "tauri", "dioxus", "both"]),
+    type=click.Choice(
+        ["python", "flutter", "react-typescript", "tauri", "dioxus", "both"]
+    ),
     default="both",
     help="Target language to generate",
 )
@@ -1417,12 +1419,23 @@ def generate(
     """
     try:
         from src.generate import GenerateCoordinator
-        create_generate_coordinator = lambda input_path, output_path, target, streaming, parallel, workers, verbose: GenerateCoordinator(input_path, output_path)
+
+        create_generate_coordinator = (
+            lambda input_path,
+            output_path,
+            target,
+            streaming,
+            parallel,
+            workers,
+            verbose: GenerateCoordinator(input_path, output_path)
+        )
 
         # Use new pipeline if model-dir is provided
         if model_dir and output_dir:
             logger.info("Generating %s code from model files...", target)
-            coordinator = create_generate_coordinator(Path(model_dir), Path(output_dir), target)
+            coordinator = create_generate_coordinator(
+                Path(model_dir), Path(output_dir), target
+            )
             results = coordinator.process()
 
             # Results is a dict with counts, not file lists
@@ -1449,10 +1462,14 @@ def generate(
             if target in ["flutter", "both"]:
                 logger.info("Generating Flutter frontend...")
                 generate_flutter(parsed_dir, legacy_output)
-                
+
             if target == "react-typescript":
-                logger.warning("React/TypeScript generation requires --model-dir, not supported in legacy mode")
-                logger.info("Please use the modern pipeline: python main.py generate --model-dir <path> --output-dir <path> --target react-typescript")
+                logger.warning(
+                    "React/TypeScript generation requires --model-dir, not supported in legacy mode"
+                )
+                logger.info(
+                    "Please use the modern pipeline: python main.py generate --model-dir <path> --output-dir <path> --target react-typescript"
+                )
 
             logger.info("Code generation complete.")
         else:
@@ -1604,6 +1621,7 @@ def all(
     try:
         # Use UniversalCoordinator for pipeline operations
         from src.extract import ExtractCoordinator
+
         # Create a simple UniversalCoordinator wrapper
         class UniversalCoordinator:
             def __init__(self, input_path, output_path, stage_config=None):
@@ -1983,8 +2001,8 @@ def all_parallel(
     - Streaming support for large files
     - Caching of parsed ASTs
     """
-    from src.extract import ExtractCoordinator
     from src.domain.models import PipelineStage
+
     # Create a simple UniversalCoordinator wrapper
     class UniversalCoordinator:
         def __init__(self, input_path, output_path, stage_config=None):
@@ -2054,13 +2072,16 @@ def all_parallel(
 @click.option("--memory", type=int, default=512, help="Maximum cache memory in MB")
 def cache_stats(size: int, memory: int) -> None:
     """Display cache statistics and optionally configure cache settings."""
+
     # Simple cache manager implementation
     class CacheManager:
         def __init__(self, cache_dir):
             self.cache_dir = cache_dir
+
         def clear_all(self):
             if self.cache_dir.exists():
                 import shutil
+
                 shutil.rmtree(self.cache_dir)
 
     def show_stats() -> None:

@@ -6,7 +6,7 @@ Pure data types following Scott Wlaschin's FDM principles.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Any, Generic, TypeVar
+from typing import List, Optional, Any
 from enum import Enum
 from datetime import datetime
 
@@ -15,6 +15,7 @@ from datetime import datetime
 # FUNDAMENTAL COMPUTATION CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Computation:
     """The universal concept of computation: input → output transformation.
@@ -22,11 +23,12 @@ class Computation:
     This is the most fundamental concept in all programming languages.
     A computation takes inputs and produces outputs, possibly with effects.
     """
+
     name: str
-    inputs: List['Value']
-    output: Optional['Value']
+    inputs: List["Value"]
+    output: Optional["Value"]
     is_pure: bool = True  # No side effects
-    effects: List['SideEffect'] = field(default_factory=list)
+    effects: List["SideEffect"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -35,9 +37,10 @@ class Expression:
 
     Universal across all languages - something that can be reduced to a value.
     """
-    result_type: 'Type'
+
+    result_type: "Type"
     is_constant: bool = False  # Can be evaluated at compile time
-    dependencies: List['Name'] = field(default_factory=list)  # Names it depends on
+    dependencies: List["Name"] = field(default_factory=list)  # Names it depends on
 
 
 @dataclass(frozen=True)
@@ -46,8 +49,9 @@ class Statement:
 
     Universal concept of imperative action.
     """
-    effects: List['SideEffect']
-    modifies: List['Name'] = field(default_factory=list)  # Names it modifies
+
+    effects: List["SideEffect"]
+    modifies: List["Name"] = field(default_factory=list)  # Names it modifies
 
 
 @dataclass(frozen=True)
@@ -56,10 +60,11 @@ class Function:
 
     Present in all languages in some form (procedure, method, function, lambda).
     """
-    name: 'Name'
-    parameters: List['Parameter']
-    return_type: Optional['Type']
-    body: 'Computation'
+
+    name: "Name"
+    parameters: List["Parameter"]
+    return_type: Optional["Type"]
+    body: "Computation"
     is_pure: bool = True
     is_recursive: bool = False
 
@@ -70,10 +75,11 @@ class Parameter:
 
     Universal concept of parameterization.
     """
-    name: 'Name'
-    parameter_type: 'Type'
+
+    name: "Name"
+    parameter_type: "Type"
     is_optional: bool = False
-    default_value: Optional['Value'] = None
+    default_value: Optional["Value"] = None
     pass_by: str = "value"  # value, reference, name
 
 
@@ -83,16 +89,19 @@ class Return:
 
     Universal concept of producing output.
     """
-    value: Optional['Value']
-    return_type: Optional['Type']
+
+    value: Optional["Value"]
+    return_type: Optional["Type"]
 
 
 # ============================================================================
 # EVALUATION CONCEPTS
 # ============================================================================
 
+
 class EvaluationStrategy(str, Enum):
     """How expressions are evaluated."""
+
     EAGER = "eager"  # Call-by-value
     LAZY = "lazy"  # Call-by-need
     NORMAL = "normal"  # Call-by-name
@@ -104,10 +113,11 @@ class Evaluation:
 
     Universal concept of computation execution.
     """
+
     expression: Expression
-    environment: 'Environment'
+    environment: "Environment"
     strategy: EvaluationStrategy = EvaluationStrategy.EAGER
-    result: Optional['Value'] = None
+    result: Optional["Value"] = None
 
 
 @dataclass(frozen=True)
@@ -116,14 +126,16 @@ class Application:
 
     Applying a function to arguments (from lambda calculus).
     """
+
     function: Function
-    arguments: List['Value']
-    result: Optional['Value'] = None
+    arguments: List["Value"]
+    result: Optional["Value"] = None
 
 
 # ============================================================================
 # LAMBDA CALCULUS FOUNDATIONS
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Lambda:
@@ -131,9 +143,10 @@ class Lambda:
 
     The foundation of functional programming.
     """
+
     parameter: Parameter
     body: Expression
-    closure: 'Environment' = field(default_factory=dict)  # Captured environment
+    closure: "Environment" = field(default_factory=dict)  # Captured environment
 
 
 @dataclass(frozen=True)
@@ -142,13 +155,15 @@ class Closure:
 
     Universal concept in languages with lexical scope.
     """
+
     function: Function
-    captured_environment: 'Environment'
+    captured_environment: "Environment"
 
 
 # ============================================================================
 # COMPOSITION PATTERNS
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Composition:
@@ -156,6 +171,7 @@ class Composition:
 
     Universal concept of combining computations.
     """
+
     outer: Function
     inner: Function
 
@@ -166,6 +182,7 @@ class Pipeline:
 
     Data flows through a series of transformations.
     """
+
     stages: List[Function]
     is_parallel: bool = False
 
@@ -176,6 +193,7 @@ class HigherOrderFunction:
 
     Takes functions as input or returns functions.
     """
+
     name: Name
     function_parameters: List[Function]
     returns_function: bool
@@ -185,12 +203,14 @@ class HigherOrderFunction:
 # RECURSION AND ITERATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Recursion:
     """Self-referential computation.
 
     Universal concept of recursive definition.
     """
+
     base_case: Expression
     recursive_case: Function
     termination_condition: Expression
@@ -202,6 +222,7 @@ class TailRecursion:
 
     Last operation is recursive call.
     """
+
     function: Function
     accumulator: Parameter
     is_optimizable: bool = True
@@ -211,14 +232,16 @@ class TailRecursion:
 # PARTIAL APPLICATION AND CURRYING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PartialApplication:
     """Fixing some arguments of a function.
 
     Creates a new function with fewer parameters.
     """
+
     original_function: Function
-    fixed_arguments: Dict[str, 'Value']
+    fixed_arguments: Dict[str, "Value"]
     remaining_parameters: List[Parameter]
 
 
@@ -228,6 +251,7 @@ class Curry:
 
     f(a,b,c) becomes f(a)(b)(c).
     """
+
     original_function: Function
     curried_form: Lambda
 
@@ -236,9 +260,11 @@ class Curry:
 # DOMAIN EVENTS (Colocated with Computation aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ComputationStarted:
     """Event: Computation began execution."""
+
     computation: Computation
     input_values: List[Any]
     timestamp: datetime
@@ -247,6 +273,7 @@ class ComputationStarted:
 @dataclass(frozen=True)
 class ComputationCompleted:
     """Event: Computation finished successfully."""
+
     computation: Computation
     result: Any
     execution_time: float
@@ -256,6 +283,7 @@ class ComputationCompleted:
 @dataclass(frozen=True)
 class ComputationFailed:
     """Event: Computation failed with error."""
+
     computation: Computation
     error: str
     timestamp: datetime
@@ -264,6 +292,7 @@ class ComputationFailed:
 @dataclass(frozen=True)
 class FunctionDefined:
     """Event: New function was defined."""
+
     function: Function
     module: str
     timestamp: datetime
@@ -272,6 +301,7 @@ class FunctionDefined:
 @dataclass(frozen=True)
 class FunctionApplied:
     """Event: Function was applied to arguments."""
+
     function: Function
     arguments: List[Any]
     result: Any

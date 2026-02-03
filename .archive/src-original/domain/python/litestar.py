@@ -15,16 +15,18 @@ from datetime import datetime
 # LITESTAR APPLICATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class LitestarApp:
     """Litestar application.
 
     Maps to PowerBuilder application with web API exposure.
     """
+
     name: str
-    controllers: List['Controller']
-    middleware: List['Middleware']
-    dependencies: Dict[str, 'Dependency']
+    controllers: List["Controller"]
+    middleware: List["Middleware"]
+    dependencies: Dict[str, "Dependency"]
     on_startup: List[Callable]
     on_shutdown: List[Callable]
     debug: bool = False
@@ -36,10 +38,11 @@ class Controller:
 
     Maps to PowerBuilder DataWindow/Window exposed as API.
     """
+
     path: str  # Base path like /api/users
-    endpoints: List['Endpoint']
-    dependencies: Dict[str, 'Dependency']
-    guards: List['Guard']
+    endpoints: List["Endpoint"]
+    dependencies: Dict[str, "Dependency"]
+    guards: List["Guard"]
     tags: List[str] = field(default_factory=list)  # OpenAPI tags
 
 
@@ -47,24 +50,27 @@ class Controller:
 # ENDPOINTS (Manifestation of core Function concept)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Endpoint:
     """REST API endpoint.
 
     Maps to PowerBuilder function/event exposed as API.
     """
+
     path: str
-    method: 'HTTPMethod'
-    handler: 'Handler'
+    method: "HTTPMethod"
+    handler: "Handler"
     status_code: int = 200
     response_model: Optional[Any] = None
-    dependencies: Dict[str, 'Dependency'] = field(default_factory=dict)
-    guards: List['Guard'] = field(default_factory=list)
-    cache: Optional['CacheConfig'] = None
+    dependencies: Dict[str, "Dependency"] = field(default_factory=dict)
+    guards: List["Guard"] = field(default_factory=list)
+    cache: Optional["CacheConfig"] = None
 
 
 class HTTPMethod(str, Enum):
     """HTTP methods."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -80,8 +86,9 @@ class Handler:
 
     The actual function that processes requests.
     """
+
     name: str
-    parameters: List['Parameter']
+    parameters: List["Parameter"]
     return_type: Optional[str]
     is_async: bool = True
     docstring: Optional[str] = None
@@ -90,16 +97,18 @@ class Handler:
 @dataclass(frozen=True)
 class Parameter:
     """Handler parameter."""
+
     name: str
-    param_type: 'ParamType'
+    param_type: "ParamType"
     python_type: str
     default: Optional[Any] = None
     required: bool = True
-    validation: Optional['Validation'] = None
+    validation: Optional["Validation"] = None
 
 
 class ParamType(str, Enum):
     """Parameter types in Litestar."""
+
     PATH = "path"  # Path parameter
     QUERY = "query"  # Query string
     BODY = "body"  # Request body
@@ -114,20 +123,23 @@ class ParamType(str, Enum):
 # DEPENDENCY INJECTION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Dependency:
     """Dependency injection configuration.
 
     Litestar's DI system for managing dependencies.
     """
+
     provider: Callable
-    scope: 'DIScope'
+    scope: "DIScope"
     cache: bool = False
     sync_to_thread: bool = False
 
 
 class DIScope(str, Enum):
     """Dependency injection scopes."""
+
     APP = "app"  # Singleton per app
     REQUEST = "request"  # Per request
     SESSION = "session"  # Per session
@@ -136,6 +148,7 @@ class DIScope(str, Enum):
 @dataclass(frozen=True)
 class Provide:
     """Dependency provider."""
+
     dependency: Callable
     use_cache: bool = True
     sync_to_thread: bool = False
@@ -145,19 +158,22 @@ class Provide:
 # MIDDLEWARE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Middleware:
     """Middleware for request/response processing.
 
     Cross-cutting concerns like auth, logging, CORS.
     """
-    middleware_type: 'MiddlewareType'
+
+    middleware_type: "MiddlewareType"
     config: Dict[str, Any] = field(default_factory=dict)
     exclude_paths: List[str] = field(default_factory=list)
 
 
 class MiddlewareType(str, Enum):
     """Types of middleware."""
+
     CORS = "cors"
     AUTHENTICATION = "auth"
     SESSION = "session"
@@ -171,6 +187,7 @@ class MiddlewareType(str, Enum):
 @dataclass(frozen=True)
 class CORSMiddleware(Middleware):
     """CORS configuration."""
+
     allow_origins: List[str] = field(default_factory=lambda: ["*"])
     allow_methods: List[str] = field(default_factory=lambda: ["*"])
     allow_headers: List[str] = field(default_factory=lambda: ["*"])
@@ -182,19 +199,22 @@ class CORSMiddleware(Middleware):
 # GUARDS (Authorization)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Guard:
     """Authorization guard.
 
     Maps to PowerBuilder security/role checks.
     """
-    guard_type: 'GuardType'
+
+    guard_type: "GuardType"
     handler: Callable
     exception_handler: Optional[Callable] = None
 
 
 class GuardType(str, Enum):
     """Types of guards."""
+
     AUTHENTICATION = "auth"
     AUTHORIZATION = "authz"
     RATE_LIMIT = "rate"
@@ -204,6 +224,7 @@ class GuardType(str, Enum):
 @dataclass(frozen=True)
 class AuthenticationGuard(Guard):
     """Authentication requirement."""
+
     required_auth: bool = True
     auth_backend: str = "session"  # session, jwt, oauth
 
@@ -211,6 +232,7 @@ class AuthenticationGuard(Guard):
 @dataclass(frozen=True)
 class AuthorizationGuard(Guard):
     """Authorization requirement."""
+
     required_roles: List[str] = field(default_factory=list)
     required_permissions: List[str] = field(default_factory=list)
     check_ownership: bool = False
@@ -220,9 +242,11 @@ class AuthorizationGuard(Guard):
 # REQUEST/RESPONSE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Request:
     """HTTP request."""
+
     method: HTTPMethod
     path: str
     headers: Dict[str, str]
@@ -236,16 +260,18 @@ class Request:
 @dataclass(frozen=True)
 class Response:
     """HTTP response."""
+
     status_code: int
     content: Any
     headers: Dict[str, str] = field(default_factory=dict)
-    cookies: List['Cookie'] = field(default_factory=list)
+    cookies: List["Cookie"] = field(default_factory=list)
     media_type: str = "application/json"
 
 
 @dataclass(frozen=True)
 class Cookie:
     """HTTP cookie."""
+
     key: str
     value: str
     max_age: Optional[int] = None
@@ -261,26 +287,30 @@ class Cookie:
 # VALIDATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Validation:
     """Input validation rules.
 
     Maps to PowerBuilder field validation.
     """
-    validators: List['Validator']
+
+    validators: List["Validator"]
     on_fail: str = "raise"  # raise, ignore, default
 
 
 @dataclass(frozen=True)
 class Validator:
     """Single validation rule."""
-    validator_type: 'ValidatorType'
+
+    validator_type: "ValidatorType"
     constraint: Any
     message: Optional[str] = None
 
 
 class ValidatorType(str, Enum):
     """Types of validators."""
+
     REQUIRED = "required"
     MIN_LENGTH = "min_length"
     MAX_LENGTH = "max_length"
@@ -297,16 +327,19 @@ class ValidatorType(str, Enum):
 # CACHING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CacheConfig:
     """Cache configuration for endpoints."""
+
     key_builder: Callable
     expiration: int  # Seconds
-    cache_backend: 'CacheBackend'
+    cache_backend: "CacheBackend"
 
 
 class CacheBackend(str, Enum):
     """Cache backend types."""
+
     MEMORY = "memory"
     REDIS = "redis"
     MEMCACHED = "memcached"
@@ -316,12 +349,14 @@ class CacheBackend(str, Enum):
 # WEBSOCKETS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class WebSocketEndpoint:
     """WebSocket endpoint.
 
     For real-time communication.
     """
+
     path: str
     on_connect: Callable
     on_receive: Callable
@@ -333,9 +368,11 @@ class WebSocketEndpoint:
 # BACKGROUND TASKS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class BackgroundTask:
     """Background task configuration."""
+
     task: Callable
     args: tuple = ()
     kwargs: Dict[str, Any] = field(default_factory=dict)
@@ -346,19 +383,22 @@ class BackgroundTask:
 # OPENAPI DOCUMENTATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class OpenAPIConfig:
     """OpenAPI/Swagger configuration."""
+
     title: str
     version: str
     description: Optional[str] = None
-    servers: List['Server'] = field(default_factory=list)
-    tags: List['Tag'] = field(default_factory=list)
+    servers: List["Server"] = field(default_factory=list)
+    tags: List["Tag"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class Server:
     """API server definition."""
+
     url: str
     description: Optional[str] = None
     variables: Dict[str, Any] = field(default_factory=dict)
@@ -367,6 +407,7 @@ class Server:
 @dataclass(frozen=True)
 class Tag:
     """API tag for grouping."""
+
     name: str
     description: Optional[str] = None
 
@@ -375,9 +416,11 @@ class Tag:
 # DOMAIN EVENTS (Colocated with Litestar aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ApplicationStarted:
     """Event: Litestar app started."""
+
     app: LitestarApp
     port: int
     timestamp: datetime
@@ -386,6 +429,7 @@ class ApplicationStarted:
 @dataclass(frozen=True)
 class RequestReceived:
     """Event: HTTP request received."""
+
     request: Request
     endpoint: Endpoint
     timestamp: datetime
@@ -394,6 +438,7 @@ class RequestReceived:
 @dataclass(frozen=True)
 class ResponseSent:
     """Event: HTTP response sent."""
+
     response: Response
     duration_ms: float
     timestamp: datetime
@@ -402,6 +447,7 @@ class ResponseSent:
 @dataclass(frozen=True)
 class ValidationFailed:
     """Event: Request validation failed."""
+
     endpoint: Endpoint
     errors: List[str]
     timestamp: datetime
@@ -410,6 +456,7 @@ class ValidationFailed:
 @dataclass(frozen=True)
 class DependencyInjected:
     """Event: Dependency was injected."""
+
     dependency: Dependency
     scope: DIScope
     timestamp: datetime
@@ -418,6 +465,7 @@ class DependencyInjected:
 @dataclass(frozen=True)
 class WebSocketConnected:
     """Event: WebSocket client connected."""
+
     endpoint: WebSocketEndpoint
     client_id: str
     timestamp: datetime
