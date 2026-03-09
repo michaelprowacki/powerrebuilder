@@ -9,11 +9,11 @@ This document catalogs all PowerBuilder test fixtures available for comprehensiv
 - **dcm_email.pbd** - Email functionality test (original fixture)
   - Contains: n_cst_mailsession, n_cst_pdfwriter, n_cst_email, w_mail_test
   - Tests: Object extraction, email components, PDF generation
-  
+
 - **pb6_example_d1.pbd** - PowerBuilder 6.0 example data module 1
   - Source: `reference/pb_code_examples/PowerBuilder 6.0/PWRS/PB6/Examples/`
   - Tests: Legacy PB6 format, data access objects
-  
+
 - **pb6_example_fe.pbd** - PowerBuilder 6.0 frontend examples
   - Source: `reference/pb_code_examples/PowerBuilder 6.0/PWRS/PB6/Examples/`
   - Tests: UI components, window objects
@@ -22,11 +22,11 @@ This document catalogs all PowerBuilder test fixtures available for comprehensiv
 - **pb10_transtlk_main.pbd** - TransTalk main module
   - Source: `reference/pb_code_examples/PowerBuilder 10.0/Sybase/PowerBuilder 10.0/TransTlk/`
   - Tests: Application structure, main entry points
-  
+
 - **pb10_translate.pbd** - Translation services
   - Source: `reference/pb_code_examples/PowerBuilder 10.0/Sybase/PowerBuilder 10.0/TransTlk/`
   - Tests: String handling, internationalization
-  
+
 - **pb10_crypto_client.pbd** - Cryptography client
   - Source: `reference/pb_code_examples/PowerBuilder 10.0/Sybase/PowerBuilder 10.0/Cryptograph/`
   - Tests: Security features, encryption/decryption
@@ -55,7 +55,7 @@ This document catalogs all PowerBuilder test fixtures available for comprehensiv
     - Virtual methods for overriding
     - Constructor/destructor chain
     - Debug logging functionality
-  
+
 - **inheritance_child.sru** - Derived data service (n_data_service)
   - Features:
     - Method overriding (of_initialize)

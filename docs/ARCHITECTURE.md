@@ -14,7 +14,7 @@ PBL/PBD → Extract → Decompile → Parse → Model → Generate → Modern Co
 ### Stage Dependencies
 Each stage **MUST** run in order as each depends on the previous stage's output:
 - Extract produces P-code files that Decompile needs
-- Decompile produces source files that Parse needs  
+- Decompile produces source files that Parse needs
 - Parse produces AST that Model needs
 - Model produces semantic models that Generate needs
 

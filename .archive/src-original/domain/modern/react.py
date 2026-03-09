@@ -14,8 +14,10 @@ from enum import Enum
 # TYPESCRIPT LANGUAGE TYPES
 # ============================================================================
 
+
 class TypeScriptType(str, Enum):
     """TypeScript types."""
+
     NUMBER = "number"
     STRING = "string"
     BOOLEAN = "boolean"
@@ -37,6 +39,7 @@ class TypeScriptType(str, Enum):
 @dataclass(frozen=True)
 class TypeScriptVariable:
     """A TypeScript variable."""
+
     name: str
     type: str
     is_const: bool = False
@@ -49,6 +52,7 @@ class TypeScriptVariable:
 @dataclass(frozen=True)
 class TypeScriptParameter:
     """A function parameter."""
+
     name: str
     type: str
     is_optional: bool = False
@@ -59,6 +63,7 @@ class TypeScriptParameter:
 @dataclass(frozen=True)
 class TypeScriptFunction:
     """A TypeScript function."""
+
     name: str
     parameters: List[TypeScriptParameter] = field(default_factory=list)
     return_type: str = "void"
@@ -71,9 +76,10 @@ class TypeScriptFunction:
 @dataclass(frozen=True)
 class TypeScriptInterface:
     """A TypeScript interface."""
+
     name: str
     extends: List[str] = field(default_factory=list)
-    properties: List['InterfaceProperty'] = field(default_factory=list)
+    properties: List["InterfaceProperty"] = field(default_factory=list)
     methods: List[TypeScriptFunction] = field(default_factory=list)
     generics: List[str] = field(default_factory=list)
 
@@ -81,6 +87,7 @@ class TypeScriptInterface:
 @dataclass(frozen=True)
 class InterfaceProperty:
     """An interface property."""
+
     name: str
     type: str
     is_optional: bool = False
@@ -90,6 +97,7 @@ class InterfaceProperty:
 @dataclass(frozen=True)
 class TypeScriptClass:
     """A TypeScript class."""
+
     name: str
     extends: Optional[str] = None
     implements: List[str] = field(default_factory=list)
@@ -103,6 +111,7 @@ class TypeScriptClass:
 @dataclass(frozen=True)
 class TypeScriptEnum:
     """A TypeScript enum."""
+
     name: str
     members: Dict[str, Any] = field(default_factory=dict)
     is_const: bool = False
@@ -111,6 +120,7 @@ class TypeScriptEnum:
 @dataclass(frozen=True)
 class TypeScriptType:
     """A TypeScript type alias."""
+
     name: str
     definition: str
     generics: List[str] = field(default_factory=list)
@@ -120,8 +130,10 @@ class TypeScriptType:
 # REACT COMPONENT TYPES
 # ============================================================================
 
+
 class ComponentType(str, Enum):
     """Types of React components."""
+
     FUNCTIONAL = "functional"
     CLASS = "class"
     MEMO = "memo"
@@ -132,20 +144,22 @@ class ComponentType(str, Enum):
 @dataclass(frozen=True)
 class ReactComponent:
     """A React component."""
+
     name: str
     type: ComponentType
     props: List[InterfaceProperty] = field(default_factory=list)
     state: Optional[List[InterfaceProperty]] = None  # For class components
-    hooks: List['ReactHook'] = field(default_factory=list)
+    hooks: List["ReactHook"] = field(default_factory=list)
     children: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class FunctionalComponent:
     """A functional React component."""
+
     name: str
     props_type: Optional[TypeScriptInterface] = None
-    hooks: List['ReactHook'] = field(default_factory=list)
+    hooks: List["ReactHook"] = field(default_factory=list)
     jsx: str = ""
     is_memo: bool = False
 
@@ -153,6 +167,7 @@ class FunctionalComponent:
 @dataclass(frozen=True)
 class ClassComponent:
     """A class-based React component."""
+
     name: str
     props_type: Optional[TypeScriptInterface] = None
     state_type: Optional[TypeScriptInterface] = None
@@ -165,8 +180,10 @@ class ClassComponent:
 # REACT HOOKS
 # ============================================================================
 
+
 class HookType(str, Enum):
     """Types of React hooks."""
+
     STATE = "useState"
     EFFECT = "useEffect"
     CONTEXT = "useContext"
@@ -183,6 +200,7 @@ class HookType(str, Enum):
 @dataclass(frozen=True)
 class ReactHook:
     """A React hook usage."""
+
     type: HookType
     name: Optional[str] = None  # For custom hooks
     dependencies: List[str] = field(default_factory=list)
@@ -192,6 +210,7 @@ class ReactHook:
 @dataclass(frozen=True)
 class UseStateHook:
     """useState hook."""
+
     state_name: str
     setter_name: str
     type: str
@@ -201,6 +220,7 @@ class UseStateHook:
 @dataclass(frozen=True)
 class UseEffectHook:
     """useEffect hook."""
+
     effect_body: str
     dependencies: List[str]
     cleanup: Optional[str] = None
@@ -209,6 +229,7 @@ class UseEffectHook:
 @dataclass(frozen=True)
 class UseContextHook:
     """useContext hook."""
+
     context_name: str
     value_name: str
     type: str
@@ -217,6 +238,7 @@ class UseContextHook:
 @dataclass(frozen=True)
 class CustomHook:
     """A custom React hook."""
+
     name: str
     parameters: List[TypeScriptParameter] = field(default_factory=list)
     return_type: str
@@ -228,18 +250,21 @@ class CustomHook:
 # JSX ELEMENTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class JSXElement:
     """A JSX element."""
+
     tag: str
     props: Dict[str, Any] = field(default_factory=dict)
-    children: List['JSXChild'] = field(default_factory=list)
+    children: List["JSXChild"] = field(default_factory=list)
     is_self_closing: bool = False
 
 
 @dataclass(frozen=True)
 class JSXChild:
     """A child of a JSX element."""
+
     type: str  # element, text, expression, fragment
     value: Any
 
@@ -247,6 +272,7 @@ class JSXChild:
 @dataclass(frozen=True)
 class JSXProps:
     """JSX element props."""
+
     attributes: Dict[str, Any] = field(default_factory=dict)
     event_handlers: Dict[str, str] = field(default_factory=dict)
     ref: Optional[str] = None
@@ -259,18 +285,21 @@ class JSXProps:
 # STATE MANAGEMENT
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ReduxStore:
     """Redux store configuration."""
+
     name: str
     initial_state: Dict[str, Any]
-    reducers: List['ReduxReducer']
+    reducers: List["ReduxReducer"]
     middleware: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class ReduxReducer:
     """A Redux reducer."""
+
     name: str
     initial_state: Any
     actions: Dict[str, str]  # action_type -> handler
@@ -279,6 +308,7 @@ class ReduxReducer:
 @dataclass(frozen=True)
 class ReduxAction:
     """A Redux action."""
+
     type: str
     payload: Optional[Any] = None
     meta: Optional[Dict[str, Any]] = None
@@ -287,6 +317,7 @@ class ReduxAction:
 @dataclass(frozen=True)
 class ContextProvider:
     """React Context provider."""
+
     name: str
     value_type: str
     default_value: Any
@@ -297,6 +328,7 @@ class ContextProvider:
 @dataclass(frozen=True)
 class ZustandStore:
     """Zustand state store."""
+
     name: str
     state: Dict[str, Any]
     actions: Dict[str, str]
@@ -307,20 +339,23 @@ class ZustandStore:
 # ROUTING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ReactRoute:
     """A React Router route."""
+
     path: str
     component: str
     exact: bool = False
     props: Dict[str, Any] = field(default_factory=dict)
-    children: List['ReactRoute'] = field(default_factory=list)
+    children: List["ReactRoute"] = field(default_factory=list)
     guards: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class RouterConfig:
     """Router configuration."""
+
     type: str  # BrowserRouter, HashRouter, MemoryRouter
     basename: Optional[str] = None
     routes: List[ReactRoute] = field(default_factory=list)
@@ -330,9 +365,11 @@ class RouterConfig:
 # STYLING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class StyledComponent:
     """A styled-component."""
+
     name: str
     base_element: str
     styles: str
@@ -342,6 +379,7 @@ class StyledComponent:
 @dataclass(frozen=True)
 class CSSModule:
     """CSS Module."""
+
     name: str
     classes: Dict[str, str] = field(default_factory=dict)
 
@@ -349,6 +387,7 @@ class CSSModule:
 @dataclass(frozen=True)
 class EmotionStyle:
     """Emotion CSS-in-JS style."""
+
     name: str
     css: str
     is_global: bool = False
@@ -358,9 +397,11 @@ class EmotionStyle:
 # PROJECT STRUCTURE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ReactProject:
     """React project structure."""
+
     name: str
     components: List[ReactComponent] = field(default_factory=list)
     pages: List[ReactComponent] = field(default_factory=list)

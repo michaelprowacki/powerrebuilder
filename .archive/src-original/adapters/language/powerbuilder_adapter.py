@@ -4,21 +4,32 @@ Adapts PowerBuilder-specific formats to generic modernization workflows.
 """
 
 import struct
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from typing import List, Dict, Any
 
 from src_new._core.result import Result, Success, Failure
 from src_new._core.language_adapter import (
-    BaseLanguageAdapter, SupportedLanguage, LanguageSignature,
-    AdapterCapabilities, CapabilityProvider
+    BaseLanguageAdapter,
+    SupportedLanguage,
+    LanguageSignature,
+    AdapterCapabilities,
+    CapabilityProvider,
 )
 from src_new._core.legacy_modernization_types import (
-    CompiledArchive, Bytecode, SourceCode,
-    ArchiveHeader, CompiledObject, LegacyObjectType,
-    GenericAST, ASTNodeType, LegacyApplicationModel,
-    UIContainer, DataPresentation, CodeModule,
-    ArchiveExtractionError, DecompilationError,
-    SourceParseError, ModelBuildError
+    CompiledArchive,
+    Bytecode,
+    SourceCode,
+    ArchiveHeader,
+    CompiledObject,
+    LegacyObjectType,
+    GenericAST,
+    ASTNodeType,
+    LegacyApplicationModel,
+    UIContainer,
+    DataPresentation,
+    ArchiveExtractionError,
+    DecompilationError,
+    SourceParseError,
+    ModelBuildError,
 )
 
 
@@ -30,22 +41,21 @@ class PowerBuilderAdapter(BaseLanguageAdapter, CapabilityProvider):
 
     def __init__(self):
         super().__init__(
-            SupportedLanguage.POWERBUILDER,
-            ['.pbl', '.pbd', '.pba', '.pbw']
+            SupportedLanguage.POWERBUILDER, [".pbl", ".pbd", ".pba", ".pbw"]
         )
 
     def get_signatures(self) -> List[LanguageSignature]:
         """PowerBuilder file signatures."""
         return [
             LanguageSignature(
-                magic_bytes=b'HDR*',  # PBL header signature
-                extensions=['.pbl', '.pbd'],
-                language=SupportedLanguage.POWERBUILDER
+                magic_bytes=b"HDR*",  # PBL header signature
+                extensions=[".pbl", ".pbd"],
+                language=SupportedLanguage.POWERBUILDER,
             ),
             LanguageSignature(
-                magic_bytes=b'PBL\x06',  # Alternative PBL signature
-                extensions=['.pbl'],
-                language=SupportedLanguage.POWERBUILDER
+                magic_bytes=b"PBL\x06",  # Alternative PBL signature
+                extensions=[".pbl"],
+                language=SupportedLanguage.POWERBUILDER,
             ),
         ]
 
@@ -55,68 +65,81 @@ class PowerBuilderAdapter(BaseLanguageAdapter, CapabilityProvider):
             can_extract=True,
             can_decompile=True,
             can_parse=True,
-            has_ui_support=True,         # Windows, Menus
-            has_data_support=True,       # DataWindows
-            has_report_support=True,     # DataWindow reports
+            has_ui_support=True,  # Windows, Menus
+            has_data_support=True,  # DataWindows
+            has_report_support=True,  # DataWindow reports
             supported_targets=[
-                'flutter', 'tauri', 'react', 'vue',
-                'litestar', 'fastapi', 'django'
-            ]
+                "flutter",
+                "tauri",
+                "react",
+                "vue",
+                "litestar",
+                "fastapi",
+                "django",
+            ],
         )
 
-    def parse_archive_header(self, archive: CompiledArchive) -> Result[ArchiveHeader, ArchiveExtractionError]:
+    def parse_archive_header(
+        self, archive: CompiledArchive
+    ) -> Result[ArchiveHeader, ArchiveExtractionError]:
         """Parse PBL/PBD header."""
         data = bytes(archive)
 
         if len(data) < 512:  # PBL headers are 512 bytes
-            return Failure(ArchiveExtractionError(
-                error_type="InvalidSize",
-                message="Archive too small for PBL header",
-                archive_name="unknown",
-                offset=0
-            ))
+            return Failure(
+                ArchiveExtractionError(
+                    error_type="InvalidSize",
+                    message="Archive too small for PBL header",
+                    archive_name="unknown",
+                    offset=0,
+                )
+            )
 
         # Check signature
-        if not (data.startswith(b'HDR*') or data.startswith(b'PBL')):
-            return Failure(ArchiveExtractionError(
-                error_type="InvalidSignature",
-                message="Not a PowerBuilder library",
-                archive_name="unknown",
-                offset=0
-            ))
+        if not (data.startswith(b"HDR*") or data.startswith(b"PBL")):
+            return Failure(
+                ArchiveExtractionError(
+                    error_type="InvalidSignature",
+                    message="Not a PowerBuilder library",
+                    archive_name="unknown",
+                    offset=0,
+                )
+            )
 
         # Parse PowerBuilder version and object count
         try:
             # These offsets are specific to PBL format
-            version_bytes = struct.unpack('<H', data[4:6])[0]
-            object_count = struct.unpack('<I', data[8:12])[0]
+            version_bytes = struct.unpack("<H", data[4:6])[0]
+            object_count = struct.unpack("<I", data[8:12])[0]
 
             # Map version bytes to PowerBuilder version
             pb_version = self._map_pb_version(version_bytes)
 
-            return Success(ArchiveHeader(
-                format_signature="PBL",
-                format_version="1.0",
-                compiler_version=pb_version,
-                object_count=object_count,
-                creation_timestamp=None,
-                metadata={
-                    'library_format': 'PBL' if data[0:3] != b'PBD' else 'PBD',
-                    'optimization_level': 0
-                }
-            ))
+            return Success(
+                ArchiveHeader(
+                    format_signature="PBL",
+                    format_version="1.0",
+                    compiler_version=pb_version,
+                    object_count=object_count,
+                    creation_timestamp=None,
+                    metadata={
+                        "library_format": "PBL" if data[0:3] != b"PBD" else "PBD",
+                        "optimization_level": 0,
+                    },
+                )
+            )
         except struct.error as e:
-            return Failure(ArchiveExtractionError(
-                error_type="ParseError",
-                message=f"Failed to parse PBL header: {e}",
-                archive_name="unknown",
-                offset=0
-            ))
+            return Failure(
+                ArchiveExtractionError(
+                    error_type="ParseError",
+                    message=f"Failed to parse PBL header: {e}",
+                    archive_name="unknown",
+                    offset=0,
+                )
+            )
 
     def extract_objects(
-        self,
-        archive: CompiledArchive,
-        header: ArchiveHeader
+        self, archive: CompiledArchive, header: ArchiveHeader
     ) -> Result[List[CompiledObject], ArchiveExtractionError]:
         """Extract PowerBuilder objects from PBL."""
         data = bytes(archive)
@@ -130,14 +153,16 @@ class PowerBuilderAdapter(BaseLanguageAdapter, CapabilityProvider):
                 break
 
             # Extract object entry
-            entry_header = data[offset:offset + 256]
+            entry_header = data[offset : offset + 256]
 
             # Get object name (null-terminated string)
-            name_end = entry_header.find(b'\x00', 0, 64)
+            name_end = entry_header.find(b"\x00", 0, 64)
             if name_end == -1:
-                object_name = entry_header[:64].decode('utf-8', errors='replace').strip()
+                object_name = (
+                    entry_header[:64].decode("utf-8", errors="replace").strip()
+                )
             else:
-                object_name = entry_header[:name_end].decode('utf-8', errors='replace')
+                object_name = entry_header[:name_end].decode("utf-8", errors="replace")
 
             # Get object type
             type_byte = entry_header[64]
@@ -145,29 +170,31 @@ class PowerBuilderAdapter(BaseLanguageAdapter, CapabilityProvider):
 
             # Get compiled size
             try:
-                compiled_size = struct.unpack('<I', entry_header[68:72])[0]
+                compiled_size = struct.unpack("<I", entry_header[68:72])[0]
             except struct.error:
                 compiled_size = 0
 
             # Extract P-code data
             pcode_offset = offset + 256
             if pcode_offset + compiled_size <= len(data):
-                pcode = data[pcode_offset:pcode_offset + compiled_size]
+                pcode = data[pcode_offset : pcode_offset + compiled_size]
             else:
-                pcode = b''
+                pcode = b""
 
             # Create compiled object
-            objects.append(CompiledObject(
-                object_name=object_name,
-                object_type=object_type,
-                bytecode=Bytecode(pcode) if pcode else None,
-                source=None,  # Will be decompiled
-                resources=[],
-                metadata={
-                    'powerbuilder_type': self._get_pb_type_name(type_byte),
-                    'compiled_size': compiled_size
-                }
-            ))
+            objects.append(
+                CompiledObject(
+                    object_name=object_name,
+                    object_type=object_type,
+                    bytecode=Bytecode(pcode) if pcode else None,
+                    source=None,  # Will be decompiled
+                    resources=[],
+                    metadata={
+                        "powerbuilder_type": self._get_pb_type_name(type_byte),
+                        "compiled_size": compiled_size,
+                    },
+                )
+            )
 
             # Move to next entry
             offset = pcode_offset + compiled_size
@@ -177,29 +204,35 @@ class PowerBuilderAdapter(BaseLanguageAdapter, CapabilityProvider):
 
         return Success(objects)
 
-    def analyze_bytecode(self, bytecode: Bytecode) -> Result[Dict[str, Any], DecompilationError]:
+    def analyze_bytecode(
+        self, bytecode: Bytecode
+    ) -> Result[Dict[str, Any], DecompilationError]:
         """Analyze P-code structure."""
         data = bytes(bytecode)
 
         if len(data) < 16:
-            return Failure(DecompilationError(
-                error_type="InvalidPCode",
-                message="P-code too small",
-                bytecode_offset=0
-            ))
+            return Failure(
+                DecompilationError(
+                    error_type="InvalidPCode",
+                    message="P-code too small",
+                    bytecode_offset=0,
+                )
+            )
 
         # Detect P-code version and structure
         analysis = {
-            'format': 'pcode',
-            'version': self._detect_pcode_version(data),
-            'size': len(data),
-            'has_debug_info': self._has_debug_info(data),
-            'entry_point': 0
+            "format": "pcode",
+            "version": self._detect_pcode_version(data),
+            "size": len(data),
+            "has_debug_info": self._has_debug_info(data),
+            "entry_point": 0,
         }
 
         return Success(analysis)
 
-    def decompile_bytecode(self, bytecode: Bytecode) -> Result[SourceCode, DecompilationError]:
+    def decompile_bytecode(
+        self, bytecode: Bytecode
+    ) -> Result[SourceCode, DecompilationError]:
         """Decompile P-code to PowerScript."""
         # Simplified decompilation - real implementation would be complex
         data = bytes(bytecode)
@@ -227,11 +260,11 @@ end type
 
         # Simplified parsing - real implementation would use proper parser
         # Check for basic PowerBuilder structures
-        if 'global type' in code or 'window' in code:
+        if "global type" in code or "window" in code:
             node_type = ASTNodeType.UI_CONTAINER_DEF
-        elif 'datawindow' in code:
+        elif "datawindow" in code:
             node_type = ASTNodeType.DATA_QUERY
-        elif 'function' in code:
+        elif "function" in code:
             node_type = ASTNodeType.FUNCTION_DEF
         else:
             node_type = ASTNodeType.MODULE
@@ -241,39 +274,30 @@ end type
             node_type=node_type,
             name="parsed_object",
             children=(),
-            attributes={'source': code},
-            source_location=(1, 1)
+            attributes={"source": code},
+            source_location=(1, 1),
         )
 
         return Success(ast)
 
-    def extract_symbols(self, ast: GenericAST) -> Result[Dict[str, Any], ModelBuildError]:
+    def extract_symbols(
+        self, ast: GenericAST
+    ) -> Result[Dict[str, Any], ModelBuildError]:
         """Extract symbols from PowerScript AST."""
         symbols = {}
 
         # Extract based on node type
         if ast.node_type == ASTNodeType.UI_CONTAINER_DEF:
-            symbols[ast.name] = {
-                'type': 'window',
-                'properties': ast.attributes
-            }
+            symbols[ast.name] = {"type": "window", "properties": ast.attributes}
         elif ast.node_type == ASTNodeType.DATA_QUERY:
-            symbols[ast.name] = {
-                'type': 'datawindow',
-                'properties': ast.attributes
-            }
+            symbols[ast.name] = {"type": "datawindow", "properties": ast.attributes}
         elif ast.node_type == ASTNodeType.FUNCTION_DEF:
-            symbols[ast.name] = {
-                'type': 'function',
-                'properties': ast.attributes
-            }
+            symbols[ast.name] = {"type": "function", "properties": ast.attributes}
 
         return Success(symbols)
 
     def build_model(
-        self,
-        symbols: Dict[str, Any],
-        asts: List[GenericAST]
+        self, symbols: Dict[str, Any], asts: List[GenericAST]
     ) -> Result[LegacyApplicationModel, ModelBuildError]:
         """Build PowerBuilder application model."""
         # Categorize symbols
@@ -282,24 +306,24 @@ end type
         code_modules = {}
 
         for name, symbol in symbols.items():
-            if symbol['type'] == 'window':
+            if symbol["type"] == "window":
                 ui_containers[name] = UIContainer(
                     name=name,
-                    container_type='window',
+                    container_type="window",
                     title=name,
                     size=(800, 600),
                     controls=[],
                     event_handlers=[],
-                    properties=symbol.get('properties', {})
+                    properties=symbol.get("properties", {}),
                 )
-            elif symbol['type'] == 'datawindow':
+            elif symbol["type"] == "datawindow":
                 # Create data presentation
                 data_presentations[name] = DataPresentation(
                     name=name,
-                    presentation_type='grid',
+                    presentation_type="grid",
                     data_source=None,
                     columns=[],
-                    layout={}
+                    layout={},
                 )
 
         # Build complete model
@@ -316,7 +340,7 @@ end type
             resources={},
             configurations={},
             external_libraries=[],
-            database_connections=[]
+            database_connections=[],
         )
 
         return Success(model)
@@ -341,12 +365,12 @@ end type
         """Map PowerBuilder type byte to generic object type."""
         type_map = {
             0x01: LegacyObjectType.APPLICATION,
-            0x02: LegacyObjectType.UI_CONTAINER,    # Window
-            0x03: LegacyObjectType.CLASS,            # User Object
+            0x02: LegacyObjectType.UI_CONTAINER,  # Window
+            0x03: LegacyObjectType.CLASS,  # User Object
             0x04: LegacyObjectType.MENU,
             0x05: LegacyObjectType.FUNCTION,
             0x06: LegacyObjectType.DATA_PRESENTATION,  # DataWindow
-            0x07: LegacyObjectType.DATA_MODEL,         # Structure
+            0x07: LegacyObjectType.DATA_MODEL,  # Structure
         }
         return type_map.get(type_byte, LegacyObjectType.MODULE)
 
@@ -367,7 +391,7 @@ end type
         """Detect P-code version from bytecode."""
         # Simplified detection
         if len(data) > 4:
-            version_hint = struct.unpack('<H', data[2:4])[0]
+            version_hint = struct.unpack("<H", data[2:4])[0]
             if version_hint in [0x0600, 0x0700, 0x0800]:
                 return f"P-code {version_hint >> 8}.{version_hint & 0xFF}"
         return "P-code Unknown"
@@ -375,4 +399,4 @@ end type
     def _has_debug_info(self, data: bytes) -> bool:
         """Check if P-code contains debug information."""
         # Look for debug markers
-        return b'DEBUG' in data or b'LINE' in data
+        return b"DEBUG" in data or b"LINE" in data

@@ -3,10 +3,9 @@
 This module builds semantic models from parsed ASTs, resolving types and dependencies.
 """
 
-import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from src_new._core import (
     ApplicationModel,
@@ -20,7 +19,6 @@ from src_new._core import (
 )
 from src_new._patterns import (
     BaseCoordinator,
-    BaseTransformer,
     FileHandler,
 )
 
@@ -319,7 +317,9 @@ class DependencyResolver:
         # Mark as resolved
         self.resolved[obj.name] = True
 
-    def _inherit_from_parent(self, child: SemanticObject, parent: SemanticObject) -> None:
+    def _inherit_from_parent(
+        self, child: SemanticObject, parent: SemanticObject
+    ) -> None:
         """Apply inheritance from parent to child.
 
         Args:
@@ -533,8 +533,7 @@ class ModelCoordinator(BaseCoordinator):
                     "return_type": m.return_type,
                     "access": m.access,
                     "parameters": [
-                        {"name": p.name, "type": p.type}
-                        for p in m.parameters
+                        {"name": p.name, "type": p.type} for p in m.parameters
                     ],
                 }
                 for m in obj.methods
@@ -543,8 +542,7 @@ class ModelCoordinator(BaseCoordinator):
                 {
                     "name": e.name,
                     "parameters": [
-                        {"name": p.name, "type": p.type}
-                        for p in e.parameters
+                        {"name": p.name, "type": p.type} for p in e.parameters
                     ],
                 }
                 for e in obj.events
@@ -566,16 +564,14 @@ class ModelCoordinator(BaseCoordinator):
             "version": app.version,
             "entry_point": app.entry_point,
             "objects": {
-                name: self._semantic_to_json(obj)
-                for name, obj in app.objects.items()
+                name: self._semantic_to_json(obj) for name, obj in app.objects.items()
             },
             "global_functions": [
                 {
                     "name": m.name,
                     "return_type": m.return_type,
                     "parameters": [
-                        {"name": p.name, "type": p.type}
-                        for p in m.parameters
+                        {"name": p.name, "type": p.type} for p in m.parameters
                     ],
                 }
                 for m in app.global_functions

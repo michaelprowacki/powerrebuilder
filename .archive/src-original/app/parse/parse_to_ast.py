@@ -4,13 +4,13 @@ Coordinates parsing PowerScript source to Abstract Syntax Trees.
 """
 
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
-from src_new.shared.result import Result, Success, Failure
+from typing import List, Tuple
 
 
 @dataclass(frozen=True)
 class ParseToASTDTO:
     """Data transfer object for parse request."""
+
     source_path: str
     output_dir: str
     strict_mode: bool = False
@@ -19,6 +19,7 @@ class ParseToASTDTO:
 @dataclass(frozen=True)
 class ParseResult:
     """Result of parsing operation."""
+
     success: bool
     ast_nodes: int
     errors: List[str]
@@ -27,6 +28,7 @@ class ParseResult:
 @dataclass(frozen=True)
 class ParseEvent:
     """Event emitted during parsing."""
+
     type: str
     data: dict
 
@@ -34,16 +36,15 @@ class ParseEvent:
 @dataclass(frozen=True)
 class ASTNode:
     """Simplified AST node representation."""
+
     type: str
     name: str
-    children: List['ASTNode']
+    children: List["ASTNode"]
     attributes: dict
 
 
 async def run(
-    dto: ParseToASTDTO,
-    source_reader,
-    ast_writer
+    dto: ParseToASTDTO, source_reader, ast_writer
 ) -> Tuple[ParseResult, List[ParseEvent]]:
     """Run the parsing workflow.
 
@@ -72,28 +73,20 @@ async def run(
 
         # Mock AST for now
         ast = ASTNode(
-            type="function",
-            name="main",
-            children=[],
-            attributes={"returns": "int"}
+            type="function", name="main", children=[], attributes={"returns": "int"}
         )
 
         # Write AST if output requested
         if dto.output_dir:
             await ast_writer.write_ast(dto.output_dir, ast)
 
-        events.append(ParseEvent(
-            type="parse_completed",
-            data={"source": dto.source_path, "nodes": 1}
-        ))
-
-        return (
-            ParseResult(success=True, ast_nodes=1, errors=[]),
-            events
+        events.append(
+            ParseEvent(
+                type="parse_completed", data={"source": dto.source_path, "nodes": 1}
+            )
         )
+
+        return (ParseResult(success=True, ast_nodes=1, errors=[]), events)
 
     except Exception as e:
-        return (
-            ParseResult(success=False, ast_nodes=0, errors=[str(e)]),
-            events
-        )
+        return (ParseResult(success=False, ast_nodes=0, errors=[str(e)]), events)

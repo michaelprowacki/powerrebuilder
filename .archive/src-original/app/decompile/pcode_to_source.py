@@ -5,27 +5,39 @@ Uses Parse Don't Validate pattern with factory functions.
 Coordinates domain functions to transform P-code into decompiled objects.
 """
 
-from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union, Dict, Any
+from typing import List, Optional, Tuple, Dict, Any
 from datetime import datetime
-import time
 
 from src_new.shared.result import Result, Success, Error
 from src_new.domain.powerbuilder.pcode import (
-    PCodeInstruction, PCodeModule, Opcode,
-    StackOperation, BranchOperation, CallOperation
+    PCodeInstruction,
+    PCodeModule,
+    Opcode,
+    StackOperation,
+    BranchOperation,
+    CallOperation,
 )
 from src_new.domain.powerbuilder.decompiled import (
-    DecompiledFunction, DecompiledWindow, DecompiledDataWindow,
-    DecompiledUserObject, DecompiledMenu,
-    BasicBlock, ControlFlowGraph, ControlFlowEdge, Loop,
-    Statement, StatementBlock, AssignmentStatement, IfStatement,
-    WhileStatement, ForStatement, ReturnStatement, CallStatement,
-    Expression, BinaryExpression, UnaryExpression, LiteralExpression,
-    VariableExpression, MemberExpression, CallExpression,
-    Parameter, LocalVariable, InstanceVariable,
-    Symbol, SymbolTable,
-    FunctionDecompiled, WindowDecompiled, DecompilationFailed
+    DecompiledFunction,
+    DecompiledWindow,
+    BasicBlock,
+    ControlFlowGraph,
+    ControlFlowEdge,
+    Loop,
+    Statement,
+    StatementBlock,
+    ReturnStatement,
+    CallStatement,
+    Expression,
+    BinaryExpression,
+    LiteralExpression,
+    VariableExpression,
+    Parameter,
+    LocalVariable,
+    Symbol,
+    SymbolTable,
+    FunctionDecompiled,
+    DecompilationFailed,
 )
 
 
@@ -33,14 +45,14 @@ from src_new.domain.powerbuilder.decompiled import (
 # PARSE DON'T VALIDATE - FACTORY FUNCTIONS
 # ============================================================================
 
+
 class _DecompileToken:
     """Hidden token for Parse Don't Validate pattern."""
+
     pass
 
 
-def create_decompiled_function(
-    p_code: PCodeModule
-) -> Result[DecompiledFunction, str]:
+def create_decompiled_function(p_code: PCodeModule) -> Result[DecompiledFunction, str]:
     """Create a validated decompiled function from P-code.
 
     This is the main entry point following Parse Don't Validate.
@@ -75,14 +87,16 @@ def create_decompiled_function(
     name, params, return_type, locals = metadata_result.value
 
     # Create validated function with hidden token
-    return Success(_create_function_internal(
-        name=name,
-        return_type=return_type,
-        parameters=params,
-        local_variables=locals,
-        body=body,
-        token=_DecompileToken()
-    ))
+    return Success(
+        _create_function_internal(
+            name=name,
+            return_type=return_type,
+            parameters=params,
+            local_variables=locals,
+            body=body,
+            token=_DecompileToken(),
+        )
+    )
 
 
 def _create_function_internal(
@@ -91,7 +105,7 @@ def _create_function_internal(
     parameters: List[Parameter],
     local_variables: List[LocalVariable],
     body: StatementBlock,
-    token: _DecompileToken
+    token: _DecompileToken,
 ) -> DecompiledFunction:
     """Internal factory - requires token."""
     if not isinstance(token, _DecompileToken):
@@ -102,7 +116,7 @@ def _create_function_internal(
         return_type=return_type,
         parameters=parameters,
         local_variables=local_variables,
-        body=body
+        body=body,
     )
 
 
@@ -110,9 +124,8 @@ def _create_function_internal(
 # CONTROL FLOW ANALYSIS
 # ============================================================================
 
-def _build_control_flow_graph(
-    p_code: PCodeModule
-) -> Result[ControlFlowGraph, str]:
+
+def _build_control_flow_graph(p_code: PCodeModule) -> Result[ControlFlowGraph, str]:
     """Build control flow graph from P-code instructions."""
     blocks: Dict[int, BasicBlock] = {}
     edges: List[ControlFlowEdge] = []
@@ -131,7 +144,7 @@ def _build_control_flow_graph(
                 blocks[current_block_id] = BasicBlock(
                     id=current_block_id,
                     statements=current_statements,
-                    is_entry=(current_block_id == 0)
+                    is_entry=(current_block_id == 0),
                 )
                 current_block_id += 1
                 current_statements = []
@@ -144,9 +157,7 @@ def _build_control_flow_graph(
     # Add final block
     if current_statements:
         blocks[current_block_id] = BasicBlock(
-            id=current_block_id,
-            statements=current_statements,
-            is_exit=True
+            id=current_block_id, statements=current_statements, is_exit=True
         )
 
     # Build edges based on control flow
@@ -158,13 +169,15 @@ def _build_control_flow_graph(
     # Find loops
     loops = _detect_loops(blocks, edges)
 
-    return Success(ControlFlowGraph(
-        entry_block=0,
-        exit_blocks=[b.id for b in blocks.values() if b.is_exit],
-        blocks=blocks,
-        edges=edges,
-        loops=loops
-    ))
+    return Success(
+        ControlFlowGraph(
+            entry_block=0,
+            exit_blocks=[b.id for b in blocks.values() if b.is_exit],
+            blocks=blocks,
+            edges=edges,
+            loops=loops,
+        )
+    )
 
 
 def _find_block_leaders(instructions: List[PCodeInstruction]) -> set:
@@ -185,9 +198,7 @@ def _find_block_leaders(instructions: List[PCodeInstruction]) -> set:
     return leaders
 
 
-def _instruction_to_statement(
-    instr: PCodeInstruction
-) -> Result[Statement, str]:
+def _instruction_to_statement(instr: PCodeInstruction) -> Result[Statement, str]:
     """Convert P-code instruction to statement."""
     if instr.opcode == Opcode.RETURN:
         return Success(ReturnStatement())
@@ -198,20 +209,20 @@ def _instruction_to_statement(
 
     elif instr.opcode == Opcode.CALL:
         if isinstance(instr.operation, CallOperation):
-            return Success(CallStatement(
-                target=None,
-                function_name=instr.operation.function_name,
-                arguments=[]  # Will be filled from stack
-            ))
+            return Success(
+                CallStatement(
+                    target=None,
+                    function_name=instr.operation.function_name,
+                    arguments=[],  # Will be filled from stack
+                )
+            )
 
     # Default placeholder
     return Success(Statement())
 
 
 def _get_control_flow_edges(
-    block_id: int,
-    last_stmt: Statement,
-    blocks: Dict[int, BasicBlock]
+    block_id: int, last_stmt: Statement, blocks: Dict[int, BasicBlock]
 ) -> List[ControlFlowEdge]:
     """Get control flow edges from a block based on its last statement."""
     edges = []
@@ -219,18 +230,17 @@ def _get_control_flow_edges(
     # Default fall-through to next block
     next_block = block_id + 1
     if next_block in blocks:
-        edges.append(ControlFlowEdge(
-            source=block_id,
-            target=next_block,
-            edge_type="unconditional"
-        ))
+        edges.append(
+            ControlFlowEdge(
+                source=block_id, target=next_block, edge_type="unconditional"
+            )
+        )
 
     return edges
 
 
 def _detect_loops(
-    blocks: Dict[int, BasicBlock],
-    edges: List[ControlFlowEdge]
+    blocks: Dict[int, BasicBlock], edges: List[ControlFlowEdge]
 ) -> List[Loop]:
     """Detect loops in control flow graph."""
     loops = []
@@ -239,12 +249,14 @@ def _detect_loops(
     for edge in edges:
         if edge.target < edge.source:
             # This is a back edge - indicates a loop
-            loops.append(Loop(
-                header=edge.target,
-                back_edges=[edge],
-                body_blocks=list(range(edge.target, edge.source + 1)),
-                loop_type="while"  # Will refine based on pattern
-            ))
+            loops.append(
+                Loop(
+                    header=edge.target,
+                    back_edges=[edge],
+                    body_blocks=list(range(edge.target, edge.source + 1)),
+                    loop_type="while",  # Will refine based on pattern
+                )
+            )
 
     return loops
 
@@ -253,19 +265,20 @@ def _detect_loops(
 # SYMBOL EXTRACTION
 # ============================================================================
 
+
 def _extract_symbols(p_code: PCodeModule) -> Result[SymbolTable, str]:
     """Extract symbol table from P-code."""
     symbols: Dict[str, Symbol] = {}
 
     # Extract from metadata if available
-    if hasattr(p_code, 'metadata') and p_code.metadata:
-        for var_name, var_type in p_code.metadata.get('variables', {}).items():
+    if hasattr(p_code, "metadata") and p_code.metadata:
+        for var_name, var_type in p_code.metadata.get("variables", {}).items():
             symbols[var_name] = Symbol(
                 name=var_name,
                 symbol_type="variable",
                 data_type=var_type,
                 scope="local",
-                references=[]
+                references=[],
             )
 
     # Scan instructions for symbol usage
@@ -279,7 +292,7 @@ def _extract_symbols(p_code: PCodeModule) -> Result[SymbolTable, str]:
                         symbol_type="variable",
                         data_type=None,  # Unknown type
                         scope="local",
-                        references=[i]
+                        references=[i],
                     )
                 else:
                     symbols[var_name].references.append(i)
@@ -291,9 +304,9 @@ def _extract_symbols(p_code: PCodeModule) -> Result[SymbolTable, str]:
 # STATEMENT RECONSTRUCTION
 # ============================================================================
 
+
 def _reconstruct_statements(
-    cfg: ControlFlowGraph,
-    symbols: SymbolTable
+    cfg: ControlFlowGraph, symbols: SymbolTable
 ) -> Result[StatementBlock, str]:
     """Reconstruct high-level statements from control flow graph."""
     statements = []
@@ -310,31 +323,33 @@ def _reconstruct_statements(
 # METADATA EXTRACTION
 # ============================================================================
 
+
 def _extract_function_metadata(
-    p_code: PCodeModule,
-    symbols: SymbolTable
+    p_code: PCodeModule, symbols: SymbolTable
 ) -> Result[Tuple[str, List[Parameter], Optional[str], List[LocalVariable]], str]:
     """Extract function metadata from P-code and symbols."""
     # Extract function name (from module name or metadata)
-    name = p_code.name if hasattr(p_code, 'name') else "unnamed_function"
+    name = p_code.name if hasattr(p_code, "name") else "unnamed_function"
 
     # Extract parameters (simplified - would need more analysis)
     params: List[Parameter] = []
 
     # Extract return type (from metadata or analysis)
     return_type = None
-    if hasattr(p_code, 'metadata') and p_code.metadata:
-        return_type = p_code.metadata.get('return_type')
+    if hasattr(p_code, "metadata") and p_code.metadata:
+        return_type = p_code.metadata.get("return_type")
 
     # Extract local variables from symbol table
     locals: List[LocalVariable] = []
     for symbol in symbols.symbols.values():
         if symbol.symbol_type == "variable" and symbol.scope == "local":
-            locals.append(LocalVariable(
-                name=symbol.name,
-                data_type=symbol.data_type or "any",
-                initial_value=None
-            ))
+            locals.append(
+                LocalVariable(
+                    name=symbol.name,
+                    data_type=symbol.data_type or "any",
+                    initial_value=None,
+                )
+            )
 
     return Success((name, params, return_type, locals))
 
@@ -343,21 +358,21 @@ def _extract_function_metadata(
 # WINDOW DECOMPILATION
 # ============================================================================
 
+
 def create_decompiled_window(
-    p_code: PCodeModule,
-    window_data: Dict[str, Any]
+    p_code: PCodeModule, window_data: Dict[str, Any]
 ) -> Result[DecompiledWindow, str]:
     """Create a validated decompiled window.
 
     Parse Don't Validate entry point for windows.
     """
     # Validate window data
-    if not window_data.get('name'):
+    if not window_data.get("name"):
         return Error("Window must have a name")
 
     # Extract controls
     controls = []
-    for control_data in window_data.get('controls', []):
+    for control_data in window_data.get("controls", []):
         control_result = _create_control(control_data)
         if isinstance(control_result, Error):
             return control_result
@@ -365,7 +380,7 @@ def create_decompiled_window(
 
     # Extract events
     events = []
-    for event_data in window_data.get('events', []):
+    for event_data in window_data.get("events", []):
         event_result = _create_event(event_data, p_code)
         if isinstance(event_result, Error):
             return event_result
@@ -373,21 +388,23 @@ def create_decompiled_window(
 
     # Extract functions
     functions = []
-    for func_data in window_data.get('functions', []):
+    for func_data in window_data.get("functions", []):
         func_result = create_decompiled_function(func_data)
         if isinstance(func_result, Error):
             return func_result
         functions.append(func_result.value)
 
-    return Success(DecompiledWindow(
-        name=window_data['name'],
-        title=window_data.get('title', ''),
-        controls=controls,
-        events=events,
-        functions=functions,
-        instance_variables=[],
-        properties=window_data.get('properties', {})
-    ))
+    return Success(
+        DecompiledWindow(
+            name=window_data["name"],
+            title=window_data.get("title", ""),
+            controls=controls,
+            events=events,
+            functions=functions,
+            instance_variables=[],
+            properties=window_data.get("properties", {}),
+        )
+    )
 
 
 def _create_control(control_data: Dict[str, Any]) -> Result[Any, str]:
@@ -395,18 +412,17 @@ def _create_control(control_data: Dict[str, Any]) -> Result[Any, str]:
     # Simplified control creation
     from src_new.domain.powerbuilder.decompiled import DecompiledControl
 
-    return Success(DecompiledControl(
-        name=control_data.get('name', 'unnamed'),
-        control_type=control_data.get('type', 'unknown'),
-        properties=control_data.get('properties', {}),
-        events=[]
-    ))
+    return Success(
+        DecompiledControl(
+            name=control_data.get("name", "unnamed"),
+            control_type=control_data.get("type", "unknown"),
+            properties=control_data.get("properties", {}),
+            events=[],
+        )
+    )
 
 
-def _create_event(
-    event_data: Dict[str, Any],
-    p_code: PCodeModule
-) -> Result[Any, str]:
+def _create_event(event_data: Dict[str, Any], p_code: PCodeModule) -> Result[Any, str]:
     """Create a decompiled event."""
     from src_new.domain.powerbuilder.decompiled import DecompiledEvent
 
@@ -414,26 +430,25 @@ def _create_event(
     body = StatementBlock(statements=[])
     if p_code and p_code.instructions:
         statements_result = _reconstruct_statements(
-            _build_control_flow_graph(p_code).value,
-            _extract_symbols(p_code).value
+            _build_control_flow_graph(p_code).value, _extract_symbols(p_code).value
         )
         if isinstance(statements_result, Success):
             body = statements_result.value
 
-    return Success(DecompiledEvent(
-        name=event_data.get('name', 'unnamed'),
-        parameters=[],
-        body=body
-    ))
+    return Success(
+        DecompiledEvent(
+            name=event_data.get("name", "unnamed"), parameters=[], body=body
+        )
+    )
 
 
 # ============================================================================
 # EXPRESSION RECONSTRUCTION
 # ============================================================================
 
+
 def reconstruct_expression(
-    stack: List[Any],
-    instruction: PCodeInstruction
+    stack: List[Any], instruction: PCodeInstruction
 ) -> Result[Expression, str]:
     """Reconstruct expression from stack and instruction.
 
@@ -448,16 +463,16 @@ def reconstruct_expression(
 
     elif instruction.opcode == Opcode.PUSH_CONSTANT:
         if isinstance(instruction.operation, StackOperation):
-            return Success(LiteralExpression(
-                value=instruction.operation.value,
-                literal_type=_infer_literal_type(instruction.operation.value)
-            ))
+            return Success(
+                LiteralExpression(
+                    value=instruction.operation.value,
+                    literal_type=_infer_literal_type(instruction.operation.value),
+                )
+            )
 
     elif instruction.opcode == Opcode.PUSH_VARIABLE:
         if isinstance(instruction.operation, StackOperation):
-            return Success(VariableExpression(
-                name=str(instruction.operation.value)
-            ))
+            return Success(VariableExpression(name=str(instruction.operation.value)))
 
     return Error(f"Unknown instruction for expression: {instruction.opcode}")
 
@@ -481,11 +496,12 @@ def _infer_literal_type(value: Any) -> str:
 # EVENT GENERATION
 # ============================================================================
 
+
 def emit_function_decompiled(
     function: DecompiledFunction,
     p_code_size: int,
     instruction_count: int,
-    decompilation_time: float
+    decompilation_time: float,
 ) -> FunctionDecompiled:
     """Emit function decompiled event."""
     return FunctionDecompiled(
@@ -493,7 +509,7 @@ def emit_function_decompiled(
         p_code_size=p_code_size,
         instruction_count=instruction_count,
         decompilation_time=decompilation_time,
-        timestamp=datetime.now()
+        timestamp=datetime.now(),
     )
 
 
@@ -501,7 +517,7 @@ def emit_decompilation_failed(
     object_name: str,
     object_type: str,
     error_message: str,
-    p_code_offset: Optional[int] = None
+    p_code_offset: Optional[int] = None,
 ) -> DecompilationFailed:
     """Emit decompilation failed event."""
     return DecompilationFailed(
@@ -509,5 +525,5 @@ def emit_decompilation_failed(
         object_type=object_type,
         error_message=error_message,
         p_code_offset=p_code_offset,
-        timestamp=datetime.now()
+        timestamp=datetime.now(),
     )

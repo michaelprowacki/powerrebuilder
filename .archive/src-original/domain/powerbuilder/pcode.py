@@ -15,8 +15,10 @@ from datetime import datetime
 # P-CODE INSTRUCTIONS
 # ============================================================================
 
+
 class OpCode(int, Enum):
     """P-code operation codes."""
+
     NOP = 0x00
     PUSH = 0x01
     POP = 0x02
@@ -48,6 +50,7 @@ class OpCode(int, Enum):
 @dataclass(frozen=True)
 class PCodeInstruction:
     """A single P-code instruction."""
+
     offset: int
     opcode: OpCode
     operands: List[Union[int, str, float]]
@@ -58,6 +61,7 @@ class PCodeInstruction:
 @dataclass(frozen=True)
 class PCodeFunction:
     """A compiled function in P-code."""
+
     name: str
     signature: str
     instructions: List[PCodeInstruction]
@@ -71,6 +75,7 @@ class PCodeFunction:
 @dataclass(frozen=True)
 class PCodeModule:
     """A module containing P-code functions."""
+
     name: str
     functions: List[PCodeFunction]
     globals: List[str]
@@ -83,9 +88,11 @@ class PCodeModule:
 # P-CODE METADATA
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SymbolInfo:
     """Symbol table entry."""
+
     name: str
     type: str
     scope: str  # local, global, parameter
@@ -96,6 +103,7 @@ class SymbolInfo:
 @dataclass(frozen=True)
 class DebugInfo:
     """Debug information for P-code."""
+
     source_file: str
     line_numbers: List[int]  # Maps instruction offset to line number
     variable_names: List[str]
@@ -105,6 +113,7 @@ class DebugInfo:
 @dataclass(frozen=True)
 class PCodeHeader:
     """P-code file header."""
+
     magic: bytes
     version: int
     flags: int
@@ -119,9 +128,11 @@ class PCodeHeader:
 # VERSION-SPECIFIC STRUCTURES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PB6PCode:
     """PowerBuilder 6.x P-code format."""
+
     header: PCodeHeader
     code_section: bytes
     data_section: bytes
@@ -132,6 +143,7 @@ class PB6PCode:
 @dataclass(frozen=True)
 class PB10PCode:
     """PowerBuilder 10.x P-code format (Unicode support)."""
+
     header: PCodeHeader
     code_section: bytes
     data_section: bytes
@@ -143,6 +155,7 @@ class PB10PCode:
 @dataclass(frozen=True)
 class PB12PCode:
     """PowerBuilder 12.x P-code format (.NET integration)."""
+
     header: PCodeHeader
     code_section: bytes
     data_section: bytes
@@ -156,9 +169,11 @@ class PB12PCode:
 # DECOMPILATION MARKERS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class DecompilationHint:
     """Hints for P-code decompilation."""
+
     pattern: bytes
     meaning: str
     confidence: float  # 0.0 to 1.0
@@ -168,6 +183,7 @@ class DecompilationHint:
 @dataclass(frozen=True)
 class ControlFlow:
     """Control flow information."""
+
     entry_points: List[int]
     exit_points: List[int]
     loops: List[tuple[int, int]]  # (start, end) offsets
@@ -178,9 +194,11 @@ class ControlFlow:
 # DOMAIN EVENTS (Colocated with P-code aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PCodeAnalyzed:
     """Event: P-code bytecode was analyzed."""
+
     module: PCodeModule
     instruction_count: int
     complexity: int
@@ -190,6 +208,7 @@ class PCodeAnalyzed:
 @dataclass(frozen=True)
 class FunctionDecompiled:
     """Event: A P-code function was decompiled."""
+
     function: PCodeFunction
     source_code: str
     confidence: float  # 0.0 to 1.0
@@ -199,6 +218,7 @@ class FunctionDecompiled:
 @dataclass(frozen=True)
 class VersionDetected:
     """Event: PowerBuilder version detected from P-code."""
+
     version: int  # 6, 10, 12, etc.
     format_type: str  # PB6PCode, PB10PCode, PB12PCode
     features: List[str]
@@ -208,6 +228,7 @@ class VersionDetected:
 @dataclass(frozen=True)
 class DecompilationFailed:
     """Event: P-code decompilation failed."""
+
     function_name: str
     offset: int
     reason: str

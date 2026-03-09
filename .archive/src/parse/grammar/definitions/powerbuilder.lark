@@ -151,7 +151,7 @@ POST: "post"
 # Extended accessors
 ACCESSOR.2: PUBLIC | PRIVATE | PROTECTED | "global"
 
-# Data types 
+# Data types
 array_bounds: "[" ((INT | IDENTIFIER) ("," (INT | IDENTIFIER))*)? "]"
 array_init: "{" value_list "}"
 value_list: value ("," value)*
@@ -182,7 +182,7 @@ global_decl: accessor_modifier? GLOBAL function_decl
            | GLOBAL TYPE_VARIABLES NEWLINE var_decl* END_VARIABLES NEWLINE
            | GLOBAL IDENTIFIER IDENTIFIER NEWLINE  # Global variable declaration
 
-# Type declarations 
+# Type declarations
 type_decl: accessor_modifier? TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? NEWLINE
          | GLOBAL_TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? attribute* END_GLOBAL_TYPE NEWLINE
          | TYPE IDENTIFIER FROM IDENTIFIER LBRACE type_body_items* RBRACE
@@ -252,7 +252,7 @@ local_vars: variable_section
 
 local_var_decl: TYPE_NAME IDENTIFIER array_bounds? (EQUALS value)? (NEWLINE | SEMICOLON)
 
-# Event handlers  
+# Event handlers
 event_handler: EVENT (IDENTIFIER "::")? IDENTIFIER EVENT_TYPE? "(" parameter_list? ")" NEWLINE local_vars? code_statement_list END_EVENT NEWLINE
 
 # On blocks for initialization/destruction
@@ -262,7 +262,7 @@ on_block: "on" IDENTIFIER "." (CREATE | DESTROY) NEWLINE code_statement_list? EN
 # Code statements (simplified - can be expanded)
 code_statements: assignment_statement
                | if_statement
-               | loop_statement  
+               | loop_statement
                | try_catch_statement
                | call_statement
                | return_statement
@@ -328,7 +328,7 @@ datawindow_definition: "release" INT ";" NEWLINE dw_content+
 dw_content: dw_section | comment_line | NEWLINE
 
 dw_section: "datawindow" "(" dw_attributes ")" NEWLINE
-          | "header" "(" dw_attributes ")" NEWLINE  
+          | "header" "(" dw_attributes ")" NEWLINE
           | "detail" "(" dw_attributes ")" NEWLINE
           | "footer" "(" dw_attributes ")" NEWLINE
           | "table" "(" dw_table_def ")" NEWLINE

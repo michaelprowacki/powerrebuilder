@@ -7,25 +7,26 @@ Coordinates different detection approaches using pure domain functions.
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional
 
 from src_new.domain.decompile.pcode_spec import (
-    is_valid_pcode_structure, decode_instruction_stream,
-    validate_instruction_structure, identify_pcode_version,
-    PCodeVersion, InstructionStream
+    is_valid_pcode_structure,
+    decode_instruction_stream,
+    validate_instruction_structure,
+    identify_pcode_version,
+    PCodeVersion,
 )
-from src_new.domain.extract.pbd_format import (
-    parse_pbd_header, find_blocks, parse_complete_pbd,
-    BlockType, PBDStructure
-)
+from src_new.domain.extract.pbd_format import parse_complete_pbd, BlockType
 
 
 # ============================================================================
 # STRATEGY TYPES
 # ============================================================================
 
+
 class DetectionStrategy(str, Enum):
     """Detection strategy options."""
+
     FAST = "fast"  # Quick structural check
     SPECIFICATION = "specification"  # Specification-based (most robust)
     AUTOMATIC = "automatic"  # Choose based on file
@@ -34,6 +35,7 @@ class DetectionStrategy(str, Enum):
 
 class Confidence(str, Enum):
     """Confidence levels for detection."""
+
     NONE = "none"
     LOW = "low"
     MEDIUM = "medium"
@@ -44,6 +46,7 @@ class Confidence(str, Enum):
 @dataclass(frozen=True)
 class DetectionResult:
     """Result of P-code detection."""
+
     is_pcode: bool
     confidence: Confidence
     version: Optional[PCodeVersion]
@@ -57,9 +60,9 @@ class DetectionResult:
 # DETECTION STRATEGIES
 # ============================================================================
 
+
 def detect_with_strategy(
-    data: bytes,
-    strategy: DetectionStrategy = DetectionStrategy.AUTOMATIC
+    data: bytes, strategy: DetectionStrategy = DetectionStrategy.AUTOMATIC
 ) -> DetectionResult:
     """Detect P-code using specified strategy.
 
@@ -89,7 +92,7 @@ def detect_with_strategy(
         instructions_found=result.instructions_found,
         time_taken=time.time() - start_time,
         strategy_used=strategy,
-        issues=result.issues
+        issues=result.issues,
     )
 
 
@@ -99,10 +102,10 @@ def choose_strategy(data: bytes) -> DetectionStrategy:
     Prefers specification-based for reliability.
     """
     # Check for PBD/PBL structure markers
-    if data[:4] in [b'HDR*', b'ENT*', b'DAT*']:
+    if data[:4] in [b"HDR*", b"ENT*", b"DAT*"]:
         return DetectionStrategy.SPECIFICATION  # Use spec-based for PBD files
 
-    if data[:3] == b'PBL':
+    if data[:3] == b"PBL":
         return DetectionStrategy.SPECIFICATION  # Use spec-based for PBL files
 
     # For raw P-code, use fast structural check
@@ -115,7 +118,7 @@ def fast_detection(data: bytes) -> DetectionResult:
     Quick check using structural validation.
     """
     # Quick structural check
-    is_pcode = is_valid_pcode_structure(data[:min(4096, len(data))])
+    is_pcode = is_valid_pcode_structure(data[: min(4096, len(data))])
 
     if not is_pcode:
         return DetectionResult(
@@ -125,11 +128,11 @@ def fast_detection(data: bytes) -> DetectionResult:
             instructions_found=0,
             time_taken=0,
             strategy_used=DetectionStrategy.FAST,
-            issues=["Not valid P-code structure"]
+            issues=["Not valid P-code structure"],
         )
 
     # Decode a sample to get instruction count
-    sample = data[:min(1024, len(data))]
+    sample = data[: min(1024, len(data))]
     stream = decode_instruction_stream(sample)
 
     # Check version
@@ -145,7 +148,7 @@ def fast_detection(data: bytes) -> DetectionResult:
         instructions_found=len(stream.instructions),
         time_taken=0,
         strategy_used=DetectionStrategy.FAST,
-        issues=[]
+        issues=[],
     )
 
 
@@ -180,7 +183,7 @@ def specification_based_detection(data: bytes) -> DetectionResult:
                 instructions_found=total_instructions,
                 time_taken=0,
                 strategy_used=DetectionStrategy.SPECIFICATION,
-                issues=[]
+                issues=[],
             )
         else:
             return DetectionResult(
@@ -190,7 +193,7 @@ def specification_based_detection(data: bytes) -> DetectionResult:
                 instructions_found=0,
                 time_taken=0,
                 strategy_used=DetectionStrategy.SPECIFICATION,
-                issues=["PBD found but no valid P-code in DAT sections"]
+                issues=["PBD found but no valid P-code in DAT sections"],
             )
 
     # Not a PBD file - try as raw P-code
@@ -205,7 +208,7 @@ def specification_based_detection(data: bytes) -> DetectionResult:
             instructions_found=len(stream.instructions),
             time_taken=0,
             strategy_used=DetectionStrategy.SPECIFICATION,
-            issues=validation_issues
+            issues=validation_issues,
         )
 
     return DetectionResult(
@@ -215,7 +218,7 @@ def specification_based_detection(data: bytes) -> DetectionResult:
         instructions_found=0,
         time_taken=0,
         strategy_used=DetectionStrategy.SPECIFICATION,
-        issues=["Not valid PBD structure or P-code stream"]
+        issues=["Not valid PBD structure or P-code stream"],
     )
 
 
@@ -228,7 +231,7 @@ def heuristic_detection(data: bytes) -> DetectionResult:
     patterns_found = 0
     common_opcodes = [0x00, 0x01, 0x02, 0x03, 0x04, 0x10, 0x11, 0x20, 0x21, 0x30]
 
-    sample = data[:min(4096, len(data))]
+    sample = data[: min(4096, len(data))]
     for byte in sample:
         if byte in common_opcodes:
             patterns_found += 1
@@ -259,7 +262,7 @@ def heuristic_detection(data: bytes) -> DetectionResult:
         instructions_found=instructions_found,
         time_taken=0,
         strategy_used=DetectionStrategy.HEURISTIC,
-        issues=[f"Pattern density: {pattern_density:.2f}"]
+        issues=[f"Pattern density: {pattern_density:.2f}"],
     )
 
 
@@ -267,9 +270,11 @@ def heuristic_detection(data: bytes) -> DetectionResult:
 # PARALLEL DETECTION SUPPORT
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ParallelDetectionRequest:
     """Request for parallel detection."""
+
     file_id: str
     data: bytes
     strategy: DetectionStrategy
@@ -278,12 +283,13 @@ class ParallelDetectionRequest:
 @dataclass(frozen=True)
 class ParallelDetectionResult:
     """Result from parallel detection."""
+
     file_id: str
     result: DetectionResult
 
 
 def detect_multiple(
-    requests: List[ParallelDetectionRequest]
+    requests: List[ParallelDetectionRequest],
 ) -> List[ParallelDetectionResult]:
     """Detect P-code in multiple files.
 
@@ -293,14 +299,10 @@ def detect_multiple(
     results = []
 
     for request in requests:
-        detection_result = detect_with_strategy(
-            request.data,
-            request.strategy
-        )
+        detection_result = detect_with_strategy(request.data, request.strategy)
 
-        results.append(ParallelDetectionResult(
-            file_id=request.file_id,
-            result=detection_result
-        ))
+        results.append(
+            ParallelDetectionResult(file_id=request.file_id, result=detection_result)
+        )
 
     return results

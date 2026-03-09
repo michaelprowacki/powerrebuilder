@@ -5,14 +5,10 @@ Consolidates the decompilation logic into a clean, maintainable implementation.
 """
 
 import logging
-import struct
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from src_new._core import (
-    DecompiledSource,
-    ObjectType,
-    PCodeFunction,
     PCodeInstruction,
 )
 from src_new._patterns import (
@@ -21,7 +17,7 @@ from src_new._patterns import (
     BinaryReader,
     FileHandler,
 )
-from .opcodes import OPCODES, get_opcode_name
+from .opcodes import get_opcode_name
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +57,9 @@ class PCodeDecoder:
                 if instruction:
                     instructions.append(instruction)
             except Exception as e:
-                logger.debug(f"Failed to decode instruction at {self.reader.offset}: {e}")
+                logger.debug(
+                    f"Failed to decode instruction at {self.reader.offset}: {e}"
+                )
                 # Skip bad byte and continue
                 self.reader.seek(1, whence=1)
 
@@ -121,7 +119,7 @@ class PCodeDecoder:
         elif "CALL" in opcode_name:
             # Function call
             operands.append(self.reader.read_uint16())  # Function ID
-            operands.append(self.reader.read_uint8())   # Arg count
+            operands.append(self.reader.read_uint8())  # Arg count
 
         elif opcode_name in ["ADD", "SUB", "MULT", "DIV", "POWER"]:
             # Binary operation - no additional operands
@@ -492,11 +490,11 @@ class DecompileCoordinator(BaseCoordinator):
         # Real implementation would use more sophisticated detection
         header = bytecode[:16]
 
-        if b"PB12" in header or b"\x0C" in header[:4]:
+        if b"PB12" in header or b"\x0c" in header[:4]:
             return "PB12.5"
-        elif b"PB11" in header or b"\x0B" in header[:4]:
+        elif b"PB11" in header or b"\x0b" in header[:4]:
             return "PB11"
-        elif b"PB10" in header or b"\x0A" in header[:4]:
+        elif b"PB10" in header or b"\x0a" in header[:4]:
             return "PB10"
         else:
             return "PB9"

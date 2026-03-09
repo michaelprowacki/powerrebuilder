@@ -10,7 +10,7 @@ The Extract module is responsible for extracting PowerBuilder source code from c
 extract/
 ├── __init__.py
 ├── constants.py          # Magic numbers and constants
-├── extract_coordinator.py # Orchestrates extraction process  
+├── extract_coordinator.py # Orchestrates extraction process
 ├── pbd/                  # PBD file handling
 │   ├── extraction/       # Core extraction logic
 │   │   ├── extractor.py  # Main extraction implementation

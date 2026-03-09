@@ -160,13 +160,13 @@ def test_new_feature(self, temp_workspace):
     PipelineTestFixtures.create_mock_sru_file(
         temp_workspace / "source" / "test.sru"
     )
-    
+
     # Run pipeline stage
     parse_files(
         str(temp_workspace / "source"),
         str(temp_workspace / "output")
     )
-    
+
     # Verify results
     assert (temp_workspace / "output" / "test.ast.json").exists()
 ```
@@ -229,13 +229,13 @@ pytest tests/integration/test_full_pipeline.py::test_pipeline_benchmark -v
 def test_profile_pipeline(self, temp_workspace):
     import cProfile
     import pstats
-    
+
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     # Run pipeline
     self.test_full_pipeline_happy_path(temp_workspace)
-    
+
     profiler.disable()
     stats = pstats.Stats(profiler)
     stats.sort_stats('cumulative')

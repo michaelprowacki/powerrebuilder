@@ -12,13 +12,14 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 class ComplexityLevel(str, Enum):
     """Complexity level categories."""
+
     LOW = "low"
     MODERATE = "moderate"
     HIGH = "high"
@@ -27,6 +28,7 @@ class ComplexityLevel(str, Enum):
 
 class CodeSmellType(str, Enum):
     """Types of code smells."""
+
     LONG_METHOD = "long_method"
     LARGE_CLASS = "large_class"
     LONG_PARAMETER_LIST = "long_parameter_list"
@@ -42,6 +44,7 @@ class CodeSmellType(str, Enum):
 @dataclass
 class MethodMetrics:
     """Metrics for a single method/function."""
+
     name: str
     lines_of_code: int
     cyclomatic_complexity: int
@@ -56,6 +59,7 @@ class MethodMetrics:
 @dataclass
 class ClassMetrics:
     """Metrics for a class."""
+
     name: str
     lines_of_code: int
     method_count: int
@@ -70,6 +74,7 @@ class ClassMetrics:
 @dataclass
 class FileMetrics:
     """Metrics for a single file."""
+
     path: str
     language: str
     lines_of_code: int
@@ -86,6 +91,7 @@ class FileMetrics:
 @dataclass
 class CodeSmell:
     """Detected code smell."""
+
     type: CodeSmellType
     severity: str  # low, medium, high
     location: str  # file:line
@@ -189,11 +195,7 @@ class ComplexityAnalyzer:
         }
         return ext_map.get(file_path.suffix.lower(), "unknown")
 
-    def _count_lines(
-        self,
-        lines: List[str],
-        language: str
-    ) -> Tuple[int, int, int]:
+    def _count_lines(self, lines: List[str], language: str) -> Tuple[int, int, int]:
         """Count lines of code, comments, and blank lines.
 
         Args:
@@ -260,9 +262,9 @@ class ComplexityAnalyzer:
                 if isinstance(node, ast.ClassDef):
                     class_metrics = self._analyze_python_class(node)
                     metrics.classes.append(class_metrics)
-                elif isinstance(node, ast.FunctionDef) and \
-                     not any(isinstance(parent, ast.ClassDef)
-                            for parent in ast.walk(tree)):
+                elif isinstance(node, ast.FunctionDef) and not any(
+                    isinstance(parent, ast.ClassDef) for parent in ast.walk(tree)
+                ):
                     func_metrics = self._analyze_python_function(node)
                     metrics.functions.append(func_metrics)
 
@@ -280,7 +282,9 @@ class ComplexityAnalyzer:
         """
         class_metrics = ClassMetrics(
             name=node.name,
-            lines_of_code=node.end_lineno - node.lineno + 1 if hasattr(node, 'end_lineno') else 0,
+            lines_of_code=node.end_lineno - node.lineno + 1
+            if hasattr(node, "end_lineno")
+            else 0,
             method_count=0,
             property_count=0,
             cyclomatic_complexity=0,
@@ -294,7 +298,9 @@ class ComplexityAnalyzer:
                 method_metrics = self._analyze_python_function(item)
                 class_metrics.methods.append(method_metrics)
                 class_metrics.method_count += 1
-                class_metrics.cyclomatic_complexity += method_metrics.cyclomatic_complexity
+                class_metrics.cyclomatic_complexity += (
+                    method_metrics.cyclomatic_complexity
+                )
             elif isinstance(item, ast.Assign):
                 class_metrics.property_count += 1
 
@@ -325,11 +331,13 @@ class ComplexityAnalyzer:
         nesting = self._calculate_nesting_depth(node)
 
         # Lines of code
-        loc = node.end_lineno - node.lineno + 1 if hasattr(node, 'end_lineno') else 0
+        loc = node.end_lineno - node.lineno + 1 if hasattr(node, "end_lineno") else 0
 
         # Maintainability index
         volume = loc * math.log2(param_count + 1) if param_count > 0 else loc
-        mi = max(0, 171 - 5.2 * math.log(volume) - 0.23 * complexity - 16.2 * math.log(loc))
+        mi = max(
+            0, 171 - 5.2 * math.log(volume) - 0.23 * complexity - 16.2 * math.log(loc)
+        )
 
         # Determine complexity level
         if complexity <= 5:
@@ -432,7 +440,9 @@ class ComplexityAnalyzer:
         lines = content.splitlines()
 
         # Find functions
-        function_pattern = re.compile(r"^\s*(function|event)\s+(\w+)\s*\(", re.IGNORECASE)
+        function_pattern = re.compile(
+            r"^\s*(function|event)\s+(\w+)\s*\(", re.IGNORECASE
+        )
         class_pattern = re.compile(r"^\s*type\s+(\w+)\s+from", re.IGNORECASE)
 
         current_function = None
@@ -463,8 +473,7 @@ class ComplexityAnalyzer:
                     # Complete previous function
                     current_function.lines_of_code = i - function_start
                     self._calculate_pb_complexity(
-                        lines[function_start:i],
-                        current_function
+                        lines[function_start:i], current_function
                     )
 
                     if current_class:
@@ -490,10 +499,7 @@ class ComplexityAnalyzer:
         # Complete last function
         if current_function:
             current_function.lines_of_code = len(lines) - function_start
-            self._calculate_pb_complexity(
-                lines[function_start:],
-                current_function
-            )
+            self._calculate_pb_complexity(lines[function_start:], current_function)
 
             if current_class:
                 current_class.methods.append(current_function)
@@ -505,9 +511,7 @@ class ComplexityAnalyzer:
             metrics.classes.append(current_class)
 
     def _calculate_pb_complexity(
-        self,
-        lines: List[str],
-        metrics: MethodMetrics
+        self, lines: List[str], metrics: MethodMetrics
     ) -> None:
         """Calculate PowerBuilder complexity.
 
@@ -519,8 +523,10 @@ class ComplexityAnalyzer:
             line_lower = line.lower().strip()
 
             # Control flow statements
-            if any(keyword in line_lower for keyword in
-                   ["if ", "elseif ", "for ", "do ", "while ", "case "]):
+            if any(
+                keyword in line_lower
+                for keyword in ["if ", "elseif ", "for ", "do ", "while ", "case "]
+            ):
                 metrics.cyclomatic_complexity += 1
 
             # Return statements
@@ -550,7 +556,7 @@ class ComplexityAnalyzer:
         # Patterns
         function_pattern = re.compile(
             r"^\s*(function|const|let|var)\s+(\w+)\s*[=:]?\s*(?:function)?\s*\(",
-            re.IGNORECASE
+            re.IGNORECASE,
         )
         class_pattern = re.compile(r"^\s*class\s+(\w+)", re.IGNORECASE)
 
@@ -574,7 +580,9 @@ class ComplexityAnalyzer:
             func_match = function_pattern.match(line)
             if func_match:
                 func_metrics = MethodMetrics(
-                    name=func_match.group(2) if func_match.lastindex >= 2 else "anonymous",
+                    name=func_match.group(2)
+                    if func_match.lastindex >= 2
+                    else "anonymous",
                     lines_of_code=0,
                     cyclomatic_complexity=1,
                     cognitive_complexity=0,
@@ -641,50 +649,56 @@ class ComplexityAnalyzer:
         # Check for long methods
         for func in metrics.functions:
             if func.lines_of_code > self.thresholds["max_method_lines"]:
-                smells.append({
-                    "type": CodeSmellType.LONG_METHOD.value,
-                    "severity": "high" if func.lines_of_code > 50 else "medium",
-                    "location": f"{metrics.path}:{func.name}",
-                    "message": f"Method {func.name} has {func.lines_of_code} lines (threshold: {self.thresholds['max_method_lines']})",
-                    "suggestion": "Consider breaking this method into smaller, more focused methods",
-                })
+                smells.append(
+                    {
+                        "type": CodeSmellType.LONG_METHOD.value,
+                        "severity": "high" if func.lines_of_code > 50 else "medium",
+                        "location": f"{metrics.path}:{func.name}",
+                        "message": f"Method {func.name} has {func.lines_of_code} lines (threshold: {self.thresholds['max_method_lines']})",
+                        "suggestion": "Consider breaking this method into smaller, more focused methods",
+                    }
+                )
 
             if func.parameter_count > self.thresholds["max_parameters"]:
-                smells.append({
-                    "type": CodeSmellType.LONG_PARAMETER_LIST.value,
-                    "severity": "medium",
-                    "location": f"{metrics.path}:{func.name}",
-                    "message": f"Method {func.name} has {func.parameter_count} parameters",
-                    "suggestion": "Consider using a parameter object or builder pattern",
-                })
+                smells.append(
+                    {
+                        "type": CodeSmellType.LONG_PARAMETER_LIST.value,
+                        "severity": "medium",
+                        "location": f"{metrics.path}:{func.name}",
+                        "message": f"Method {func.name} has {func.parameter_count} parameters",
+                        "suggestion": "Consider using a parameter object or builder pattern",
+                    }
+                )
 
         # Check for large classes
         for cls in metrics.classes:
             if cls.lines_of_code > self.thresholds["max_class_lines"]:
-                smells.append({
-                    "type": CodeSmellType.LARGE_CLASS.value,
-                    "severity": "high",
-                    "location": f"{metrics.path}:{cls.name}",
-                    "message": f"Class {cls.name} has {cls.lines_of_code} lines",
-                    "suggestion": "Consider splitting into smaller, more focused classes",
-                })
+                smells.append(
+                    {
+                        "type": CodeSmellType.LARGE_CLASS.value,
+                        "severity": "high",
+                        "location": f"{metrics.path}:{cls.name}",
+                        "message": f"Class {cls.name} has {cls.lines_of_code} lines",
+                        "suggestion": "Consider splitting into smaller, more focused classes",
+                    }
+                )
 
             # God class detection
             if cls.method_count > 20 or cls.property_count > 15:
-                smells.append({
-                    "type": CodeSmellType.GOD_CLASS.value,
-                    "severity": "high",
-                    "location": f"{metrics.path}:{cls.name}",
-                    "message": f"Class {cls.name} has too many responsibilities",
-                    "suggestion": "Apply Single Responsibility Principle",
-                })
+                smells.append(
+                    {
+                        "type": CodeSmellType.GOD_CLASS.value,
+                        "severity": "high",
+                        "location": f"{metrics.path}:{cls.name}",
+                        "message": f"Class {cls.name} has too many responsibilities",
+                        "suggestion": "Apply Single Responsibility Principle",
+                    }
+                )
 
         return smells
 
     def generate_report(
-        self,
-        metrics_list: List[FileMetrics],
-        output_path: Optional[Path] = None
+        self, metrics_list: List[FileMetrics], output_path: Optional[Path] = None
     ) -> Dict[str, Any]:
         """Generate complexity analysis report.
 
@@ -721,14 +735,16 @@ class ComplexityAnalyzer:
 
         for file_metrics in metrics_list:
             # Add file summary
-            report["files"].append({
-                "path": file_metrics.path,
-                "loc": file_metrics.lines_of_code,
-                "complexity": file_metrics.cyclomatic_complexity,
-                "maintainability": file_metrics.maintainability_index,
-                "debt_ratio": file_metrics.technical_debt_ratio,
-                "smells": len(file_metrics.code_smells),
-            })
+            report["files"].append(
+                {
+                    "path": file_metrics.path,
+                    "loc": file_metrics.lines_of_code,
+                    "complexity": file_metrics.cyclomatic_complexity,
+                    "maintainability": file_metrics.maintainability_index,
+                    "debt_ratio": file_metrics.technical_debt_ratio,
+                    "smells": len(file_metrics.code_smells),
+                }
+            )
 
             # Collect methods
             for cls in file_metrics.classes:
@@ -740,12 +756,12 @@ class ComplexityAnalyzer:
 
         # Calculate summary
         if metrics_list:
-            report["summary"]["average_complexity"] = (
-                sum(m.cyclomatic_complexity for m in metrics_list) / len(metrics_list)
-            )
-            report["summary"]["average_maintainability"] = (
-                sum(m.maintainability_index for m in metrics_list) / len(metrics_list)
-            )
+            report["summary"]["average_complexity"] = sum(
+                m.cyclomatic_complexity for m in metrics_list
+            ) / len(metrics_list)
+            report["summary"]["average_maintainability"] = sum(
+                m.maintainability_index for m in metrics_list
+            ) / len(metrics_list)
             report["summary"]["total_code_smells"] = len(all_smells)
 
         # Complexity distribution

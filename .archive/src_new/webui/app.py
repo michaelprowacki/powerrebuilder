@@ -7,10 +7,7 @@ monitoring, pipeline control, and visual analytics.
 import asyncio
 import json
 import logging
-import os
-import shutil
-import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -22,15 +19,14 @@ try:
     from fastapi.responses import FileResponse, HTMLResponse
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
     FastAPI = None
     BaseModel = object
 
-from src_new._core.models import PipelineStage
-from src_new._patterns.observability import get_metrics, get_tracer
-from src_new._patterns.progress import get_tracker
+from src_new._patterns.observability import get_metrics
 from src_new.analyze.complexity import ComplexityAnalyzer
 from src_new.analyze.database import SchemaExtractor
 
@@ -41,8 +37,10 @@ logger = logging.getLogger(__name__)
 # DATA MODELS
 # ============================================================================
 
+
 class PipelineRequest(BaseModel):
     """Pipeline execution request."""
+
     input_path: str
     output_path: str
     stages: List[str] = ["all"]
@@ -51,6 +49,7 @@ class PipelineRequest(BaseModel):
 
 class PipelineStatus(BaseModel):
     """Pipeline execution status."""
+
     id: str
     status: str  # pending, running, completed, failed
     stage: Optional[str] = None
@@ -63,6 +62,7 @@ class PipelineStatus(BaseModel):
 
 class ProjectInfo(BaseModel):
     """Project information."""
+
     name: str
     path: str
     last_modified: datetime
@@ -74,6 +74,7 @@ class ProjectInfo(BaseModel):
 # ============================================================================
 # WEB UI APPLICATION
 # ============================================================================
+
 
 class WebUIApp:
     """Web UI Dashboard application."""
@@ -92,7 +93,9 @@ class WebUIApp:
             pipeline_executor: Pipeline executor instance
         """
         if not FASTAPI_AVAILABLE:
-            raise ImportError("FastAPI is required for Web UI. Install with: pip install fastapi uvicorn")
+            raise ImportError(
+                "FastAPI is required for Web UI. Install with: pip install fastapi uvicorn"
+            )
 
         self.host = host
         self.port = port
@@ -240,10 +243,12 @@ class WebUIApp:
                         # Subscribe to pipeline updates
                         pipeline_id = message.get("pipeline_id")
                         if pipeline_id in self.active_pipelines:
-                            await websocket.send_json({
-                                "type": "status",
-                                "data": asdict(self.active_pipelines[pipeline_id])
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "status",
+                                    "data": asdict(self.active_pipelines[pipeline_id]),
+                                }
+                            )
             except WebSocketDisconnect:
                 self.websocket_clients.remove(websocket)
 
@@ -262,9 +267,11 @@ class WebUIApp:
             await self._broadcast_status(pipeline_id)
 
             # Execute each stage
-            stages = request.stages if request.stages != ["all"] else [
-                "extract", "decompile", "parse", "model", "generate"
-            ]
+            stages = (
+                request.stages
+                if request.stages != ["all"]
+                else ["extract", "decompile", "parse", "model", "generate"]
+            )
 
             for i, stage in enumerate(stages):
                 status.stage = stage
@@ -306,10 +313,7 @@ class WebUIApp:
             return
 
         status = self.active_pipelines[pipeline_id]
-        message = {
-            "type": "pipeline_update",
-            "data": asdict(status)
-        }
+        message = {"type": "pipeline_update", "data": asdict(status)}
 
         # Broadcast to all connected clients
         for client in self.websocket_clients[:]:
@@ -579,6 +583,7 @@ class WebUIApp:
 # ============================================================================
 # CLI INTEGRATION
 # ============================================================================
+
 
 def start_webui(host: str = "0.0.0.0", port: int = 8080):
     """Start the Web UI dashboard.

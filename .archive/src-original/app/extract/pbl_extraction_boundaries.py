@@ -4,7 +4,7 @@ Small, specific interfaces for the extract slice.
 Uses domain types, not primitives where possible.
 """
 
-from typing import Protocol, List, Optional
+from typing import Protocol, List
 from src_new.domain.extract.shared import PBLEntry
 
 

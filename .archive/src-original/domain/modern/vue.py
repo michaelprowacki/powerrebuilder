@@ -15,15 +15,17 @@ from datetime import datetime
 # VUE COMPONENT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueComponent:
     """A Vue 3 component."""
+
     name: str
-    props: List['VueProp'] = field(default_factory=list)
-    emits: List['VueEmit'] = field(default_factory=list)
+    props: List["VueProp"] = field(default_factory=list)
+    emits: List["VueEmit"] = field(default_factory=list)
     setup_return: Dict[str, Any] = field(default_factory=dict)
     template: str = ""
-    style: Optional['VueStyle'] = None
+    style: Optional["VueStyle"] = None
     is_script_setup: bool = False
     is_async: bool = False
 
@@ -31,6 +33,7 @@ class VueComponent:
 @dataclass(frozen=True)
 class VueProp:
     """A component prop."""
+
     name: str
     type: Union[str, List[str]]  # String, Number, Boolean, Array, Object, etc.
     default: Optional[Any] = None
@@ -41,6 +44,7 @@ class VueProp:
 @dataclass(frozen=True)
 class VueEmit:
     """An event emission."""
+
     name: str
     payload_type: Optional[str] = None
     validation: Optional[str] = None
@@ -49,6 +53,7 @@ class VueEmit:
 @dataclass(frozen=True)
 class VueStyle:
     """Component styles."""
+
     content: str
     scoped: bool = False
     module: bool = False
@@ -59,9 +64,11 @@ class VueStyle:
 # COMPOSITION API
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CompositionRef:
     """A ref() reactive reference."""
+
     name: str
     initial_value: Any
     type: Optional[str] = None
@@ -70,6 +77,7 @@ class CompositionRef:
 @dataclass(frozen=True)
 class CompositionReactive:
     """A reactive() object."""
+
     name: str
     properties: Dict[str, Any]
     type: Optional[str] = None
@@ -78,6 +86,7 @@ class CompositionReactive:
 @dataclass(frozen=True)
 class CompositionComputed:
     """A computed property."""
+
     name: str
     getter: str
     setter: Optional[str] = None
@@ -87,6 +96,7 @@ class CompositionComputed:
 @dataclass(frozen=True)
 class CompositionWatch:
     """A watcher."""
+
     source: Union[str, List[str]]
     callback: str
     options: Dict[str, Any] = field(default_factory=dict)  # immediate, deep, flush
@@ -95,6 +105,7 @@ class CompositionWatch:
 @dataclass(frozen=True)
 class CompositionProvide:
     """Provide/inject pattern."""
+
     key: str
     value: Any
     is_readonly: bool = False
@@ -103,6 +114,7 @@ class CompositionProvide:
 @dataclass(frozen=True)
 class CompositionInject:
     """Inject a provided value."""
+
     key: str
     default_value: Optional[Any] = None
     treat_as_ref: bool = True
@@ -112,9 +124,11 @@ class CompositionInject:
 # LIFECYCLE HOOKS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class LifecycleHook:
     """A lifecycle hook."""
+
     type: str  # onMounted, onUpdated, onUnmounted, etc.
     callback: str
     cleanup: Optional[str] = None
@@ -122,6 +136,7 @@ class LifecycleHook:
 
 class LifecycleType(str, Enum):
     """Vue 3 lifecycle hooks."""
+
     BEFORE_CREATE = "onBeforeCreate"  # Options API only
     CREATED = "onCreated"  # Options API only
     BEFORE_MOUNT = "onBeforeMount"
@@ -142,9 +157,11 @@ class LifecycleType(str, Enum):
 # DIRECTIVES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueDirective:
     """A Vue directive."""
+
     name: str  # v-if, v-for, v-model, custom
     value: Any
     arg: Optional[str] = None
@@ -154,6 +171,7 @@ class VueDirective:
 @dataclass(frozen=True)
 class CustomDirective:
     """A custom directive definition."""
+
     name: str
     created: Optional[str] = None
     before_mount: Optional[str] = None
@@ -168,9 +186,11 @@ class CustomDirective:
 # COMPOSABLES (CUSTOM HOOKS)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Composable:
     """A composable function."""
+
     name: str
     parameters: List[tuple[str, str]] = field(default_factory=list)
     returns: Dict[str, Any] = field(default_factory=dict)
@@ -182,15 +202,17 @@ class Composable:
 # VUE ROUTER
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueRoute:
     """A Vue Router route."""
+
     path: str
     name: Optional[str] = None
     component: str
     props: Union[bool, Dict[str, Any]] = False
     meta: Dict[str, Any] = field(default_factory=dict)
-    children: List['VueRoute'] = field(default_factory=list)
+    children: List["VueRoute"] = field(default_factory=list)
     redirect: Optional[str] = None
     alias: Optional[Union[str, List[str]]] = None
     before_enter: Optional[str] = None
@@ -199,6 +221,7 @@ class VueRoute:
 @dataclass(frozen=True)
 class VueRouter:
     """Router configuration."""
+
     routes: List[VueRoute]
     mode: str = "history"  # history, hash, abstract
     base: str = "/"
@@ -208,6 +231,7 @@ class VueRouter:
 @dataclass(frozen=True)
 class NavigationGuard:
     """A navigation guard."""
+
     type: str  # beforeEach, afterEach, beforeResolve
     handler: str
     is_global: bool = True
@@ -217,9 +241,11 @@ class NavigationGuard:
 # PINIA STORE (VUEX SUCCESSOR)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PiniaStore:
     """A Pinia store."""
+
     id: str
     state: Dict[str, Any] = field(default_factory=dict)
     getters: Dict[str, str] = field(default_factory=dict)
@@ -230,6 +256,7 @@ class PiniaStore:
 @dataclass(frozen=True)
 class PiniaGetter:
     """A store getter."""
+
     name: str
     dependencies: List[str]
     compute_function: str
@@ -238,6 +265,7 @@ class PiniaGetter:
 @dataclass(frozen=True)
 class PiniaAction:
     """A store action."""
+
     name: str
     is_async: bool = False
     parameters: List[tuple[str, str]] = field(default_factory=list)
@@ -248,20 +276,25 @@ class PiniaAction:
 # TEMPLATE SYNTAX
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueTemplate:
     """Vue template structure."""
-    root_element: Optional['VueElement'] = None
-    fragments: List['VueElement'] = field(default_factory=list)  # Vue 3 supports fragments
+
+    root_element: Optional["VueElement"] = None
+    fragments: List["VueElement"] = field(
+        default_factory=list
+    )  # Vue 3 supports fragments
 
 
 @dataclass(frozen=True)
 class VueElement:
     """A template element."""
+
     tag: str
     attributes: Dict[str, Any] = field(default_factory=dict)
     directives: List[VueDirective] = field(default_factory=list)
-    children: List[Union['VueElement', str]] = field(default_factory=list)
+    children: List[Union["VueElement", str]] = field(default_factory=list)
     slot: Optional[str] = None
     key: Optional[str] = None
 
@@ -269,6 +302,7 @@ class VueElement:
 @dataclass(frozen=True)
 class VueSlot:
     """A slot definition."""
+
     name: Optional[str] = None  # None for default slot
     scope: Dict[str, Any] = field(default_factory=dict)
     fallback: Optional[str] = None
@@ -278,9 +312,11 @@ class VueSlot:
 # TELEPORT AND SUSPENSE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueTeleport:
     """Teleport component."""
+
     to: str  # CSS selector or element
     disabled: bool = False
     content: VueElement
@@ -289,6 +325,7 @@ class VueTeleport:
 @dataclass(frozen=True)
 class VueSuspense:
     """Suspense component."""
+
     default_content: VueElement
     fallback_content: Optional[VueElement] = None
     timeout: Optional[int] = None
@@ -298,9 +335,11 @@ class VueSuspense:
 # DOMAIN EVENTS (Colocated with Vue aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class VueComponentCreated:
     """Event: Vue component instance created."""
+
     component: VueComponent
     props: Dict[str, Any]
     timestamp: datetime
@@ -309,6 +348,7 @@ class VueComponentCreated:
 @dataclass(frozen=True)
 class VueComponentMounted:
     """Event: Component mounted to DOM."""
+
     component: VueComponent
     mount_point: str
     timestamp: datetime
@@ -317,6 +357,7 @@ class VueComponentMounted:
 @dataclass(frozen=True)
 class VueComponentUpdated:
     """Event: Component re-rendered."""
+
     component: VueComponent
     trigger: str  # prop change, state change, etc.
     patches: int  # Number of DOM patches
@@ -326,6 +367,7 @@ class VueComponentUpdated:
 @dataclass(frozen=True)
 class VueComponentUnmounted:
     """Event: Component unmounted."""
+
     component: VueComponent
     cleanup_performed: bool
     timestamp: datetime
@@ -334,6 +376,7 @@ class VueComponentUnmounted:
 @dataclass(frozen=True)
 class ReactiveValueChanged:
     """Event: Reactive value changed."""
+
     source: str  # ref name or reactive property path
     old_value: Any
     new_value: Any
@@ -344,6 +387,7 @@ class ReactiveValueChanged:
 @dataclass(frozen=True)
 class StoreActionDispatched:
     """Event: Pinia store action dispatched."""
+
     store_id: str
     action_name: str
     payload: Any
@@ -355,6 +399,7 @@ class StoreActionDispatched:
 @dataclass(frozen=True)
 class RouteChanged:
     """Event: Vue Router navigation."""
+
     from_route: Optional[str]
     to_route: str
     params: Dict[str, str]

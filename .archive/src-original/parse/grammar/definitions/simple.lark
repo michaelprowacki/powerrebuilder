@@ -5,7 +5,7 @@ start: program
 program: item*
 
 item: type_declaration
-    | function_declaration  
+    | function_declaration
     | variable_declaration
     | event_declaration
     | object_declaration
@@ -29,7 +29,7 @@ object_declaration: "global" "type" IDENTIFIER "from" IDENTIFIER statement* "end
 
 statement: assignment
          | if_statement
-         | choose_statement  
+         | choose_statement
          | return_statement
          | function_call
          | IDENTIFIER

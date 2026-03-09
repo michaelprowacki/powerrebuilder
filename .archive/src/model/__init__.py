@@ -3,7 +3,7 @@
 # Import from unified model module
 from .unified_model import (
     AccessType,
-    PBAccess, 
+    PBAccess,
     PBAccessNode,
     PBAccessTracker,
     ASTProcessor,
@@ -15,7 +15,7 @@ __all__ = [
     # Constructs
     "AccessType",
     "PBAccess",
-    "PBAccessNode", 
+    "PBAccessNode",
     "PBAccessTracker",
     # Main classes
     "ASTProcessor",

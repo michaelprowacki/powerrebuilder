@@ -4,15 +4,13 @@ Generates comprehensive HTML and JSON reports for pipeline accuracy testing.
 """
 
 import json
-from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 import html
 
 from testing.accuracy_metrics import (
     AccuracyMetrics,
-    StageResult,
     AccuracyLevel,
     MetricsAggregator,
 )
@@ -32,9 +30,7 @@ class ReportGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_accuracy_report(
-        self,
-        metrics: AccuracyMetrics,
-        validation: Optional[ValidationResult] = None
+        self, metrics: AccuracyMetrics, validation: Optional[ValidationResult] = None
     ) -> Path:
         """Generate HTML accuracy report.
 
@@ -45,7 +41,10 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        report_path = self.output_dir / f"accuracy_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        report_path = (
+            self.output_dir
+            / f"accuracy_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        )
 
         html_content = self._generate_html_report(metrics, validation)
         report_path.write_text(html_content)
@@ -61,7 +60,10 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        report_path = self.output_dir / f"summary_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        report_path = (
+            self.output_dir
+            / f"summary_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        )
 
         html_content = self._generate_summary_html(aggregator)
         report_path.write_text(html_content)
@@ -77,7 +79,9 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        report_path = self.output_dir / f"metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_path = (
+            self.output_dir / f"metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
 
         json_data = metrics.to_dict()
         report_path.write_text(json.dumps(json_data, indent=2))
@@ -85,9 +89,7 @@ class ReportGenerator:
         return report_path
 
     def _generate_html_report(
-        self,
-        metrics: AccuracyMetrics,
-        validation: Optional[ValidationResult] = None
+        self, metrics: AccuracyMetrics, validation: Optional[ValidationResult] = None
     ) -> str:
         """Generate HTML content for accuracy report."""
 
@@ -104,10 +106,9 @@ class ReportGenerator:
         if validation:
             html_parts.append(self._generate_validation_section(validation))
 
-        html_parts.extend([
-            self._generate_metrics_charts(metrics),
-            self._get_html_footer()
-        ])
+        html_parts.extend(
+            [self._generate_metrics_charts(metrics), self._get_html_footer()]
+        )
 
         return "\n".join(html_parts)
 
@@ -171,7 +172,7 @@ class ReportGenerator:
                     <td class="accuracy" style="color: {level_color}">{result.accuracy:.1f}%</td>
                     <td>{result.accuracy_level.value}</td>
                     <td>{result.execution_time:.3f}s</td>
-                    <td class="metrics">{' • '.join(metrics_html)}</td>
+                    <td class="metrics">{" • ".join(metrics_html)}</td>
                     <td>{len(result.errors)}/{len(result.warnings)}</td>
                 </tr>
             """)
@@ -192,7 +193,7 @@ class ReportGenerator:
                     </tr>
                 </thead>
                 <tbody>
-                    {''.join(rows)}
+                    {"".join(rows)}
                 </tbody>
             </table>
         </section>
@@ -201,8 +202,12 @@ class ReportGenerator:
     def _generate_validation_section(self, validation: ValidationResult) -> str:
         """Generate validation section HTML."""
         # Group issues by severity
-        errors = [i for i in validation.issues if i.severity == ValidationSeverity.ERROR]
-        warnings = [i for i in validation.issues if i.severity == ValidationSeverity.WARNING]
+        errors = [
+            i for i in validation.issues if i.severity == ValidationSeverity.ERROR
+        ]
+        warnings = [
+            i for i in validation.issues if i.severity == ValidationSeverity.WARNING
+        ]
         info = [i for i in validation.issues if i.severity == ValidationSeverity.INFO]
 
         issues_html = []
@@ -214,7 +219,9 @@ class ReportGenerator:
             issues_html.append("</ul>")
 
         if warnings:
-            issues_html.append("<h3 class='warning'>Warnings</h3><ul class='warning-list'>")
+            issues_html.append(
+                "<h3 class='warning'>Warnings</h3><ul class='warning-list'>"
+            )
             for issue in warnings[:10]:  # Show max 10
                 issues_html.append(f"<li>{html.escape(issue.message)}</li>")
             issues_html.append("</ul>")
@@ -223,13 +230,13 @@ class ReportGenerator:
         <section class="validation">
             <h2>Semantic Validation</h2>
             <div class="validation-summary">
-                <p><strong>Valid:</strong> {'Yes' if validation.valid else 'No'}</p>
+                <p><strong>Valid:</strong> {"Yes" if validation.valid else "No"}</p>
                 <p><strong>Errors:</strong> {len(errors)}</p>
                 <p><strong>Warnings:</strong> {len(warnings)}</p>
                 <p><strong>Info:</strong> {len(info)}</p>
             </div>
             <div class="validation-issues">
-                {''.join(issues_html)}
+                {"".join(issues_html)}
             </div>
             <div class="validation-metrics">
                 <h3>Metrics</h3>
@@ -291,19 +298,19 @@ class ReportGenerator:
                 <div class="summary-stats">
                     <div class="stat-card">
                         <h3>Total Tests</h3>
-                        <div class="stat-value">{summary['total_runs']}</div>
+                        <div class="stat-value">{summary["total_runs"]}</div>
                     </div>
                     <div class="stat-card">
                         <h3>Average Accuracy</h3>
-                        <div class="stat-value">{summary['average_accuracy']:.1f}%</div>
+                        <div class="stat-value">{summary["average_accuracy"]:.1f}%</div>
                     </div>
                     <div class="stat-card">
                         <h3>Best Run</h3>
-                        <div class="stat-value">{summary.get('best_run', 'N/A')}</div>
+                        <div class="stat-value">{summary.get("best_run", "N/A")}</div>
                     </div>
                     <div class="stat-card">
                         <h3>Worst Run</h3>
-                        <div class="stat-value">{summary.get('worst_run', 'N/A')}</div>
+                        <div class="stat-value">{summary.get("worst_run", "N/A")}</div>
                     </div>
                 </div>
 
@@ -320,8 +327,8 @@ class ReportGenerator:
             """,
         ]
 
-        for stage, accuracy in summary['stage_averages'].items():
-            failure_rate = summary['failure_rates'].get(stage, 0)
+        for stage, accuracy in summary["stage_averages"].items():
+            failure_rate = summary["failure_rates"].get(stage, 0)
             html_parts.append(f"""
                 <tr>
                     <td>{stage.capitalize()}</td>
@@ -330,14 +337,16 @@ class ReportGenerator:
                 </tr>
             """)
 
-        html_parts.extend([
-            """
+        html_parts.extend(
+            [
+                """
                     </tbody>
                 </table>
             </section>
             """,
-            self._get_html_footer()
-        ])
+                self._get_html_footer(),
+            ]
+        )
 
         return "\n".join(html_parts)
 
@@ -489,12 +498,12 @@ class ReportGenerator:
     def _get_level_color(self, level: AccuracyLevel) -> str:
         """Get color for accuracy level."""
         colors = {
-            AccuracyLevel.PERFECT: "#27ae60",   # Green
-            AccuracyLevel.EXCELLENT: "#2ecc71", # Light green
-            AccuracyLevel.GOOD: "#3498db",      # Blue
-            AccuracyLevel.FAIR: "#f39c12",      # Orange
-            AccuracyLevel.POOR: "#e67e22",      # Dark orange
-            AccuracyLevel.FAILED: "#e74c3c",    # Red
+            AccuracyLevel.PERFECT: "#27ae60",  # Green
+            AccuracyLevel.EXCELLENT: "#2ecc71",  # Light green
+            AccuracyLevel.GOOD: "#3498db",  # Blue
+            AccuracyLevel.FAIR: "#f39c12",  # Orange
+            AccuracyLevel.POOR: "#e67e22",  # Dark orange
+            AccuracyLevel.FAILED: "#e74c3c",  # Red
         }
         return colors.get(level, "#95a5a6")
 
@@ -515,7 +524,7 @@ class ReportGenerator:
 
     def _format_size(self, size: int) -> str:
         """Format byte size as human readable."""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024:
                 return f"{size:.1f} {unit}"
             size /= 1024
@@ -527,7 +536,9 @@ class ReportGenerator:
         for key, value in metrics.items():
             if isinstance(value, float):
                 value = f"{value:.2f}"
-            rows.append(f"<tr><td>{key.replace('_', ' ').title()}</td><td>{value}</td></tr>")
+            rows.append(
+                f"<tr><td>{key.replace('_', ' ').title()}</td><td>{value}</td></tr>"
+            )
 
         return f"""
         <table>
@@ -535,7 +546,7 @@ class ReportGenerator:
                 <tr><th>Metric</th><th>Value</th></tr>
             </thead>
             <tbody>
-                {''.join(rows)}
+                {"".join(rows)}
             </tbody>
         </table>
         """

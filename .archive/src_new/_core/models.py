@@ -8,7 +8,7 @@ or external dependencies.
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 # ============================================================================
 # ENUMS
@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class PipelineStage(str, Enum):
     """Pipeline processing stages."""
+
     EXTRACT = "extract"
     DECOMPILE = "decompile"
     PARSE = "parse"
@@ -27,6 +28,7 @@ class PipelineStage(str, Enum):
 
 class ObjectType(str, Enum):
     """PowerBuilder object types."""
+
     APPLICATION = "application"
     WINDOW = "window"
     USER_OBJECT = "user_object"
@@ -40,6 +42,7 @@ class ObjectType(str, Enum):
 
 class TargetLanguage(str, Enum):
     """Target generation languages."""
+
     FLUTTER = "flutter"
     PYTHON = "python"
     TYPESCRIPT = "typescript"
@@ -60,6 +63,7 @@ class TargetLanguage(str, Enum):
 @dataclass
 class PBLEntry:
     """Entry in a PowerBuilder Library file."""
+
     name: str
     type: ObjectType
     size: int
@@ -71,6 +75,7 @@ class PBLEntry:
 @dataclass
 class PBLFile:
     """PowerBuilder Library file representation."""
+
     path: Path
     version: str
     entries: List[PBLEntry] = field(default_factory=list)
@@ -81,6 +86,7 @@ class PBLFile:
 @dataclass
 class ExtractedObject:
     """Object extracted from PBL/PBD."""
+
     name: str
     type: ObjectType
     data: bytes
@@ -96,6 +102,7 @@ class ExtractedObject:
 @dataclass
 class PCodeInstruction:
     """P-code bytecode instruction."""
+
     opcode: int
     operands: List[Any] = field(default_factory=list)
     offset: int = 0
@@ -105,6 +112,7 @@ class PCodeInstruction:
 @dataclass
 class PCodeFunction:
     """Decompiled P-code function."""
+
     name: str
     instructions: List[PCodeInstruction] = field(default_factory=list)
     locals: List[str] = field(default_factory=list)
@@ -115,6 +123,7 @@ class PCodeFunction:
 @dataclass
 class DecompiledSource:
     """Decompiled PowerBuilder source code."""
+
     object_name: str
     object_type: ObjectType
     source: str
@@ -135,6 +144,7 @@ class DecompiledSource:
 @dataclass
 class ASTNode:
     """Abstract Syntax Tree node."""
+
     node_type: str
     value: Any = None
     children: List["ASTNode"] = field(default_factory=list)
@@ -162,6 +172,7 @@ class ASTNode:
 @dataclass
 class ParsedObject:
     """Parsed PowerBuilder object with AST."""
+
     object_name: str
     object_type: ObjectType
     ast: ASTNode
@@ -177,6 +188,7 @@ class ParsedObject:
 @dataclass
 class Property:
     """Object property definition."""
+
     name: str
     type: str
     access: str = "public"
@@ -189,6 +201,7 @@ class Property:
 @dataclass
 class Parameter:
     """Method/Event parameter."""
+
     name: str
     type: str
     is_optional: bool = False
@@ -200,6 +213,7 @@ class Parameter:
 @dataclass
 class Method:
     """Object method definition."""
+
     name: str
     return_type: Optional[str] = None
     parameters: List[Parameter] = field(default_factory=list)
@@ -213,6 +227,7 @@ class Method:
 @dataclass
 class Event:
     """Object event definition."""
+
     name: str
     parameters: List[Parameter] = field(default_factory=list)
     body: Optional[str] = None
@@ -222,6 +237,7 @@ class Event:
 @dataclass
 class SemanticObject:
     """High-level semantic model of a PowerBuilder object."""
+
     name: str
     type: ObjectType
     parent: Optional[str] = None
@@ -253,6 +269,7 @@ class SemanticObject:
 @dataclass
 class PBControl:
     """PowerBuilder UI control."""
+
     name: str
     control_type: str  # button, datawindow, textbox, etc.
     x: int = 0
@@ -267,6 +284,7 @@ class PBControl:
 @dataclass
 class PBWindow:
     """PowerBuilder window definition."""
+
     name: str
     title: str = ""
     width: int = 0
@@ -279,6 +297,7 @@ class PBWindow:
 @dataclass
 class DataWindowColumn:
     """DataWindow column definition."""
+
     name: str
     db_name: str
     data_type: str
@@ -293,6 +312,7 @@ class DataWindowColumn:
 @dataclass
 class DataWindowDefinition:
     """Complete DataWindow definition."""
+
     name: str
     sql_query: Optional[str] = None
     columns: List[DataWindowColumn] = field(default_factory=list)
@@ -308,6 +328,7 @@ class DataWindowDefinition:
 @dataclass
 class GeneratedFile:
     """Generated source file."""
+
     path: str
     content: str
     language: TargetLanguage
@@ -317,6 +338,7 @@ class GeneratedFile:
 @dataclass
 class GeneratedProject:
     """Complete generated project."""
+
     name: str
     target: TargetLanguage
     files: List[GeneratedFile] = field(default_factory=list)
@@ -328,19 +350,13 @@ class GeneratedProject:
         """Get all source files."""
         return [f for f in self.files if f.file_type == "source"]
 
-    def add_file(
-        self,
-        path: str,
-        content: str,
-        file_type: str = "source"
-    ) -> None:
+    def add_file(self, path: str, content: str, file_type: str = "source") -> None:
         """Add a file to the project."""
-        self.files.append(GeneratedFile(
-            path=path,
-            content=content,
-            language=self.target,
-            file_type=file_type
-        ))
+        self.files.append(
+            GeneratedFile(
+                path=path, content=content, language=self.target, file_type=file_type
+            )
+        )
 
 
 # ============================================================================
@@ -351,6 +367,7 @@ class GeneratedProject:
 @dataclass
 class ApplicationModel:
     """Complete application model."""
+
     name: str
     version: str = "1.0.0"
     objects: Dict[str, SemanticObject] = field(default_factory=dict)
@@ -364,16 +381,12 @@ class ApplicationModel:
 
     def get_windows(self) -> List[SemanticObject]:
         """Get all window objects."""
-        return [
-            obj for obj in self.objects.values()
-            if obj.type == ObjectType.WINDOW
-        ]
+        return [obj for obj in self.objects.values() if obj.type == ObjectType.WINDOW]
 
     def get_datawindows(self) -> List[SemanticObject]:
         """Get all datawindow objects."""
         return [
-            obj for obj in self.objects.values()
-            if obj.type == ObjectType.DATAWINDOW
+            obj for obj in self.objects.values() if obj.type == ObjectType.DATAWINDOW
         ]
 
 
@@ -385,6 +398,7 @@ class ApplicationModel:
 @dataclass
 class ExtractResult:
     """Extraction operation result."""
+
     success: bool
     extracted_count: int
     errors: List[str]
@@ -394,6 +408,7 @@ class ExtractResult:
 @dataclass
 class DecompileResult:
     """Decompilation operation result."""
+
     success: bool
     source: str
     instructions: List[str]

@@ -11,6 +11,7 @@ from .high_performance_detector import HighPerformancePCodeDetector
 try:
     from .tiered_detector import TieredPCodeDetector, TierResult
     from .tiered_config import TieredConfig, AggressivenessLevel
+
     _tiered_available = True
 except ImportError:
     _tiered_available = False
@@ -22,14 +23,17 @@ except ImportError:
 # Default detector - use high performance detector
 default_detector = HighPerformancePCodeDetector()
 
-def detect_pcode(data: bytes, filename: str = "", use_tiered: bool = False) -> PCodeInfo:
+
+def detect_pcode(
+    data: bytes, filename: str = "", use_tiered: bool = False
+) -> PCodeInfo:
     """Detect P-code sections using the appropriate detector.
-    
+
     Args:
         data: Raw binary data to analyze
         filename: Optional filename for optimization hints
         use_tiered: Whether to use tiered detection (if available)
-        
+
     Returns:
         PCodeInfo object with detected sections
     """
@@ -46,22 +50,25 @@ def detect_pcode(data: bytes, filename: str = "", use_tiered: bool = False) -> P
             sections=sections,
             pcode_offset=sections[0].offset if sections else -1,
             pcode_length=sum(s.length for s in sections),
-            confidence="high" if sections else "none"
+            confidence="high" if sections else "none",
         )
 
+
 __all__ = [
-    'PCodeDetector',
-    'PCodeSection', 
-    'PCodeInfo',
-    'HighPerformancePCodeDetector',
-    'detect_pcode',
+    "PCodeDetector",
+    "PCodeSection",
+    "PCodeInfo",
+    "HighPerformancePCodeDetector",
+    "detect_pcode",
 ]
 
 # Add tiered detector exports if available
 if _tiered_available:
-    __all__.extend([
-        'TieredPCodeDetector',
-        'TierResult',
-        'TieredConfig',
-        'AggressivenessLevel',
-    ])
+    __all__.extend(
+        [
+            "TieredPCodeDetector",
+            "TierResult",
+            "TieredConfig",
+            "AggressivenessLevel",
+        ]
+    )

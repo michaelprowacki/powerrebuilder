@@ -14,8 +14,10 @@ from enum import Enum
 # DART LANGUAGE TYPES
 # ============================================================================
 
+
 class DartType(str, Enum):
     """Dart data types."""
+
     INT = "int"
     DOUBLE = "double"
     NUM = "num"
@@ -34,6 +36,7 @@ class DartType(str, Enum):
 @dataclass(frozen=True)
 class DartVariable:
     """A Dart variable."""
+
     name: str
     type: DartType
     is_final: bool = False
@@ -46,9 +49,10 @@ class DartVariable:
 @dataclass(frozen=True)
 class DartFunction:
     """A Dart function."""
+
     name: str
     return_type: DartType
-    parameters: List['DartParameter'] = field(default_factory=list)
+    parameters: List["DartParameter"] = field(default_factory=list)
     is_async: bool = False
     is_generator: bool = False
     body: Optional[str] = None
@@ -57,6 +61,7 @@ class DartFunction:
 @dataclass(frozen=True)
 class DartParameter:
     """A function parameter."""
+
     name: str
     type: DartType
     is_required: bool = True
@@ -67,6 +72,7 @@ class DartParameter:
 @dataclass(frozen=True)
 class DartClass:
     """A Dart class."""
+
     name: str
     extends: Optional[str] = None
     implements: List[str] = field(default_factory=list)
@@ -74,12 +80,13 @@ class DartClass:
     is_abstract: bool = False
     fields: List[DartVariable] = field(default_factory=list)
     methods: List[DartFunction] = field(default_factory=list)
-    constructors: List['DartConstructor'] = field(default_factory=list)
+    constructors: List["DartConstructor"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class DartConstructor:
     """A class constructor."""
+
     name: Optional[str] = None  # None for default constructor
     parameters: List[DartParameter] = field(default_factory=list)
     is_const: bool = False
@@ -91,8 +98,10 @@ class DartConstructor:
 # FLUTTER WIDGET TYPES
 # ============================================================================
 
+
 class WidgetType(str, Enum):
     """Types of Flutter widgets."""
+
     STATELESS = "stateless"
     STATEFUL = "stateful"
     INHERITED = "inherited"
@@ -101,16 +110,18 @@ class WidgetType(str, Enum):
 @dataclass(frozen=True)
 class Widget:
     """A Flutter widget."""
+
     name: str
     type: WidgetType
     properties: Dict[str, Any] = field(default_factory=dict)
-    child: Optional['Widget'] = None
-    children: List['Widget'] = field(default_factory=list)
+    child: Optional["Widget"] = None
+    children: List["Widget"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class StatelessWidget:
     """A stateless Flutter widget."""
+
     name: str
     properties: List[DartVariable] = field(default_factory=list)
     build_method: str = ""
@@ -119,14 +130,16 @@ class StatelessWidget:
 @dataclass(frozen=True)
 class StatefulWidget:
     """A stateful Flutter widget."""
+
     name: str
     properties: List[DartVariable] = field(default_factory=list)
-    state_class: 'State'
+    state_class: "State"
 
 
 @dataclass(frozen=True)
 class State:
     """State for a stateful widget."""
+
     name: str
     widget_class: str
     state_variables: List[DartVariable] = field(default_factory=list)
@@ -140,11 +153,13 @@ class State:
 # FLUTTER UI COMPONENTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class MaterialApp:
     """Flutter MaterialApp configuration."""
+
     title: str
-    theme: 'ThemeData'
+    theme: "ThemeData"
     home: Widget
     routes: Dict[str, Widget] = field(default_factory=dict)
     debug_show_checked_mode_banner: bool = False
@@ -153,17 +168,19 @@ class MaterialApp:
 @dataclass(frozen=True)
 class ThemeData:
     """Flutter theme configuration."""
+
     primary_swatch: Optional[str] = None
     primary_color: Optional[str] = None
     accent_color: Optional[str] = None
     brightness: str = "light"
     font_family: Optional[str] = None
-    text_theme: Optional['TextTheme'] = None
+    text_theme: Optional["TextTheme"] = None
 
 
 @dataclass(frozen=True)
 class TextTheme:
     """Text theme configuration."""
+
     headline1: Optional[Dict[str, Any]] = None
     headline2: Optional[Dict[str, Any]] = None
     body1: Optional[Dict[str, Any]] = None
@@ -174,7 +191,8 @@ class TextTheme:
 @dataclass(frozen=True)
 class Scaffold:
     """Scaffold widget structure."""
-    app_bar: Optional['AppBar'] = None
+
+    app_bar: Optional["AppBar"] = None
     body: Optional[Widget] = None
     drawer: Optional[Widget] = None
     bottom_navigation_bar: Optional[Widget] = None
@@ -184,6 +202,7 @@ class Scaffold:
 @dataclass(frozen=True)
 class AppBar:
     """AppBar widget."""
+
     title: str
     actions: List[Widget] = field(default_factory=list)
     leading: Optional[Widget] = None
@@ -194,20 +213,23 @@ class AppBar:
 # FLUTTER LAYOUT WIDGETS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Container:
     """Container widget."""
+
     child: Optional[Widget] = None
     width: Optional[float] = None
     height: Optional[float] = None
-    padding: Optional['EdgeInsets'] = None
-    margin: Optional['EdgeInsets'] = None
-    decoration: Optional['BoxDecoration'] = None
+    padding: Optional["EdgeInsets"] = None
+    margin: Optional["EdgeInsets"] = None
+    decoration: Optional["BoxDecoration"] = None
 
 
 @dataclass(frozen=True)
 class Row:
     """Row layout widget."""
+
     children: List[Widget]
     main_axis_alignment: str = "start"
     cross_axis_alignment: str = "center"
@@ -216,6 +238,7 @@ class Row:
 @dataclass(frozen=True)
 class Column:
     """Column layout widget."""
+
     children: List[Widget]
     main_axis_alignment: str = "start"
     cross_axis_alignment: str = "center"
@@ -224,6 +247,7 @@ class Column:
 @dataclass(frozen=True)
 class EdgeInsets:
     """Padding/margin values."""
+
     left: float = 0
     top: float = 0
     right: float = 0
@@ -233,15 +257,17 @@ class EdgeInsets:
 @dataclass(frozen=True)
 class BoxDecoration:
     """Box decoration."""
+
     color: Optional[str] = None
     border_radius: Optional[float] = None
-    box_shadow: Optional[List['BoxShadow']] = None
-    gradient: Optional['Gradient'] = None
+    box_shadow: Optional[List["BoxShadow"]] = None
+    gradient: Optional["Gradient"] = None
 
 
 @dataclass(frozen=True)
 class BoxShadow:
     """Box shadow effect."""
+
     color: str
     offset: tuple[float, float]
     blur_radius: float
@@ -251,6 +277,7 @@ class BoxShadow:
 @dataclass(frozen=True)
 class Gradient:
     """Gradient decoration."""
+
     colors: List[str]
     stops: Optional[List[float]] = None
     begin: str = "topLeft"
@@ -261,9 +288,11 @@ class Gradient:
 # STATE MANAGEMENT
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Provider:
     """Provider state management."""
+
     name: str
     type: str
     value: Any
@@ -273,6 +302,7 @@ class Provider:
 @dataclass(frozen=True)
 class BlocState:
     """BLoC state."""
+
     name: str
     properties: Dict[str, Any] = field(default_factory=dict)
 
@@ -280,6 +310,7 @@ class BlocState:
 @dataclass(frozen=True)
 class BlocEvent:
     """BLoC event."""
+
     name: str
     data: Dict[str, Any] = field(default_factory=dict)
 
@@ -287,6 +318,7 @@ class BlocEvent:
 @dataclass(frozen=True)
 class Bloc:
     """Business Logic Component."""
+
     name: str
     states: List[BlocState] = field(default_factory=list)
     events: List[BlocEvent] = field(default_factory=list)
@@ -297,9 +329,11 @@ class Bloc:
 # ROUTING AND NAVIGATION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Route:
     """A navigation route."""
+
     name: str
     path: str
     widget: Widget
@@ -309,5 +343,6 @@ class Route:
 @dataclass(frozen=True)
 class NavigationStack:
     """Navigation stack state."""
+
     routes: List[Route]
     current_index: int

@@ -21,6 +21,7 @@ try:
     from .svelte import SvelteGenerator
     from .tauri import TauriGenerator
     from .rust_dioxus import DioxusGenerator as RustDioxusGenerator
+
     _new_generators = True
 except ImportError:
     _new_generators = False
@@ -35,12 +36,14 @@ __all__ = [
 ]
 
 if _new_generators:
-    __all__.extend([
-        "TypeScriptGenerator",
-        "ReactGenerator",
-        "DioxusGenerator",
-        "VueGenerator",
-        "SvelteGenerator",
-        "TauriGenerator",
-        "RustDioxusGenerator",
-    ])
+    __all__.extend(
+        [
+            "TypeScriptGenerator",
+            "ReactGenerator",
+            "DioxusGenerator",
+            "VueGenerator",
+            "SvelteGenerator",
+            "TauriGenerator",
+            "RustDioxusGenerator",
+        ]
+    )

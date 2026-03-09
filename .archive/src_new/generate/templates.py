@@ -49,7 +49,6 @@ class _{{ class_name }}ScreenState extends State<{{ class_name }}Screen> {
   {% endfor %}
 }
 """,
-
     "flutter/model.dart": """import 'package:json_annotation/json_annotation.dart';
 
 part '{{ class_name.lower() }}.g.dart';
@@ -72,7 +71,6 @@ class {{ class_name }} {
   Map<String, dynamic> toJson() => _${{ class_name }}ToJson(this);
 }
 """,
-
     "flutter/data_grid.dart": """import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
@@ -120,7 +118,6 @@ class {{ class_name }}DataSource extends DataGridSource {
   }
 }
 """,
-
     "flutter/main.dart": """import 'package:flutter/material.dart';
 {% for screen in screens %}
 import 'screens/{{ screen.name }}.dart';
@@ -170,7 +167,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 """,
-
     "flutter/pubspec.yaml": """name: {{ name }}
 description: Generated from PowerBuilder
 version: {{ version }}
@@ -224,7 +220,6 @@ class {{ class_name }}{% if parent %}({{ parent }}){% endif %}:
 
     {% endfor %}
 """,
-
     "python/model.py": """\"\"\"{{ class_name }} Model - Generated from PowerBuilder DataWindow.\"\"\"
 
 from typing import Optional
@@ -247,7 +242,6 @@ class {{ class_name }}(SQLModel, table=True):
     )
     {% endfor %}
 """,
-
     "python/repository.py": """\"\"\"Repository for {{ model_name }}.\"\"\"
 
 from typing import List, Optional
@@ -331,7 +325,6 @@ class {{ model_name }}Repository:
             return True
         return False
 """,
-
     "python/main.py": """\"\"\"Main application entry point.\"\"\"
 
 import uvicorn
@@ -360,7 +353,6 @@ if __name__ == "__main__":
         reload=True,
     )
 """,
-
     "python/pyproject.toml": """[project]
 name = "{{ name }}"
 version = "{{ version }}"

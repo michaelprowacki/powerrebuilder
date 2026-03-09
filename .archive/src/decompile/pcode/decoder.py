@@ -139,16 +139,16 @@ class PCodeDecoderV2:
         pcode_info: dict[str, Any] | None = None,
     ) -> Any:
         """Decode a P-code section with optional section information.
-        
+
         CRITICAL PCODEINFO COMPATIBILITY FIX: This function was enhanced to handle
         both dictionary-based and object-based PCodeInfo inputs after the detector
         module was updated to return PCodeInfo objects instead of dictionaries.
-        
+
         ORIGINAL PROBLEM:
         - Code expected pcode_info to be a dictionary with keys like 'sections'
         - New detector returns PCodeInfo objects with attributes like .sections
         - This mismatch caused AttributeError crashes during P-code decoding
-        
+
         COMPATIBILITY SOLUTION:
         - Check for object attributes using hasattr() instead of dictionary keys
         - Support both dict and object access patterns
@@ -167,7 +167,9 @@ class PCodeDecoderV2:
             "Decoding P-code for '%s' (%d bytes, sections: %s)",
             object_name,
             len(data),
-            bool(pcode_info and hasattr(pcode_info, 'sections') and pcode_info.sections),
+            bool(
+                pcode_info and hasattr(pcode_info, "sections") and pcode_info.sections
+            ),
         )
 
         # Initialize opcode table if not already loaded
@@ -192,8 +194,11 @@ class PCodeDecoderV2:
 
         # PCODEINFO OBJECT HANDLING: Support both dict and object formats
         # The detector now returns PCodeInfo objects, but we maintain backward compatibility
-        if pcode_info and hasattr(pcode_info, 'sections') and pcode_info.sections:
-            logger.info("P-code has %d sections (using PCodeInfo object)", len(pcode_info.sections))
+        if pcode_info and hasattr(pcode_info, "sections") and pcode_info.sections:
+            logger.info(
+                "P-code has %d sections (using PCodeInfo object)",
+                len(pcode_info.sections),
+            )
             all_instructions = []
 
             for idx, section in enumerate(pcode_info.sections):
@@ -263,17 +268,17 @@ class PCodeDecoderV2:
         if pcode_info:
             # COMPATIBILITY: Handle both object and dictionary formats
             # Extract all available PCodeInfo attributes safely
-            if hasattr(pcode_info, 'pcode_offset'):
-                metadata['pcode_offset'] = pcode_info.pcode_offset
-            if hasattr(pcode_info, 'pcode_length'):
-                metadata['pcode_length'] = pcode_info.pcode_length
-            if hasattr(pcode_info, 'object_type'):
-                metadata['object_type'] = pcode_info.object_type
-            if hasattr(pcode_info, 'confidence'):
-                metadata['confidence'] = pcode_info.confidence
+            if hasattr(pcode_info, "pcode_offset"):
+                metadata["pcode_offset"] = pcode_info.pcode_offset
+            if hasattr(pcode_info, "pcode_length"):
+                metadata["pcode_length"] = pcode_info.pcode_length
+            if hasattr(pcode_info, "object_type"):
+                metadata["object_type"] = pcode_info.object_type
+            if hasattr(pcode_info, "confidence"):
+                metadata["confidence"] = pcode_info.confidence
             # Store section count for analysis
-            if hasattr(pcode_info, 'sections') and pcode_info.sections:
-                metadata['section_count'] = len(pcode_info.sections)
+            if hasattr(pcode_info, "sections") and pcode_info.sections:
+                metadata["section_count"] = len(pcode_info.sections)
 
         return DecodedObject(
             name=object_name,
@@ -285,7 +290,7 @@ class PCodeDecoderV2:
 
     def get_version(self) -> str:
         """Get decoder version.
-        
+
         Returns:
             Version string for the decoder
         """
@@ -300,10 +305,10 @@ class PCodeDecoderV2:
         validate: bool = True,
     ) -> list[PCodeInstruction]:
         """Decode P-code bytes into instructions with enhanced safety checks.
-        
+
         ROBUSTNESS ENHANCEMENTS: This method includes several safety improvements
         to handle malformed or edge-case P-code data:
-        
+
         1. INFINITE LOOP PROTECTION: Safety checks to prevent decoder hangs
         2. NON-PCODE DETECTION: Early detection of non-P-code data patterns
         3. CONSECUTIVE RETURN LIMIT: Stop decoding after many RETURN instructions
@@ -419,16 +424,16 @@ class PCodeDecoderV2:
         base_offset: int,
     ) -> PCodeInstruction | None:
         """Decode the next instruction at current offset with comprehensive error handling.
-        
+
         ROBUST INSTRUCTION DECODING: This method includes extensive safety checks
         and error handling to gracefully process malformed P-code data:
-        
+
         1. BOUNDS CHECKING: Verify sufficient data for instruction + operands
         2. OPCODE VALIDATION: Check against version-specific opcode tables
         3. OPERAND PARSING: Safe extraction of instruction parameters
         4. ERROR RECOVERY: Continue decoding even with invalid instructions
         5. DEBUG LOGGING: Detailed information for troubleshooting
-        
+
         Returns None for invalid instructions rather than crashing.
         """
         if self.current_offset >= len(pcode):
@@ -514,15 +519,15 @@ class PCodeDecoderV2:
         expected_count: int,
     ) -> None:
         """Decode operands for an instruction with bounds checking.
-        
+
         SAFE OPERAND DECODING: This method safely extracts operands from P-code
         with comprehensive error handling:
-        
+
         1. BOUNDS VALIDATION: Ensure sufficient bytes for all operands
         2. SIZE DETERMINATION: Calculate operand sizes based on opcode type
         3. ENDIANNESS HANDLING: Proper little-endian decoding
         4. ERROR PROPAGATION: Raise exceptions for calling code to handle
-        
+
         PowerBuilder operand format notes:
         - Most operands are 1 or 2 bytes
         - Complex instructions (function calls) use 2-byte operands
@@ -563,10 +568,10 @@ class PCodeDecoderV2:
 
     def _get_operand_size(self, opcode: int, operand_index: int) -> int:
         """Get the size of an operand for a specific opcode.
-        
+
         POWERBUILDER OPERAND SIZING: This function implements PowerBuilder's
         operand size conventions based on instruction complexity:
-        
+
         SIZING RULES:
         - Simple instructions (arithmetic, stack ops): 1-byte operands
         - Complex instructions (calls, references): 2-byte operands

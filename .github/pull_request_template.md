@@ -24,9 +24,9 @@ Related to #
 
 <!-- List the specific changes made in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -80,8 +80,8 @@ Related to #
 <!-- Help reviewers know what to focus on -->
 
 ### Key areas to review:
-- 
-- 
+-
+-
 
 ### Out of scope for this PR:
-- 
+-

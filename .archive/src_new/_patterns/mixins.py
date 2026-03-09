@@ -10,7 +10,6 @@ These mixins capture the most frequently repeated patterns to ensure DRY code:
 from __future__ import annotations
 
 import logging
-import struct
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -25,9 +24,11 @@ ConfigDict = Dict[str, Any]
 # CONFIGURATION
 # ============================================================================
 
+
 @dataclass
 class BaseConfig:
     """Base configuration with common settings across all stages."""
+
     cache_enabled: bool = False
     parallel_enabled: bool = False
     recovery_enabled: bool = True
@@ -51,6 +52,7 @@ class BaseConfig:
 # ERROR HANDLING MIXIN
 # ============================================================================
 
+
 class ErrorHandlingMixin:
     """Standardized error handling found throughout the codebase."""
 
@@ -65,7 +67,7 @@ class ErrorHandlingMixin:
         error: Exception,
         context: str = "",
         recoverable: bool = True,
-        reraise: bool = True
+        reraise: bool = True,
     ) -> bool:
         """Handle error with standard logging and recovery.
 
@@ -76,7 +78,7 @@ class ErrorHandlingMixin:
         self._errors.append(f"{context}: {error}")
 
         # Get logger
-        logger = getattr(self, 'logger', logging.getLogger(__name__))
+        logger = getattr(self, "logger", logging.getLogger(__name__))
 
         logger.error(f"Error in {context}: {error}")
         logger.debug(f"Stack trace: {traceback.format_exc()}")
@@ -89,7 +91,7 @@ class ErrorHandlingMixin:
             return False
 
         # Attempt recovery if available
-        if recoverable and hasattr(self, '_attempt_recovery'):
+        if recoverable and hasattr(self, "_attempt_recovery"):
             try:
                 if self._attempt_recovery(error, context):
                     logger.info(f"Recovered from error in {context}")
@@ -118,6 +120,7 @@ class ErrorHandlingMixin:
 # VALIDATION MIXIN
 # ============================================================================
 
+
 class ValidationMixin:
     """Common validation patterns."""
 
@@ -126,7 +129,7 @@ class ValidationMixin:
         path: PathLike,
         must_exist: bool = True,
         must_be_file: bool = False,
-        must_be_dir: bool = False
+        must_be_dir: bool = False,
     ) -> bool:
         """Validate filesystem path.
 
@@ -150,9 +153,7 @@ class ValidationMixin:
         return True
 
     def validate_input(
-        self,
-        data: Any,
-        rules: Optional[List[Callable[[Any], bool]]] = None
+        self, data: Any, rules: Optional[List[Callable[[Any], bool]]] = None
     ) -> bool:
         """Validate input data against rules.
 
@@ -172,11 +173,7 @@ class ValidationMixin:
 
         return True
 
-    def validate_output(
-        self,
-        data: Any,
-        expected_type: Optional[type] = None
-    ) -> bool:
+    def validate_output(self, data: Any, expected_type: Optional[type] = None) -> bool:
         """Validate output data.
 
         Returns:
@@ -186,9 +183,7 @@ class ValidationMixin:
             ValueError: If validation fails
         """
         if expected_type and not isinstance(data, expected_type):
-            raise ValueError(
-                f"Wrong type. Expected {expected_type}, got {type(data)}"
-            )
+            raise ValueError(f"Wrong type. Expected {expected_type}, got {type(data)}")
         return True
 
 
@@ -196,14 +191,19 @@ class ValidationMixin:
 # CONFIGURATION MIXIN
 # ============================================================================
 
+
 class ConfigurableMixin:
     """Configuration management pattern."""
 
-    def __init__(self, *args, config: Optional[Union[ConfigDict, BaseConfig]] = None, **kwargs):
+    def __init__(
+        self, *args, config: Optional[Union[ConfigDict, BaseConfig]] = None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self._config = self._load_config(config)
 
-    def _load_config(self, config: Optional[Union[ConfigDict, BaseConfig]]) -> BaseConfig:
+    def _load_config(
+        self, config: Optional[Union[ConfigDict, BaseConfig]]
+    ) -> BaseConfig:
         """Load and validate configuration."""
         if config is None:
             return BaseConfig()
@@ -227,6 +227,7 @@ class ConfigurableMixin:
 # PROGRESS REPORTING MIXIN
 # ============================================================================
 
+
 class ProgressReportingMixin:
     """Progress reporting pattern used throughout pipeline stages."""
 
@@ -236,58 +237,50 @@ class ProgressReportingMixin:
         self._progress_enabled = True
 
     def start_task(
-        self,
-        task_id: str,
-        description: str,
-        total: Optional[int] = None
+        self, task_id: str, description: str, total: Optional[int] = None
     ) -> None:
         """Start a progress task."""
         self._tasks[task_id] = {
-            'description': description,
-            'total': total,
-            'current': 0,
-            'status': 'running'
+            "description": description,
+            "total": total,
+            "current": 0,
+            "status": "running",
         }
 
         # Log if available
-        if hasattr(self, 'logger'):
+        if hasattr(self, "logger"):
             self.logger.info(f"Started: {description}")
 
-    def update_task(
-        self,
-        task_id: str,
-        advance: int = 1,
-        **kwargs: Any
-    ) -> None:
+    def update_task(self, task_id: str, advance: int = 1, **kwargs: Any) -> None:
         """Update task progress."""
         if task_id in self._tasks:
-            self._tasks[task_id]['current'] += advance
+            self._tasks[task_id]["current"] += advance
 
             # Update any additional fields
             self._tasks[task_id].update(kwargs)
 
             # Log progress periodically
             task = self._tasks[task_id]
-            if task['total'] and hasattr(self, 'logger'):
-                progress = (task['current'] / task['total']) * 100
+            if task["total"] and hasattr(self, "logger"):
+                progress = (task["current"] / task["total"]) * 100
                 if progress % 20 == 0:  # Log every 20%
                     self.logger.info(f"{task['description']}: {progress:.0f}%")
 
     def complete_task(self, task_id: str) -> None:
         """Mark task as complete."""
         if task_id in self._tasks:
-            self._tasks[task_id]['status'] = 'completed'
+            self._tasks[task_id]["status"] = "completed"
 
-            if hasattr(self, 'logger'):
+            if hasattr(self, "logger"):
                 self.logger.info(f"Completed: {self._tasks[task_id]['description']}")
 
     def fail_task(self, task_id: str, error: str) -> None:
         """Mark task as failed."""
         if task_id in self._tasks:
-            self._tasks[task_id]['status'] = 'failed'
-            self._tasks[task_id]['error'] = error
+            self._tasks[task_id]["status"] = "failed"
+            self._tasks[task_id]["error"] = error
 
-            if hasattr(self, 'logger'):
+            if hasattr(self, "logger"):
                 self.logger.error(
                     f"Failed: {self._tasks[task_id]['description']} - {error}"
                 )

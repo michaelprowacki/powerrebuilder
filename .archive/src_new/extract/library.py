@@ -9,8 +9,8 @@ import logging
 from pathlib import Path
 from typing import AsyncIterator, Iterator, List, Optional
 
-from src_new._core import ExtractedObject, ObjectType, PBLEntry, PBLFile
-from src_new._patterns import BinaryReader, FileHandler
+from src_new._core import ExtractedObject, ObjectType, PBLEntry
+from src_new._patterns import FileHandler
 from .extractor import PBLParser
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,19 @@ class Library:
                 output_file = output_dir / entry.name
 
                 # Add extension if needed
-                if not any(entry.name.endswith(ext) for ext in [".sru", ".srw", ".srm", ".srd", ".srf", ".srs", ".sra", ".fun"]):
+                if not any(
+                    entry.name.endswith(ext)
+                    for ext in [
+                        ".sru",
+                        ".srw",
+                        ".srm",
+                        ".srd",
+                        ".srf",
+                        ".srs",
+                        ".sra",
+                        ".fun",
+                    ]
+                ):
                     ext_map = {
                         ObjectType.WINDOW: ".srw",
                         ObjectType.USER_OBJECT: ".sru",
@@ -111,7 +123,9 @@ class Library:
                         ObjectType.STRUCTURE: ".srs",
                         ObjectType.APPLICATION: ".sra",
                     }
-                    output_file = output_file.with_suffix(ext_map.get(entry.type, ".sru"))
+                    output_file = output_file.with_suffix(
+                        ext_map.get(entry.type, ".sru")
+                    )
 
                 # Write file
                 if self._is_text_data(data):
@@ -149,7 +163,9 @@ class Library:
         sample = data[:1000]
         try:
             sample.decode("utf-8")
-            text_chars = sum(1 for b in sample if b in range(32, 127) or b in [9, 10, 13])
+            text_chars = sum(
+                1 for b in sample if b in range(32, 127) or b in [9, 10, 13]
+            )
             return text_chars > len(sample) * 0.7
         except:
             return False

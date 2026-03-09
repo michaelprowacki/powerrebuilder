@@ -6,7 +6,6 @@ Following Scott Wlaschin's Functional Domain Modeling principles.
 """
 
 import sys
-from pathlib import Path
 
 
 def main():

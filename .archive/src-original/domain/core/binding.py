@@ -6,7 +6,7 @@ Pure data types following Scott Wlaschin's FDM principles.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
 
@@ -15,14 +15,16 @@ from datetime import datetime
 # FUNDAMENTAL NAMING CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Name:
     """A name/identifier in a program.
 
     Universal concept of naming things.
     """
+
     identifier: str
-    namespace: Optional['Namespace'] = None
+    namespace: Optional["Namespace"] = None
     is_qualified: bool = False  # Fully qualified name
 
 
@@ -32,23 +34,26 @@ class Binding:
 
     The fundamental concept from lambda calculus.
     """
+
     name: Name
-    target: 'BindingTarget'
-    scope: 'Scope'
+    target: "BindingTarget"
+    scope: "Scope"
     is_mutable: bool = False
-    binding_time: 'BindingTime' = None
+    binding_time: "BindingTime" = None
 
 
 @dataclass(frozen=True)
 class BindingTarget:
     """What a name can be bound to."""
-    target_type: 'BindingTargetType'
+
+    target_type: "BindingTargetType"
     value: Optional[Any] = None  # The actual value/reference
-    location: Optional['Location'] = None  # Memory location
+    location: Optional["Location"] = None  # Memory location
 
 
 class BindingTargetType(str, Enum):
     """Types of things names can refer to."""
+
     VALUE = "value"  # Bound to a value (R-value)
     LOCATION = "location"  # Bound to a location (L-value)
     TYPE = "type"  # Bound to a type
@@ -58,6 +63,7 @@ class BindingTargetType(str, Enum):
 
 class BindingTime(str, Enum):
     """When binding occurs."""
+
     COMPILE_TIME = "compile"  # Static binding
     LINK_TIME = "link"  # Linking phase
     LOAD_TIME = "load"  # Program load
@@ -68,21 +74,24 @@ class BindingTime(str, Enum):
 # SCOPE CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Scope:
     """Region where bindings are valid.
 
     Universal concept of visibility and lifetime.
     """
+
     name: str
-    scope_type: 'ScopeType'
-    parent: Optional['Scope'] = None  # Enclosing scope
+    scope_type: "ScopeType"
+    parent: Optional["Scope"] = None  # Enclosing scope
     bindings: Dict[str, Binding] = field(default_factory=dict)
     is_closed: bool = False  # Can new bindings be added
 
 
 class ScopeType(str, Enum):
     """Types of scopes."""
+
     GLOBAL = "global"  # Program-wide
     MODULE = "module"  # Module/file scope
     CLASS = "class"  # Class/object scope
@@ -97,7 +106,8 @@ class LexicalScope(Scope):
 
     Most modern languages use lexical scoping.
     """
-    definition_location: 'SourceLocation'
+
+    definition_location: "SourceLocation"
     captures: List[Binding] = field(default_factory=list)  # Closed-over bindings
 
 
@@ -107,12 +117,14 @@ class DynamicScope(Scope):
 
     Less common (Lisp, Perl, some shell scripts).
     """
-    call_stack: List['CallFrame']
+
+    call_stack: List["CallFrame"]
 
 
 # ============================================================================
 # ENVIRONMENT AND CONTEXT
 # ============================================================================
+
 
 @dataclass(frozen=True)
 class Environment:
@@ -120,8 +132,9 @@ class Environment:
 
     Maps names to their values/locations.
     """
+
     bindings: Dict[Name, BindingTarget]
-    parent: Optional['Environment'] = None  # Outer environment
+    parent: Optional["Environment"] = None  # Outer environment
     is_global: bool = False
 
 
@@ -131,6 +144,7 @@ class Context:
 
     The complete context for evaluating expressions.
     """
+
     environment: Environment
     scope_chain: List[Scope]
     this_binding: Optional[BindingTarget] = None  # For OOP
@@ -140,6 +154,7 @@ class Context:
 @dataclass(frozen=True)
 class CallFrame:
     """A frame in the call stack."""
+
     function_name: Name
     local_environment: Environment
     return_address: Any  # Where to return
@@ -150,22 +165,25 @@ class CallFrame:
 # NAMESPACE CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Namespace:
     """Named collection of bindings.
 
     Prevents name collisions.
     """
+
     name: Name
-    parent: Optional['Namespace'] = None
+    parent: Optional["Namespace"] = None
     members: Dict[str, Binding] = field(default_factory=dict)
-    imports: List['Import'] = field(default_factory=list)
-    exports: List['Export'] = field(default_factory=list)
+    imports: List["Import"] = field(default_factory=list)
+    exports: List["Export"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class Import:
     """Importing names from another namespace."""
+
     source_namespace: Namespace
     imported_names: List[Name]
     alias: Optional[Name] = None  # Import as different name
@@ -175,6 +193,7 @@ class Import:
 @dataclass(frozen=True)
 class Export:
     """Exporting names from a namespace."""
+
     exported_name: Name
     internal_name: Name  # May be different from exported
     is_default: bool = False
@@ -184,12 +203,14 @@ class Export:
 # SPECIAL BINDING CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Location:
     """Memory location (L-value from Strachey).
 
     Where a value is stored.
     """
+
     address: Any  # Abstract address
     size: Optional[int] = None
     is_stack: bool = True  # Stack vs heap
@@ -199,6 +220,7 @@ class Location:
 @dataclass(frozen=True)
 class Reference:
     """Reference/pointer to a location."""
+
     location: Location
     is_nullable: bool = False
     is_mutable: bool = True
@@ -210,6 +232,7 @@ class Closure:
 
     Bindings from enclosing scope.
     """
+
     function: Any  # Would be Function from computation.py
     captured_bindings: Dict[Name, BindingTarget]
     capturing_scope: Scope
@@ -218,6 +241,7 @@ class Closure:
 @dataclass(frozen=True)
 class ThisBinding:
     """The 'this'/'self' binding in OOP."""
+
     object_instance: Any
     class_scope: Scope
     is_bound: bool = True  # False for unbound methods
@@ -227,9 +251,11 @@ class ThisBinding:
 # SHADOWING AND RESOLUTION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Shadowing:
     """Name shadowing - inner binding hides outer."""
+
     inner_binding: Binding
     outer_binding: Binding
     is_intentional: bool = False
@@ -238,6 +264,7 @@ class Shadowing:
 @dataclass(frozen=True)
 class NameResolution:
     """Process of resolving a name to its binding."""
+
     name: Name
     search_path: List[Scope]  # Scopes searched in order
     resolved_binding: Optional[Binding] = None
@@ -247,6 +274,7 @@ class NameResolution:
 @dataclass(frozen=True)
 class Qualification:
     """Fully qualified name."""
+
     namespace_path: List[Name]
     local_name: Name
     separator: str = "."  # . or :: or : etc.
@@ -256,9 +284,11 @@ class Qualification:
 # MUTABILITY AND ALIASING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class MutableBinding:
     """Binding that can be changed."""
+
     binding: Binding
     can_rebind: bool = True  # Can point to different target
     can_mutate: bool = True  # Can mutate the target
@@ -267,6 +297,7 @@ class MutableBinding:
 @dataclass(frozen=True)
 class Alias:
     """Multiple names for same location/value."""
+
     primary_binding: Binding
     alias_bindings: List[Binding]
     is_strong: bool = True  # Strong vs weak reference
@@ -275,6 +306,7 @@ class Alias:
 @dataclass(frozen=True)
 class ImmutableBinding:
     """Binding that cannot be changed."""
+
     binding: Binding
     is_deeply_immutable: bool = True  # Transitive immutability
 
@@ -283,9 +315,11 @@ class ImmutableBinding:
 # DOMAIN EVENTS (Colocated with Binding aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class NameBound:
     """Event: Name was bound to a value/location."""
+
     binding: Binding
     scope: Scope
     timestamp: datetime
@@ -294,6 +328,7 @@ class NameBound:
 @dataclass(frozen=True)
 class NameRebound:
     """Event: Mutable binding was changed."""
+
     binding: Binding
     old_target: BindingTarget
     new_target: BindingTarget
@@ -303,6 +338,7 @@ class NameRebound:
 @dataclass(frozen=True)
 class NameResolved:
     """Event: Name was resolved to its binding."""
+
     resolution: NameResolution
     success: bool
     timestamp: datetime
@@ -311,6 +347,7 @@ class NameResolved:
 @dataclass(frozen=True)
 class ScopeEntered:
     """Event: Execution entered a new scope."""
+
     scope: Scope
     context: Context
     timestamp: datetime
@@ -319,6 +356,7 @@ class ScopeEntered:
 @dataclass(frozen=True)
 class ScopeExited:
     """Event: Execution left a scope."""
+
     scope: Scope
     bindings_freed: List[Binding]
     timestamp: datetime
@@ -327,6 +365,7 @@ class ScopeExited:
 @dataclass(frozen=True)
 class NameShadowed:
     """Event: Name shadowing occurred."""
+
     shadowing: Shadowing
     timestamp: datetime
 
@@ -335,9 +374,11 @@ class NameShadowed:
 # SOURCE LOCATION (for error reporting)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SourceLocation:
     """Location in source code."""
+
     file: str
     line: int
     column: int

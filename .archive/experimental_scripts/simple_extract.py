@@ -7,7 +7,7 @@ import struct
 import logging
 import sys
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class SimplePBDExtractor:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 data = f.read()
 
             # PowerBuilder library files have specific structure
@@ -40,7 +40,7 @@ class SimplePBDExtractor:
             offset = 0
             while offset < len(data) - 4:
                 # Look for HDR* marker
-                if data[offset:offset+4] == b'HDR*':
+                if data[offset : offset + 4] == b"HDR*":
                     logger.info(f"Found HDR* marker at offset {offset}")
 
                     # Try to extract entry
@@ -63,7 +63,7 @@ class SimplePBDExtractor:
             # Also try to extract based on ENT* markers (entry data)
             offset = 0
             while offset < len(data) - 4:
-                if data[offset:offset+4] == b'ENT*':
+                if data[offset : offset + 4] == b"ENT*":
                     logger.info(f"Found ENT* marker at offset {offset}")
 
                     # Try to extract P-code
@@ -84,7 +84,9 @@ class SimplePBDExtractor:
 
             # If no HDR*/ENT* markers found, try alternative extraction
             if extracted == 0:
-                logger.info("No HDR*/ENT* markers found, trying alternative extraction...")
+                logger.info(
+                    "No HDR*/ENT* markers found, trying alternative extraction..."
+                )
                 extracted = self._extract_alternative(data, output_dir)
 
             return extracted
@@ -103,22 +105,22 @@ class SimplePBDExtractor:
             if offset + 4 > len(data):
                 return None
 
-            entry_size = struct.unpack('<I', data[offset:offset+4])[0]
+            entry_size = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             if entry_size == 0 or entry_size > len(data):
                 return None
 
             # Read entry data
-            entry_data = data[offset:offset+min(entry_size, len(data)-offset)]
+            entry_data = data[offset : offset + min(entry_size, len(data) - offset)]
 
             # Try to extract name from entry
             # PowerBuilder entries often have the name in the first part
-            name_end = entry_data.find(b'\x00')
+            name_end = entry_data.find(b"\x00")
             if name_end > 0:
-                name = entry_data[:name_end].decode('latin-1', errors='ignore')
+                name = entry_data[:name_end].decode("latin-1", errors="ignore")
                 # Clean the name
-                name = ''.join(c for c in name if c.isalnum() or c in '._-')
+                name = "".join(c for c in name if c.isalnum() or c in "._-")
 
                 if name:
                     return f"{name}.fun", entry_data
@@ -144,7 +146,7 @@ class SimplePBDExtractor:
 
             # Look for next marker
             for i in range(offset, min(offset + 65536, len(data) - 4)):
-                if data[i:i+4] in [b'HDR*', b'ENT*', b'NOD*', b'FRE*']:
+                if data[i : i + 4] in [b"HDR*", b"ENT*", b"NOD*", b"FRE*"]:
                     end_offset = i
                     break
 
@@ -172,10 +174,10 @@ class SimplePBDExtractor:
             while offset < len(data) - 100:
                 # Look for common PowerBuilder bytecode patterns
                 # 0x01 0x00 often starts a function
-                if data[offset:offset+2] == b'\x01\x00':
+                if data[offset : offset + 2] == b"\x01\x00":
                     # Try to extract a chunk as potential P-code
                     chunk_size = min(4096, len(data) - offset)
-                    chunk = data[offset:offset+chunk_size]
+                    chunk = data[offset : offset + chunk_size]
 
                     # Save as potential P-code file
                     output_file = output_dir / f"potential_pcode_{offset:08x}.fun"
@@ -196,7 +198,7 @@ class SimplePBDExtractor:
             if extracted == 0:
                 chunk_size = 65536  # 64KB chunks
                 for i in range(0, len(data), chunk_size):
-                    chunk = data[i:i+chunk_size]
+                    chunk = data[i : i + chunk_size]
                     if len(chunk) > 0:
                         output_file = output_dir / f"chunk_{i:08x}.dat"
                         output_file.write_bytes(chunk)

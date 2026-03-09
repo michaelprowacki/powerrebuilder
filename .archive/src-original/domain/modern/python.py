@@ -14,8 +14,10 @@ from enum import Enum
 # PYTHON LANGUAGE TYPES
 # ============================================================================
 
+
 class PythonType(str, Enum):
     """Python type hints."""
+
     INT = "int"
     FLOAT = "float"
     STR = "str"
@@ -36,6 +38,7 @@ class PythonType(str, Enum):
 @dataclass(frozen=True)
 class PythonVariable:
     """A Python variable."""
+
     name: str
     type_hint: Optional[str] = None
     default_value: Optional[Any] = None
@@ -46,6 +49,7 @@ class PythonVariable:
 @dataclass(frozen=True)
 class PythonParameter:
     """A function parameter."""
+
     name: str
     type_hint: Optional[str] = None
     default: Optional[Any] = None
@@ -58,6 +62,7 @@ class PythonParameter:
 @dataclass(frozen=True)
 class PythonFunction:
     """A Python function."""
+
     name: str
     parameters: List[PythonParameter] = field(default_factory=list)
     return_type: Optional[str] = None
@@ -71,13 +76,14 @@ class PythonFunction:
 @dataclass(frozen=True)
 class PythonClass:
     """A Python class."""
+
     name: str
     bases: List[str] = field(default_factory=list)
     metaclass: Optional[str] = None
     class_variables: List[PythonVariable] = field(default_factory=list)
     instance_variables: List[PythonVariable] = field(default_factory=list)
     methods: List[PythonFunction] = field(default_factory=list)
-    properties: List['PythonProperty'] = field(default_factory=list)
+    properties: List["PythonProperty"] = field(default_factory=list)
     docstring: Optional[str] = None
     decorators: List[str] = field(default_factory=list)
 
@@ -85,6 +91,7 @@ class PythonClass:
 @dataclass(frozen=True)
 class PythonProperty:
     """A Python property."""
+
     name: str
     getter: Optional[PythonFunction] = None
     setter: Optional[PythonFunction] = None
@@ -95,8 +102,9 @@ class PythonProperty:
 @dataclass(frozen=True)
 class PythonModule:
     """A Python module."""
+
     name: str
-    imports: List['ImportStatement'] = field(default_factory=list)
+    imports: List["ImportStatement"] = field(default_factory=list)
     classes: List[PythonClass] = field(default_factory=list)
     functions: List[PythonFunction] = field(default_factory=list)
     variables: List[PythonVariable] = field(default_factory=list)
@@ -106,6 +114,7 @@ class PythonModule:
 @dataclass(frozen=True)
 class ImportStatement:
     """An import statement."""
+
     module: str
     names: List[str] = field(default_factory=list)  # Empty for 'import module'
     alias: Optional[str] = None
@@ -116,12 +125,14 @@ class ImportStatement:
 # PYDANTIC MODELS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PydanticModel:
     """A Pydantic model."""
+
     name: str
-    fields: List['PydanticField'] = field(default_factory=list)
-    validators: List['PydanticValidator'] = field(default_factory=list)
+    fields: List["PydanticField"] = field(default_factory=list)
+    validators: List["PydanticValidator"] = field(default_factory=list)
     config: Dict[str, Any] = field(default_factory=dict)
     base_model: str = "BaseModel"
 
@@ -129,6 +140,7 @@ class PydanticModel:
 @dataclass(frozen=True)
 class PydanticField:
     """A Pydantic field."""
+
     name: str
     type: str
     default: Optional[Any] = None
@@ -148,6 +160,7 @@ class PydanticField:
 @dataclass(frozen=True)
 class PydanticValidator:
     """A Pydantic validator."""
+
     name: str
     fields: List[str]
     is_root: bool = False
@@ -160,20 +173,23 @@ class PydanticValidator:
 # SQLMODEL/SQLALCHEMY TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SQLModel:
     """A SQLModel/SQLAlchemy model."""
+
     name: str
     table_name: str
-    fields: List['SQLField'] = field(default_factory=list)
-    relationships: List['SQLRelationship'] = field(default_factory=list)
-    indexes: List['SQLIndex'] = field(default_factory=list)
-    constraints: List['SQLConstraint'] = field(default_factory=list)
+    fields: List["SQLField"] = field(default_factory=list)
+    relationships: List["SQLRelationship"] = field(default_factory=list)
+    indexes: List["SQLIndex"] = field(default_factory=list)
+    constraints: List["SQLConstraint"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class SQLField:
     """A database field."""
+
     name: str
     type: str  # Integer, String, DateTime, etc.
     primary_key: bool = False
@@ -188,6 +204,7 @@ class SQLField:
 @dataclass(frozen=True)
 class SQLRelationship:
     """A database relationship."""
+
     name: str
     target_model: str
     relationship_type: str  # one-to-one, one-to-many, many-to-many
@@ -199,6 +216,7 @@ class SQLRelationship:
 @dataclass(frozen=True)
 class SQLIndex:
     """A database index."""
+
     name: str
     fields: List[str]
     unique: bool = False
@@ -207,6 +225,7 @@ class SQLIndex:
 @dataclass(frozen=True)
 class SQLConstraint:
     """A database constraint."""
+
     name: str
     type: str  # check, unique, foreign_key
     expression: str
@@ -216,9 +235,11 @@ class SQLConstraint:
 # LITESTAR FRAMEWORK TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class LitestarRoute:
     """A Litestar route."""
+
     path: str
     method: str  # GET, POST, PUT, DELETE, etc.
     handler: str  # Function name
@@ -232,6 +253,7 @@ class LitestarRoute:
 @dataclass(frozen=True)
 class LitestarController:
     """A Litestar controller."""
+
     name: str
     path: str
     routes: List[LitestarRoute] = field(default_factory=list)
@@ -243,18 +265,20 @@ class LitestarController:
 @dataclass(frozen=True)
 class LitestarApp:
     """A Litestar application."""
+
     name: str
     controllers: List[LitestarController] = field(default_factory=list)
-    middleware: List['LitestarMiddleware'] = field(default_factory=list)
+    middleware: List["LitestarMiddleware"] = field(default_factory=list)
     exception_handlers: Dict[str, str] = field(default_factory=dict)
     on_startup: List[str] = field(default_factory=list)
     on_shutdown: List[str] = field(default_factory=list)
-    cors_config: Optional['CORSConfig'] = None
+    cors_config: Optional["CORSConfig"] = None
 
 
 @dataclass(frozen=True)
 class LitestarMiddleware:
     """Middleware configuration."""
+
     name: str
     type: str
     config: Dict[str, Any] = field(default_factory=dict)
@@ -263,6 +287,7 @@ class LitestarMiddleware:
 @dataclass(frozen=True)
 class CORSConfig:
     """CORS configuration."""
+
     allow_origins: List[str] = field(default_factory=list)
     allow_methods: List[str] = field(default_factory=list)
     allow_headers: List[str] = field(default_factory=list)
@@ -275,9 +300,11 @@ class CORSConfig:
 # DEPENDENCY INJECTION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Dependency:
     """A dependency injection definition."""
+
     name: str
     type: str
     scope: str = "singleton"  # singleton, request, transient
@@ -288,6 +315,7 @@ class Dependency:
 @dataclass(frozen=True)
 class ServiceProvider:
     """Service provider configuration."""
+
     services: List[Dependency] = field(default_factory=list)
     modules: List[str] = field(default_factory=list)
 
@@ -296,9 +324,11 @@ class ServiceProvider:
 # TESTING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class TestCase:
     """A test case."""
+
     name: str
     test_class: Optional[str] = None
     fixtures: List[str] = field(default_factory=list)
@@ -309,6 +339,7 @@ class TestCase:
 @dataclass(frozen=True)
 class TestFixture:
     """A test fixture."""
+
     name: str
     scope: str = "function"  # function, class, module, session
     autouse: bool = False
@@ -319,18 +350,21 @@ class TestFixture:
 # PROJECT STRUCTURE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PythonPackage:
     """A Python package."""
+
     name: str
     modules: List[PythonModule] = field(default_factory=list)
-    subpackages: List['PythonPackage'] = field(default_factory=list)
+    subpackages: List["PythonPackage"] = field(default_factory=list)
     init_file: Optional[PythonModule] = None
 
 
 @dataclass(frozen=True)
 class ProjectStructure:
     """Python project structure."""
+
     name: str
     root_package: PythonPackage
     tests: List[TestCase] = field(default_factory=list)

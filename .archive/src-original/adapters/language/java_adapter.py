@@ -6,21 +6,33 @@ Handles JAR files, class files, and JVM bytecode.
 
 import struct
 import zipfile
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from io import BytesIO
 
 from src_new._core.result import Result, Success, Failure
 from src_new._core.language_adapter import (
-    BaseLanguageAdapter, SupportedLanguage, LanguageSignature,
-    AdapterCapabilities, CapabilityProvider
+    BaseLanguageAdapter,
+    SupportedLanguage,
+    LanguageSignature,
+    AdapterCapabilities,
+    CapabilityProvider,
 )
 from src_new._core.legacy_modernization_types import (
-    CompiledArchive, Bytecode, SourceCode,
-    ArchiveHeader, CompiledObject, LegacyObjectType,
-    GenericAST, ASTNodeType, LegacyApplicationModel,
-    UIContainer, CodeModule, FunctionDef,
-    ArchiveExtractionError, DecompilationError,
-    SourceParseError, ModelBuildError
+    CompiledArchive,
+    Bytecode,
+    SourceCode,
+    ArchiveHeader,
+    CompiledObject,
+    LegacyObjectType,
+    GenericAST,
+    ASTNodeType,
+    LegacyApplicationModel,
+    UIContainer,
+    CodeModule,
+    ArchiveExtractionError,
+    DecompilationError,
+    SourceParseError,
+    ModelBuildError,
 )
 
 
@@ -31,23 +43,20 @@ class JavaAdapter(BaseLanguageAdapter, CapabilityProvider):
     """
 
     def __init__(self):
-        super().__init__(
-            SupportedLanguage.JAVA,
-            ['.jar', '.war', '.ear', '.class']
-        )
+        super().__init__(SupportedLanguage.JAVA, [".jar", ".war", ".ear", ".class"])
 
     def get_signatures(self) -> List[LanguageSignature]:
         """Java file signatures."""
         return [
             LanguageSignature(
-                magic_bytes=b'PK\x03\x04',  # ZIP/JAR signature
-                extensions=['.jar', '.war', '.ear'],
-                language=SupportedLanguage.JAVA
+                magic_bytes=b"PK\x03\x04",  # ZIP/JAR signature
+                extensions=[".jar", ".war", ".ear"],
+                language=SupportedLanguage.JAVA,
             ),
             LanguageSignature(
-                magic_bytes=b'\xCA\xFE\xBA\xBE',  # Java class file magic
-                extensions=['.class'],
-                language=SupportedLanguage.JAVA
+                magic_bytes=b"\xca\xfe\xba\xbe",  # Java class file magic
+                extensions=[".class"],
+                language=SupportedLanguage.JAVA,
             ),
         ]
 
@@ -57,79 +66,92 @@ class JavaAdapter(BaseLanguageAdapter, CapabilityProvider):
             can_extract=True,
             can_decompile=True,
             can_parse=True,
-            has_ui_support=True,         # Swing, AWT, JavaFX
-            has_data_support=True,       # JDBC, JPA
-            has_report_support=False,    # Limited report support
+            has_ui_support=True,  # Swing, AWT, JavaFX
+            has_data_support=True,  # JDBC, JPA
+            has_report_support=False,  # Limited report support
             supported_targets=[
-                'flutter', 'react', 'vue', 'angular',
-                'spring-boot', 'quarkus', 'micronaut'
-            ]
+                "flutter",
+                "react",
+                "vue",
+                "angular",
+                "spring-boot",
+                "quarkus",
+                "micronaut",
+            ],
         )
 
-    def parse_archive_header(self, archive: CompiledArchive) -> Result[ArchiveHeader, ArchiveExtractionError]:
+    def parse_archive_header(
+        self, archive: CompiledArchive
+    ) -> Result[ArchiveHeader, ArchiveExtractionError]:
         """Parse JAR/WAR/EAR header (ZIP-based format)."""
         data = bytes(archive)
 
         # Check if it's a ZIP file
-        if not data.startswith(b'PK'):
+        if not data.startswith(b"PK"):
             # Maybe it's a raw class file
-            if data.startswith(b'\xCA\xFE\xBA\xBE'):
-                return Success(ArchiveHeader(
-                    format_signature="CLASS",
-                    format_version="1.0",
-                    compiler_version=self._get_class_version(data),
-                    object_count=1,  # Single class file
-                    creation_timestamp=None,
-                    metadata={'type': 'class_file'}
-                ))
+            if data.startswith(b"\xca\xfe\xba\xbe"):
+                return Success(
+                    ArchiveHeader(
+                        format_signature="CLASS",
+                        format_version="1.0",
+                        compiler_version=self._get_class_version(data),
+                        object_count=1,  # Single class file
+                        creation_timestamp=None,
+                        metadata={"type": "class_file"},
+                    )
+                )
             else:
-                return Failure(ArchiveExtractionError(
-                    error_type="InvalidFormat",
-                    message="Not a Java archive or class file",
-                    archive_name="unknown",
-                    offset=0
-                ))
+                return Failure(
+                    ArchiveExtractionError(
+                        error_type="InvalidFormat",
+                        message="Not a Java archive or class file",
+                        archive_name="unknown",
+                        offset=0,
+                    )
+                )
 
         # Parse as JAR (ZIP format)
         try:
-            with zipfile.ZipFile(BytesIO(data), 'r') as jar:
+            with zipfile.ZipFile(BytesIO(data), "r") as jar:
                 # Count class files
-                class_files = [f for f in jar.namelist() if f.endswith('.class')]
+                class_files = [f for f in jar.namelist() if f.endswith(".class")]
 
                 # Check for manifest
                 manifest_data = {}
-                if 'META-INF/MANIFEST.MF' in jar.namelist():
-                    manifest = jar.read('META-INF/MANIFEST.MF').decode('utf-8')
+                if "META-INF/MANIFEST.MF" in jar.namelist():
+                    manifest = jar.read("META-INF/MANIFEST.MF").decode("utf-8")
                     # Parse manifest (simplified)
-                    for line in manifest.split('\n'):
-                        if ':' in line:
-                            key, value = line.split(':', 1)
+                    for line in manifest.split("\n"):
+                        if ":" in line:
+                            key, value = line.split(":", 1)
                             manifest_data[key.strip()] = value.strip()
 
-                return Success(ArchiveHeader(
-                    format_signature="JAR",
-                    format_version="1.0",
-                    compiler_version=manifest_data.get('Build-Jdk', 'Unknown'),
-                    object_count=len(class_files),
-                    creation_timestamp=manifest_data.get('Build-Date'),
-                    metadata={
-                        'main_class': manifest_data.get('Main-Class'),
-                        'total_entries': len(jar.namelist()),
-                        'manifest': manifest_data
-                    }
-                ))
+                return Success(
+                    ArchiveHeader(
+                        format_signature="JAR",
+                        format_version="1.0",
+                        compiler_version=manifest_data.get("Build-Jdk", "Unknown"),
+                        object_count=len(class_files),
+                        creation_timestamp=manifest_data.get("Build-Date"),
+                        metadata={
+                            "main_class": manifest_data.get("Main-Class"),
+                            "total_entries": len(jar.namelist()),
+                            "manifest": manifest_data,
+                        },
+                    )
+                )
         except zipfile.BadZipFile as e:
-            return Failure(ArchiveExtractionError(
-                error_type="InvalidFormat",
-                message=f"Invalid JAR format: {e}",
-                archive_name="unknown",
-                offset=0
-            ))
+            return Failure(
+                ArchiveExtractionError(
+                    error_type="InvalidFormat",
+                    message=f"Invalid JAR format: {e}",
+                    archive_name="unknown",
+                    offset=0,
+                )
+            )
 
     def extract_objects(
-        self,
-        archive: CompiledArchive,
-        header: ArchiveHeader
+        self, archive: CompiledArchive, header: ArchiveHeader
     ) -> Result[List[CompiledObject], ArchiveExtractionError]:
         """Extract Java class files from JAR."""
         data = bytes(archive)
@@ -138,75 +160,89 @@ class JavaAdapter(BaseLanguageAdapter, CapabilityProvider):
         if header.format_signature == "CLASS":
             # Single class file
             class_name = self._extract_class_name(data)
-            objects.append(CompiledObject(
-                object_name=class_name,
-                object_type=LegacyObjectType.CLASS,
-                bytecode=Bytecode(data),
-                source=None,
-                resources=[],
-                metadata={'java_version': header.compiler_version}
-            ))
+            objects.append(
+                CompiledObject(
+                    object_name=class_name,
+                    object_type=LegacyObjectType.CLASS,
+                    bytecode=Bytecode(data),
+                    source=None,
+                    resources=[],
+                    metadata={"java_version": header.compiler_version},
+                )
+            )
         else:
             # JAR file
             try:
-                with zipfile.ZipFile(BytesIO(data), 'r') as jar:
+                with zipfile.ZipFile(BytesIO(data), "r") as jar:
                     for filename in jar.namelist():
-                        if filename.endswith('.class'):
+                        if filename.endswith(".class"):
                             class_data = jar.read(filename)
-                            class_name = filename.replace('/', '.').replace('.class', '')
+                            class_name = filename.replace("/", ".").replace(
+                                ".class", ""
+                            )
 
                             # Determine object type
-                            if 'Swing' in class_name or 'AWT' in class_name:
+                            if "Swing" in class_name or "AWT" in class_name:
                                 obj_type = LegacyObjectType.UI_CONTAINER
-                            elif 'DAO' in class_name or 'Repository' in class_name:
+                            elif "DAO" in class_name or "Repository" in class_name:
                                 obj_type = LegacyObjectType.DATA_MODEL
                             else:
                                 obj_type = LegacyObjectType.CLASS
 
-                            objects.append(CompiledObject(
-                                object_name=class_name,
-                                object_type=obj_type,
-                                bytecode=Bytecode(class_data),
-                                source=None,
-                                resources=[],
-                                metadata={'path': filename}
-                            ))
+                            objects.append(
+                                CompiledObject(
+                                    object_name=class_name,
+                                    object_type=obj_type,
+                                    bytecode=Bytecode(class_data),
+                                    source=None,
+                                    resources=[],
+                                    metadata={"path": filename},
+                                )
+                            )
             except Exception as e:
-                return Failure(ArchiveExtractionError(
-                    error_type="ExtractError",
-                    message=f"Failed to extract from JAR: {e}",
-                    archive_name="unknown",
-                    offset=0
-                ))
+                return Failure(
+                    ArchiveExtractionError(
+                        error_type="ExtractError",
+                        message=f"Failed to extract from JAR: {e}",
+                        archive_name="unknown",
+                        offset=0,
+                    )
+                )
 
         return Success(objects)
 
-    def analyze_bytecode(self, bytecode: Bytecode) -> Result[Dict[str, Any], DecompilationError]:
+    def analyze_bytecode(
+        self, bytecode: Bytecode
+    ) -> Result[Dict[str, Any], DecompilationError]:
         """Analyze JVM bytecode structure."""
         data = bytes(bytecode)
 
-        if not data.startswith(b'\xCA\xFE\xBA\xBE'):
-            return Failure(DecompilationError(
-                error_type="InvalidBytecode",
-                message="Not a valid Java class file",
-                bytecode_offset=0
-            ))
+        if not data.startswith(b"\xca\xfe\xba\xbe"):
+            return Failure(
+                DecompilationError(
+                    error_type="InvalidBytecode",
+                    message="Not a valid Java class file",
+                    bytecode_offset=0,
+                )
+            )
 
         # Get class file version
-        major = struct.unpack('>H', data[6:8])[0]
-        minor = struct.unpack('>H', data[4:6])[0]
+        major = struct.unpack(">H", data[6:8])[0]
+        minor = struct.unpack(">H", data[4:6])[0]
 
         analysis = {
-            'format': 'jvm_bytecode',
-            'version': f"{major}.{minor}",
-            'java_version': self._major_to_java_version(major),
-            'size': len(data),
-            'constant_pool_offset': 10,  # After magic, minor, major
+            "format": "jvm_bytecode",
+            "version": f"{major}.{minor}",
+            "java_version": self._major_to_java_version(major),
+            "size": len(data),
+            "constant_pool_offset": 10,  # After magic, minor, major
         }
 
         return Success(analysis)
 
-    def decompile_bytecode(self, bytecode: Bytecode) -> Result[SourceCode, DecompilationError]:
+    def decompile_bytecode(
+        self, bytecode: Bytecode
+    ) -> Result[SourceCode, DecompilationError]:
         """Decompile JVM bytecode to Java source."""
         # In a real implementation, this would use a Java decompiler
         # like Procyon, CFR, or FernFlower
@@ -236,20 +272,20 @@ public class {class_name} {{
         code = str(source)
 
         # Simplified parsing - real implementation would use JavaParser
-        if 'extends JFrame' in code or 'extends JPanel' in code:
+        if "extends JFrame" in code or "extends JPanel" in code:
             node_type = ASTNodeType.UI_CONTAINER_DEF
-        elif 'interface' in code:
+        elif "interface" in code:
             node_type = ASTNodeType.CLASS_DEF
-        elif 'class' in code:
+        elif "class" in code:
             node_type = ASTNodeType.CLASS_DEF
         else:
             node_type = ASTNodeType.MODULE
 
         # Extract class name (simplified)
         class_name = "UnknownClass"
-        if 'class ' in code:
-            start = code.index('class ') + 6
-            end = code.find(' ', start)
+        if "class " in code:
+            start = code.index("class ") + 6
+            end = code.find(" ", start)
             if end > start:
                 class_name = code[start:end]
 
@@ -257,58 +293,52 @@ public class {class_name} {{
             node_type=node_type,
             name=class_name,
             children=(),
-            attributes={'source': code},
-            source_location=(1, 1)
+            attributes={"source": code},
+            source_location=(1, 1),
         )
 
         return Success(ast)
 
-    def extract_symbols(self, ast: GenericAST) -> Result[Dict[str, Any], ModelBuildError]:
+    def extract_symbols(
+        self, ast: GenericAST
+    ) -> Result[Dict[str, Any], ModelBuildError]:
         """Extract symbols from Java AST."""
         symbols = {}
 
         if ast.node_type == ASTNodeType.CLASS_DEF:
-            symbols[ast.name] = {
-                'type': 'class',
-                'properties': ast.attributes
-            }
+            symbols[ast.name] = {"type": "class", "properties": ast.attributes}
         elif ast.node_type == ASTNodeType.UI_CONTAINER_DEF:
-            symbols[ast.name] = {
-                'type': 'ui_class',
-                'properties': ast.attributes
-            }
+            symbols[ast.name] = {"type": "ui_class", "properties": ast.attributes}
 
         return Success(symbols)
 
     def build_model(
-        self,
-        symbols: Dict[str, Any],
-        asts: List[GenericAST]
+        self, symbols: Dict[str, Any], asts: List[GenericAST]
     ) -> Result[LegacyApplicationModel, ModelBuildError]:
         """Build Java application model."""
         ui_containers = {}
         code_modules = {}
 
         for name, symbol in symbols.items():
-            if symbol['type'] == 'ui_class':
+            if symbol["type"] == "ui_class":
                 # Swing/AWT UI class
                 ui_containers[name] = UIContainer(
                     name=name,
-                    container_type='jframe',
+                    container_type="jframe",
                     title=name,
                     size=(800, 600),
                     controls=[],
                     event_handlers=[],
-                    properties={}
+                    properties={},
                 )
-            elif symbol['type'] == 'class':
+            elif symbol["type"] == "class":
                 # Regular Java class
                 code_modules[name] = CodeModule(
                     name=name,
-                    module_type='class',
+                    module_type="class",
                     functions=[],
                     variables=[],
-                    dependencies=[]
+                    dependencies=[],
                 )
 
         model = LegacyApplicationModel(
@@ -324,7 +354,7 @@ public class {class_name} {{
             resources={},
             configurations={},
             external_libraries=[],
-            database_connections=[]
+            database_connections=[],
         )
 
         return Success(model)
@@ -334,7 +364,7 @@ public class {class_name} {{
     def _get_class_version(self, data: bytes) -> str:
         """Get Java version from class file."""
         if len(data) > 7:
-            major = struct.unpack('>H', data[6:8])[0]
+            major = struct.unpack(">H", data[6:8])[0]
             return self._major_to_java_version(major)
         return "Unknown"
 
@@ -371,15 +401,17 @@ public class {class_name} {{
         # Real implementation would parse constant pool
         try:
             # Look for common patterns
-            if b'java/lang/Object' in class_data:
+            if b"java/lang/Object" in class_data:
                 # Try to find class name before Object reference
-                idx = class_data.find(b'java/lang/Object')
+                idx = class_data.find(b"java/lang/Object")
                 # Search backward for potential class name
                 for i in range(idx - 1, max(0, idx - 100), -1):
                     if class_data[i] == 0:  # String terminator
-                        potential_name = class_data[i+1:idx].decode('utf-8', errors='ignore')
-                        if '/' in potential_name:
-                            return potential_name.split('/')[-1]
+                        potential_name = class_data[i + 1 : idx].decode(
+                            "utf-8", errors="ignore"
+                        )
+                        if "/" in potential_name:
+                            return potential_name.split("/")[-1]
         except:
             pass
 

@@ -3,7 +3,7 @@ type w_customer from window {
         text = "Save"
         enabled = true
     }
-    
+
     dw_main: datawindow {
         dataobject = "d_customer_list"
         visible = true
@@ -16,4 +16,4 @@ type w_customer from window {
     on create() {
         dw_main.retrieve();
     }
-} 
+}

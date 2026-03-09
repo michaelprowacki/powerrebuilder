@@ -6,7 +6,7 @@ Pure data types following Scott Wlaschin's FDM principles.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Set, Any
+from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
 
@@ -15,20 +15,23 @@ from datetime import datetime
 # FUNDAMENTAL COMPOSITION CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Composition:
     """Combining smaller units into larger units.
 
     The fundamental principle of building complex systems.
     """
-    parts: List['Component']
-    composition_type: 'CompositionType'
+
+    parts: List["Component"]
+    composition_type: "CompositionType"
     is_hierarchical: bool = True
     preserves_properties: List[str] = field(default_factory=list)
 
 
 class CompositionType(str, Enum):
     """Ways to compose components."""
+
     SEQUENTIAL = "sequential"  # One after another
     PARALLEL = "parallel"  # Side by side
     NESTED = "nested"  # One inside another
@@ -40,10 +43,11 @@ class CompositionType(str, Enum):
 @dataclass(frozen=True)
 class Component:
     """A composable unit."""
+
     name: str
-    interface: 'Interface'
+    interface: "Interface"
     implementation: Optional[Any] = None
-    dependencies: List['Dependency'] = field(default_factory=list)
+    dependencies: List["Dependency"] = field(default_factory=list)
     is_atomic: bool = False  # Cannot be decomposed further
 
 
@@ -51,15 +55,17 @@ class Component:
 # MODULE CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Module:
     """A unit of organization and encapsulation.
 
     Universal concept of grouping related functionality.
     """
+
     name: str
-    exports: List['Export']
-    imports: List['Import']
+    exports: List["Export"]
+    imports: List["Import"]
     internal: List[Any]  # Internal/private elements
     is_sealed: bool = False  # Cannot be extended
 
@@ -67,15 +73,17 @@ class Module:
 @dataclass(frozen=True)
 class Export:
     """Something provided by a module."""
+
     name: str
     exported_item: Any
-    visibility: 'Visibility'
+    visibility: "Visibility"
     is_reexport: bool = False  # Re-exporting an import
 
 
 @dataclass(frozen=True)
 class Import:
     """Something required by a module."""
+
     module_path: str
     imported_items: List[str]
     alias: Optional[str] = None
@@ -84,6 +92,7 @@ class Import:
 
 class Visibility(str, Enum):
     """Visibility levels."""
+
     PUBLIC = "public"  # Visible everywhere
     PROTECTED = "protected"  # Visible to subclasses
     INTERNAL = "internal"  # Visible within module/package
@@ -94,24 +103,27 @@ class Visibility(str, Enum):
 # INTERFACE CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Interface:
     """A contract/boundary between components.
 
     Defines what a component provides without how.
     """
-    operations: List['Operation']
-    invariants: List['Invariant']
-    preconditions: List['Condition']
-    postconditions: List['Condition']
+
+    operations: List["Operation"]
+    invariants: List["Invariant"]
+    preconditions: List["Condition"]
+    postconditions: List["Condition"]
 
 
 @dataclass(frozen=True)
 class Operation:
     """An operation provided by an interface."""
+
     name: str
-    inputs: List['Parameter']
-    outputs: List['Parameter']
+    inputs: List["Parameter"]
+    outputs: List["Parameter"]
     effects: List[str]  # Allowed effects
     is_required: bool = True  # vs optional
 
@@ -119,6 +131,7 @@ class Operation:
 @dataclass(frozen=True)
 class Parameter:
     """Parameter of an operation."""
+
     name: str
     parameter_type: Any  # Would be Type from types.py
     direction: str = "in"  # in, out, inout
@@ -128,6 +141,7 @@ class Parameter:
 @dataclass(frozen=True)
 class Invariant:
     """A property that must always hold."""
+
     property: str  # Property expression
     scope: str = "interface"  # Where it applies
 
@@ -135,6 +149,7 @@ class Invariant:
 @dataclass(frozen=True)
 class Condition:
     """Pre or post condition."""
+
     expression: str
     must_hold: bool = True
     is_checked: bool = False  # Runtime checking
@@ -144,17 +159,20 @@ class Condition:
 # DEPENDENCY CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Dependency:
     """A required capability."""
+
     required_interface: Interface
     is_optional: bool = False
-    version_constraint: Optional['VersionConstraint'] = None
-    injection_type: 'InjectionType' = None
+    version_constraint: Optional["VersionConstraint"] = None
+    injection_type: "InjectionType" = None
 
 
 class InjectionType(str, Enum):
     """How dependencies are provided."""
+
     CONSTRUCTOR = "constructor"  # Constructor injection
     SETTER = "setter"  # Setter injection
     INTERFACE = "interface"  # Interface injection
@@ -165,6 +183,7 @@ class InjectionType(str, Enum):
 @dataclass(frozen=True)
 class VersionConstraint:
     """Version requirements."""
+
     minimum: Optional[str] = None
     maximum: Optional[str] = None
     exact: Optional[str] = None
@@ -174,14 +193,16 @@ class VersionConstraint:
 @dataclass(frozen=True)
 class DependencyGraph:
     """Graph of dependencies between components."""
+
     nodes: Dict[str, Component]
-    edges: List['DependencyEdge']
+    edges: List["DependencyEdge"]
     has_cycles: bool = False
 
 
 @dataclass(frozen=True)
 class DependencyEdge:
     """A dependency relationship."""
+
     from_component: str
     to_component: str
     dependency_type: str
@@ -192,19 +213,22 @@ class DependencyEdge:
 # ABSTRACTION CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Abstraction:
     """Hiding implementation details.
 
     Essential for managing complexity.
     """
+
     abstract_interface: Interface
     concrete_implementations: List[Component]
-    abstraction_level: 'AbstractionLevel'
+    abstraction_level: "AbstractionLevel"
 
 
 class AbstractionLevel(str, Enum):
     """Levels of abstraction."""
+
     HARDWARE = "hardware"  # Physical level
     SYSTEM = "system"  # OS/runtime level
     LANGUAGE = "language"  # Programming language level
@@ -216,6 +240,7 @@ class AbstractionLevel(str, Enum):
 @dataclass(frozen=True)
 class InformationHiding:
     """Hiding internal details."""
+
     public_interface: Interface
     hidden_implementation: Any
     encapsulation_boundary: str
@@ -224,6 +249,7 @@ class InformationHiding:
 @dataclass(frozen=True)
 class AbstractDataType:
     """Type defined by operations, not representation."""
+
     type_name: str
     operations: List[Operation]
     axioms: List[str]  # Properties the operations satisfy
@@ -234,9 +260,11 @@ class AbstractDataType:
 # LAYERING AND ARCHITECTURE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Layer:
     """An architectural layer."""
+
     name: str
     level: int  # Higher levels depend on lower
     components: List[Component]
@@ -247,6 +275,7 @@ class Layer:
 @dataclass(frozen=True)
 class LayeredArchitecture:
     """Layered system architecture."""
+
     layers: List[Layer]
     is_strict: bool = True  # Can only use immediate lower layer
     allows_bypass: bool = False  # Can skip layers
@@ -255,6 +284,7 @@ class LayeredArchitecture:
 @dataclass(frozen=True)
 class Tier:
     """A deployment tier (physical separation)."""
+
     name: str
     components: List[Component]
     location: str  # Where deployed
@@ -265,9 +295,11 @@ class Tier:
 # COMPOSITION PATTERNS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CompositePattern:
     """Treat individual and composite objects uniformly."""
+
     component_interface: Interface
     leaf_components: List[Component]
     composite_components: List[Component]
@@ -276,6 +308,7 @@ class CompositePattern:
 @dataclass(frozen=True)
 class DecoratorPattern:
     """Add functionality by wrapping."""
+
     base_component: Component
     decorators: List[Component]
     is_transparent: bool = True
@@ -284,6 +317,7 @@ class DecoratorPattern:
 @dataclass(frozen=True)
 class AdapterPattern:
     """Make incompatible interfaces work together."""
+
     source_interface: Interface
     target_interface: Interface
     adapter: Component
@@ -292,6 +326,7 @@ class AdapterPattern:
 @dataclass(frozen=True)
 class FacadePattern:
     """Simplified interface to complex subsystem."""
+
     facade_interface: Interface
     subsystem_components: List[Component]
 
@@ -300,9 +335,11 @@ class FacadePattern:
 # PLUGIN AND EXTENSION
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Plugin:
     """Dynamically loadable component."""
+
     plugin_interface: Interface
     metadata: Dict[str, Any]
     is_loaded: bool = False
@@ -312,6 +349,7 @@ class Plugin:
 @dataclass(frozen=True)
 class ExtensionPoint:
     """Point where system can be extended."""
+
     name: str
     extension_interface: Interface
     cardinality: str = "many"  # one, many
@@ -321,6 +359,7 @@ class ExtensionPoint:
 @dataclass(frozen=True)
 class ServiceRegistry:
     """Registry of available services."""
+
     services: Dict[str, Component]
     service_interface: Interface
     lookup_strategy: str = "name"  # name, type, predicate
@@ -330,9 +369,11 @@ class ServiceRegistry:
 # DOMAIN EVENTS (Colocated with Composition aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ComponentComposed:
     """Event: Components were composed."""
+
     composition: Composition
     timestamp: datetime
 
@@ -340,6 +381,7 @@ class ComponentComposed:
 @dataclass(frozen=True)
 class ModuleLoaded:
     """Event: Module was loaded."""
+
     module: Module
     load_time: float
     timestamp: datetime
@@ -348,6 +390,7 @@ class ModuleLoaded:
 @dataclass(frozen=True)
 class DependencyResolved:
     """Event: Dependency was resolved."""
+
     dependency: Dependency
     resolved_to: Component
     timestamp: datetime
@@ -356,6 +399,7 @@ class DependencyResolved:
 @dataclass(frozen=True)
 class InterfaceImplemented:
     """Event: Interface was implemented."""
+
     interface: Interface
     implementation: Component
     timestamp: datetime
@@ -364,6 +408,7 @@ class InterfaceImplemented:
 @dataclass(frozen=True)
 class PluginLoaded:
     """Event: Plugin was loaded."""
+
     plugin: Plugin
     extension_point: ExtensionPoint
     timestamp: datetime
@@ -372,6 +417,7 @@ class PluginLoaded:
 @dataclass(frozen=True)
 class ServiceRegistered:
     """Event: Service registered in registry."""
+
     service: Component
     registry: ServiceRegistry
     timestamp: datetime

@@ -9,17 +9,18 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
 try:
     from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class AIProvider(str, Enum):
     """AI model providers."""
+
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     HUGGINGFACE = "huggingface"
@@ -38,6 +40,7 @@ class AIProvider(str, Enum):
 
 class AnalysisType(str, Enum):
     """Types of AI analysis."""
+
     UNDERSTAND = "understand"
     REFACTOR = "refactor"
     DOCUMENT = "document"
@@ -49,6 +52,7 @@ class AnalysisType(str, Enum):
 @dataclass
 class CodeUnderstanding:
     """Result of AI code understanding."""
+
     intent: str
     business_logic: List[str]
     dependencies: List[str]
@@ -61,6 +65,7 @@ class CodeUnderstanding:
 @dataclass
 class RefactoringPlan:
     """AI-suggested refactoring plan."""
+
     description: str
     steps: List[str]
     estimated_impact: str
@@ -72,6 +77,7 @@ class RefactoringPlan:
 @dataclass
 class DocumentationOutput:
     """AI-generated documentation."""
+
     summary: str
     purpose: str
     parameters: List[Dict[str, str]]
@@ -84,6 +90,7 @@ class DocumentationOutput:
 @dataclass
 class TestSuggestion:
     """AI-suggested test cases."""
+
     test_name: str
     test_type: str  # unit, integration, e2e
     description: str
@@ -121,7 +128,9 @@ class AICodeAnalyzer:
 
         elif provider == AIProvider.HUGGINGFACE:
             if not TRANSFORMERS_AVAILABLE:
-                raise ImportError("Transformers library required: pip install transformers")
+                raise ImportError(
+                    "Transformers library required: pip install transformers"
+                )
             self._init_local_model()
 
     def _init_local_model(self):
@@ -131,9 +140,7 @@ class AICodeAnalyzer:
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForCausalLM.from_pretrained(model_name)
             self.pipeline = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer
+                "text-generation", model=self.model, tokenizer=self.tokenizer
             )
 
     def understand_code(
@@ -435,7 +442,7 @@ Requirements:
         else:
             prompt += "6. Improve logic where possible while maintaining intent\n"
 
-        prompt += f"""
+        prompt += """
 Provide:
 - Complete modernized code
 - Explanation of changes
@@ -517,7 +524,7 @@ Provide:
                 model=self.model_name or "gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a code analysis expert."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,
                 max_tokens=2000,
@@ -608,12 +615,14 @@ Provide:
             if re.search(pattern, code, re.IGNORECASE):
                 detected.append(name)
 
-        return json.dumps({
-            "intent": "Code performs " + ", ".join(detected) + " operations",
-            "patterns_detected": detected,
-            "complexity": "medium" if len(detected) > 2 else "low",
-            "suggestions": ["Consider modularization", "Add error handling"],
-        })
+        return json.dumps(
+            {
+                "intent": "Code performs " + ", ".join(detected) + " operations",
+                "patterns_detected": detected,
+                "complexity": "medium" if len(detected) > 2 else "low",
+                "suggestions": ["Consider modularization", "Add error handling"],
+            }
+        )
 
     def _rule_based_refactoring(self, code: str) -> str:
         """Rule-based refactoring suggestions.
@@ -639,10 +648,12 @@ Provide:
         if re.search(r"\b\d{2,}\b", code):
             suggestions.append("Replace magic numbers with named constants")
 
-        return json.dumps({
-            "suggestions": suggestions,
-            "risk_level": "low",
-        })
+        return json.dumps(
+            {
+                "suggestions": suggestions,
+                "risk_level": "low",
+            }
+        )
 
     def _rule_based_documentation(self, code: str) -> str:
         """Rule-based documentation generation.
@@ -656,11 +667,13 @@ Provide:
         # Extract function signatures
         functions = re.findall(r"(function|def|public)\s+(\w+)\s*\([^)]*\)", code)
 
-        return json.dumps({
-            "summary": "Code analysis results",
-            "functions": [f[1] for f in functions],
-            "purpose": "Extracted from code patterns",
-        })
+        return json.dumps(
+            {
+                "summary": "Code analysis results",
+                "functions": [f[1] for f in functions],
+                "purpose": "Extracted from code patterns",
+            }
+        )
 
     def _parse_understanding_response(self, response: str) -> CodeUnderstanding:
         """Parse AI response for code understanding.
@@ -768,24 +781,28 @@ Provide:
             data = json.loads(response)
             if isinstance(data, list):
                 for test in data:
-                    suggestions.append(TestSuggestion(
-                        test_name=test.get("name", "test_unknown"),
-                        test_type=test.get("type", "unit"),
-                        description=test.get("description", ""),
-                        test_code=test.get("code", ""),
-                        edge_cases=test.get("edge_cases", []),
-                        expected_behavior=test.get("expected", ""),
-                    ))
+                    suggestions.append(
+                        TestSuggestion(
+                            test_name=test.get("name", "test_unknown"),
+                            test_type=test.get("type", "unit"),
+                            description=test.get("description", ""),
+                            test_code=test.get("code", ""),
+                            edge_cases=test.get("edge_cases", []),
+                            expected_behavior=test.get("expected", ""),
+                        )
+                    )
         except:
             # Create basic test suggestion
-            suggestions.append(TestSuggestion(
-                test_name="test_basic",
-                test_type="unit",
-                description="Basic functionality test",
-                test_code="# TODO: Implement test",
-                edge_cases=[],
-                expected_behavior="Function should work correctly",
-            ))
+            suggestions.append(
+                TestSuggestion(
+                    test_name="test_basic",
+                    test_type="unit",
+                    description="Basic functionality test",
+                    test_code="# TODO: Implement test",
+                    edge_cases=[],
+                    expected_behavior="Function should work correctly",
+                )
+            )
 
         return suggestions
 

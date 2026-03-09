@@ -39,10 +39,14 @@ Implements BaseCoordinator interface with process() and validate_inputs() method
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 from collections.abc import Callable
 
-from src.contracts.types import GenerationSummaryDict, GeneratedFilesDict, GenerationErrorDict
+from src.contracts.types import (
+    GenerationSummaryDict,
+    GeneratedFilesDict,
+    GenerationErrorDict,
+)
 
 from src.parse.parser.sql import SQLParser
 
@@ -308,7 +312,9 @@ class GenerateCoordinator:
 
         return results
 
-    def generate(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
+    def generate(
+        self, progress_callback: Optional[Callable[[int, int, str], None]] = None
+    ) -> Dict[str, Any]:
         """Main entry point for the pipeline - generates all code.
 
         Args:
@@ -337,7 +343,7 @@ class GenerateCoordinator:
                 "flutter": [],
                 "python": [],
             }
-            
+
             summary: GenerationSummaryDict = {
                 "total_models": len(model_files),
                 "successful_models": 0,

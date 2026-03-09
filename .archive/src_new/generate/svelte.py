@@ -7,13 +7,12 @@ SvelteKit routing, and reactive stores.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from src_new._core.models import (
     ApplicationModel,
     GeneratedFile,
     GeneratedProject,
-    Method,
     Property,
     SemanticObject,
     TargetLanguage,
@@ -49,9 +48,7 @@ class SvelteGenerator(BaseCodeGenerator):
             Generated project
         """
         project = GeneratedProject(
-            name=model.name,
-            target=TargetLanguage.JAVASCRIPT,
-            files=[]
+            name=model.name, target=TargetLanguage.JAVASCRIPT, files=[]
         )
 
         # Generate project structure
@@ -83,9 +80,7 @@ class SvelteGenerator(BaseCodeGenerator):
         return project
 
     def _generate_package_json(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate package.json file.
 
@@ -104,7 +99,7 @@ class SvelteGenerator(BaseCodeGenerator):
                 "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
                 "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
                 "lint": "eslint .",
-                "format": "prettier --write ."
+                "format": "prettier --write .",
             },
             "devDependencies": {
                 "@sveltejs/adapter-auto": "^3.0.0",
@@ -118,12 +113,9 @@ class SvelteGenerator(BaseCodeGenerator):
                 "eslint": "^8.55.0",
                 "eslint-plugin-svelte": "^2.35.0",
                 "prettier": "^3.1.0",
-                "prettier-plugin-svelte": "^3.1.0"
+                "prettier-plugin-svelte": "^3.1.0",
             },
-            "dependencies": {
-                "@fontsource/inter": "^5.0.0",
-                "axios": "^1.6.0"
-            }
+            "dependencies": {"@fontsource/inter": "^5.0.0", "axios": "^1.6.0"},
         }
 
         project.files.append(
@@ -135,9 +127,7 @@ class SvelteGenerator(BaseCodeGenerator):
         )
 
     def _generate_svelte_config(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate svelte.config.js.
 
@@ -173,9 +163,7 @@ export default config;"""
         )
 
     def _generate_vite_config(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate Vite configuration.
 
@@ -208,9 +196,7 @@ export default defineConfig({
         )
 
     def _generate_tsconfig(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate TypeScript configuration.
 
@@ -229,8 +215,8 @@ export default defineConfig({
                 "skipLibCheck": True,
                 "sourceMap": True,
                 "strict": True,
-                "moduleResolution": "bundler"
-            }
+                "moduleResolution": "bundler",
+            },
         }
 
         project.files.append(
@@ -242,9 +228,7 @@ export default defineConfig({
         )
 
     def _generate_app_html(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate app.html template.
 
@@ -275,9 +259,7 @@ export default defineConfig({
         )
 
     def _generate_layout(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate layout component.
 
@@ -344,9 +326,7 @@ export default defineConfig({
         )
 
     def _generate_component(
-        self,
-        obj: SemanticObject,
-        project: GeneratedProject
+        self, obj: SemanticObject, project: GeneratedProject
     ) -> None:
         """Generate Svelte component for an object.
 
@@ -492,7 +472,7 @@ export default defineConfig({
             ts_type = self._map_to_ts_type(prop.data_type)
             default_value = self._get_default_value(prop)
             declarations.append(f"let {prop.name}: {ts_type} = {default_value};")
-        return '\n    '.join(declarations)
+        return "\n    ".join(declarations)
 
     def _generate_methods(self, obj: SemanticObject) -> str:
         """Generate component methods.
@@ -518,7 +498,7 @@ export default defineConfig({
             console.error('Error in {method.name}:', error);
         }}
     }}""")
-        return '\n    '.join(methods)
+        return "\n    ".join(methods)
 
     def _generate_component_body(self, obj: SemanticObject) -> str:
         """Generate component body HTML.
@@ -537,7 +517,7 @@ export default defineConfig({
             field_html = self._generate_form_field_svelte(prop)
             fields.append(field_html)
 
-        return '\n            '.join(fields)
+        return "\n            ".join(fields)
 
     def _generate_form_field_svelte(self, prop: Property) -> str:
         """Generate Svelte form field.
@@ -598,13 +578,11 @@ export default defineConfig({
             return ""
 
         return f"""<div class="actions">
-            {' '.join(buttons)}
+            {" ".join(buttons)}
         </div>"""
 
     def _generate_data_table(
-        self,
-        obj: SemanticObject,
-        project: GeneratedProject
+        self, obj: SemanticObject, project: GeneratedProject
     ) -> None:
         """Generate data table component.
 
@@ -840,7 +818,7 @@ export default defineConfig({
         for prop in obj.properties[:6]:  # Limit to first 6 columns
             label = self._format_label(prop.name)
             headers.append(f"<th>{label}</th>")
-        return '\n                    '.join(headers)
+        return "\n                    ".join(headers)
 
     def _generate_table_cells(self, obj: SemanticObject) -> str:
         """Generate table cells.
@@ -854,12 +832,10 @@ export default defineConfig({
         cells = []
         for prop in obj.properties[:6]:  # Limit to first 6 columns
             cells.append(f"<td>{{item.{prop.name}}}</td>")
-        return '\n                        '.join(cells)
+        return "\n                        ".join(cells)
 
     def _generate_stores(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate Svelte stores.
 
@@ -921,9 +897,7 @@ export function logout() {
         )
 
     def _generate_routes(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate SvelteKit routes.
 
@@ -971,9 +945,7 @@ export function logout() {
         )
 
     def _generate_styles(
-        self,
-        model: ApplicationModel,
-        project: GeneratedProject
+        self, model: ApplicationModel, project: GeneratedProject
     ) -> None:
         """Generate global styles.
 
@@ -1077,7 +1049,8 @@ button:disabled {
             Formatted label
         """
         import re
-        words = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)', name)
+
+        words = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)", name)
         if not words:
-            words = name.split('_')
-        return ' '.join(word.capitalize() for word in words)
+            words = name.split("_")
+        return " ".join(word.capitalize() for word in words)

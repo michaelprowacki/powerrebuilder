@@ -10,17 +10,19 @@ from pathlib import Path
 
 class AccuracyLevel(str, Enum):
     """Accuracy levels for stage results."""
-    PERFECT = "perfect"      # 100% accurate
+
+    PERFECT = "perfect"  # 100% accurate
     EXCELLENT = "excellent"  # 95-99% accurate
-    GOOD = "good"           # 85-94% accurate
-    FAIR = "fair"           # 70-84% accurate
-    POOR = "poor"           # 50-69% accurate
-    FAILED = "failed"       # <50% accurate
+    GOOD = "good"  # 85-94% accurate
+    FAIR = "fair"  # 70-84% accurate
+    POOR = "poor"  # 50-69% accurate
+    FAILED = "failed"  # <50% accurate
 
 
 @dataclass
 class MetricValue:
     """Single metric measurement."""
+
     name: str
     value: float
     expected: Optional[float] = None
@@ -42,13 +44,14 @@ class MetricValue:
             "expected": self.expected,
             "unit": self.unit,
             "accuracy": self.accuracy,
-            "details": self.details
+            "details": self.details,
         }
 
 
 @dataclass
 class StageResult:
     """Result from a single pipeline stage."""
+
     stage_name: str
     success: bool
     accuracy: float  # Overall accuracy percentage
@@ -75,15 +78,17 @@ class StageResult:
         else:
             return AccuracyLevel.FAILED
 
-    def add_metric(self, name: str, value: float, expected: Optional[float] = None,
-                   unit: str = "percent", details: Optional[Dict] = None):
+    def add_metric(
+        self,
+        name: str,
+        value: float,
+        expected: Optional[float] = None,
+        unit: str = "percent",
+        details: Optional[Dict] = None,
+    ):
         """Add a metric measurement."""
         metric = MetricValue(
-            name=name,
-            value=value,
-            expected=expected,
-            unit=unit,
-            details=details or {}
+            name=name, value=value, expected=expected, unit=unit, details=details or {}
         )
         self.metrics.append(metric)
 
@@ -107,7 +112,7 @@ class StageResult:
             "warnings": self.warnings,
             "execution_time": self.execution_time,
             "output_size": self.output_size,
-            "details": self.details
+            "details": self.details,
         }
 
 
@@ -180,8 +185,7 @@ class AccuracyMetrics:
     def get_failed_stages(self) -> List[str]:
         """Get list of failed stages."""
         return [
-            name for name, result in self.stage_results.items()
-            if not result.success
+            name for name, result in self.stage_results.items() if not result.success
         ]
 
     def get_low_accuracy_stages(self, threshold: float = 70.0) -> List[tuple]:
@@ -202,18 +206,19 @@ class AccuracyMetrics:
             "overall_level": self.overall_level.value,
             "total_execution_time": self.total_execution_time,
             "stage_results": {
-                name: result.to_dict()
-                for name, result in self.stage_results.items()
+                name: result.to_dict() for name, result in self.stage_results.items()
             },
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "metadata": self.metadata
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
+            "metadata": self.metadata,
         }
 
     def save_to_file(self, path: Path):
         """Save metrics to JSON file."""
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
@@ -226,7 +231,7 @@ class AccuracyMetrics:
         metrics = cls(
             source_file=data["source_file"],
             source_size=data["source_size"],
-            source_type=data["source_type"]
+            source_type=data["source_type"],
         )
 
         # Reconstruct stage results
@@ -239,7 +244,7 @@ class AccuracyMetrics:
                 warnings=result_data.get("warnings", []),
                 execution_time=result_data.get("execution_time", 0.0),
                 output_size=result_data.get("output_size", 0),
-                details=result_data.get("details", {})
+                details=result_data.get("details", {}),
             )
 
             # Reconstruct metrics
@@ -249,7 +254,7 @@ class AccuracyMetrics:
                     value=metric_data["value"],
                     expected=metric_data.get("expected"),
                     unit=metric_data.get("unit", "percent"),
-                    details=metric_data.get("details", {})
+                    details=metric_data.get("details", {}),
                 )
                 result.metrics.append(metric)
 
@@ -272,34 +277,18 @@ class AccuracyCalculator:
 
     @staticmethod
     def calculate_extraction_accuracy(
-        extracted_files: int,
-        expected_files: int,
-        extracted_size: int,
-        source_size: int
+        extracted_files: int, expected_files: int, extracted_size: int, source_size: int
     ) -> StageResult:
         """Calculate extraction stage accuracy."""
-        result = StageResult(
-            stage_name="extract",
-            success=extracted_files > 0
-        )
+        result = StageResult(stage_name="extract", success=extracted_files > 0)
 
         # File count accuracy
-        result.add_metric(
-            "file_count",
-            extracted_files,
-            expected_files,
-            unit="files"
-        )
+        result.add_metric("file_count", extracted_files, expected_files, unit="files")
 
         # Size preservation
         if source_size > 0:
             size_ratio = (extracted_size / source_size) * 100
-            result.add_metric(
-                "size_preservation",
-                size_ratio,
-                100,
-                unit="percent"
-            )
+            result.add_metric("size_preservation", size_ratio, 100, unit="percent")
 
         result.calculate_accuracy()
         return result
@@ -309,29 +298,23 @@ class AccuracyCalculator:
         decompiled_functions: int,
         total_functions: int,
         successful_opcodes: int,
-        total_opcodes: int
+        total_opcodes: int,
     ) -> StageResult:
         """Calculate decompile stage accuracy."""
-        result = StageResult(
-            stage_name="decompile",
-            success=decompiled_functions > 0
-        )
+        result = StageResult(stage_name="decompile", success=decompiled_functions > 0)
 
         # Function decompilation rate
         result.add_metric(
             "function_decompilation",
             decompiled_functions,
             total_functions,
-            unit="functions"
+            unit="functions",
         )
 
         # Opcode recognition rate
         if total_opcodes > 0:
             result.add_metric(
-                "opcode_recognition",
-                successful_opcodes,
-                total_opcodes,
-                unit="opcodes"
+                "opcode_recognition", successful_opcodes, total_opcodes, unit="opcodes"
             )
 
         result.calculate_accuracy()
@@ -342,29 +325,20 @@ class AccuracyCalculator:
         parsed_objects: int,
         total_objects: int,
         valid_syntax: int,
-        total_statements: int
+        total_statements: int,
     ) -> StageResult:
         """Calculate parse stage accuracy."""
-        result = StageResult(
-            stage_name="parse",
-            success=parsed_objects > 0
-        )
+        result = StageResult(stage_name="parse", success=parsed_objects > 0)
 
         # Object parsing rate
         result.add_metric(
-            "object_parsing",
-            parsed_objects,
-            total_objects,
-            unit="objects"
+            "object_parsing", parsed_objects, total_objects, unit="objects"
         )
 
         # Syntax validity rate
         if total_statements > 0:
             result.add_metric(
-                "syntax_validity",
-                valid_syntax,
-                total_statements,
-                unit="statements"
+                "syntax_validity", valid_syntax, total_statements, unit="statements"
             )
 
         result.calculate_accuracy()
@@ -372,15 +346,10 @@ class AccuracyCalculator:
 
     @staticmethod
     def calculate_model_accuracy(
-        resolved_dependencies: int,
-        total_dependencies: int,
-        semantic_validity: float
+        resolved_dependencies: int, total_dependencies: int, semantic_validity: float
     ) -> StageResult:
         """Calculate model stage accuracy."""
-        result = StageResult(
-            stage_name="model",
-            success=semantic_validity > 50
-        )
+        result = StageResult(stage_name="model", success=semantic_validity > 50)
 
         # Dependency resolution
         if total_dependencies > 0:
@@ -388,16 +357,11 @@ class AccuracyCalculator:
                 "dependency_resolution",
                 resolved_dependencies,
                 total_dependencies,
-                unit="dependencies"
+                unit="dependencies",
             )
 
         # Semantic validity
-        result.add_metric(
-            "semantic_validity",
-            semantic_validity,
-            100,
-            unit="percent"
-        )
+        result.add_metric("semantic_validity", semantic_validity, 100, unit="percent")
 
         result.calculate_accuracy()
         return result
@@ -407,28 +371,19 @@ class AccuracyCalculator:
         generated_files: int,
         expected_files: int,
         compilable_code: bool,
-        test_coverage: float
+        test_coverage: float,
     ) -> StageResult:
         """Calculate generate stage accuracy."""
-        result = StageResult(
-            stage_name="generate",
-            success=generated_files > 0
-        )
+        result = StageResult(stage_name="generate", success=generated_files > 0)
 
         # File generation rate
         result.add_metric(
-            "file_generation",
-            generated_files,
-            expected_files,
-            unit="files"
+            "file_generation", generated_files, expected_files, unit="files"
         )
 
         # Code quality
         result.add_metric(
-            "compilable",
-            100 if compilable_code else 0,
-            100,
-            unit="percent"
+            "compilable", 100 if compilable_code else 0, 100, unit="percent"
         )
 
         # Test coverage
@@ -436,7 +391,7 @@ class AccuracyCalculator:
             "test_coverage",
             test_coverage,
             80,  # Target 80% coverage
-            unit="percent"
+            unit="percent",
         )
 
         result.calculate_accuracy()
@@ -477,8 +432,7 @@ class MetricsAggregator:
 
         # Calculate averages
         return {
-            stage: acc / stage_counts[stage]
-            for stage, acc in stage_accuracies.items()
+            stage: acc / stage_counts[stage] for stage, acc in stage_accuracies.items()
         }
 
     def get_failure_rate(self) -> Dict[str, float]:
@@ -509,8 +463,14 @@ class MetricsAggregator:
             "average_accuracy": self.get_average_accuracy(),
             "stage_averages": self.get_stage_averages(),
             "failure_rates": self.get_failure_rate(),
-            "best_run": max(self.metrics_list, key=lambda m: m.overall_accuracy).source_file
-            if self.metrics_list else None,
-            "worst_run": min(self.metrics_list, key=lambda m: m.overall_accuracy).source_file
-            if self.metrics_list else None
+            "best_run": max(
+                self.metrics_list, key=lambda m: m.overall_accuracy
+            ).source_file
+            if self.metrics_list
+            else None,
+            "worst_run": min(
+                self.metrics_list, key=lambda m: m.overall_accuracy
+            ).source_file
+            if self.metrics_list
+            else None,
         }

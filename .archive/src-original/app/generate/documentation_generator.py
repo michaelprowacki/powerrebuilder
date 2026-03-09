@@ -25,15 +25,16 @@ from src_new._core.result import Result, Success, Failure
 # ============================================================================
 
 # Value types using domain language
-APIEndpoint = NewType('APIEndpoint', str)
-MarkdownDocument = NewType('MarkdownDocument', str)
-DiagramDefinition = NewType('DiagramDefinition', str)
-DocString = NewType('DocString', str)
-CodeExample = NewType('CodeExample', str)
+APIEndpoint = NewType("APIEndpoint", str)
+MarkdownDocument = NewType("MarkdownDocument", str)
+DiagramDefinition = NewType("DiagramDefinition", str)
+DocString = NewType("DocString", str)
+CodeExample = NewType("CodeExample", str)
 
 
 class DocumentationType(str, Enum):
     """Types of documentation to generate."""
+
     API = "api"
     ARCHITECTURE = "architecture"
     USER_GUIDE = "user_guide"
@@ -46,6 +47,7 @@ class DocumentationType(str, Enum):
 
 class DiagramType(str, Enum):
     """Types of architecture diagrams."""
+
     SEQUENCE = "sequence"
     CLASS = "class"
     COMPONENT = "component"
@@ -58,6 +60,7 @@ class DiagramType(str, Enum):
 
 class APIMethod(str, Enum):
     """HTTP methods for API documentation."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -71,9 +74,11 @@ class APIMethod(str, Enum):
 # IMMUTABLE DOMAIN ENTITIES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class APIParameter:
     """API parameter definition - immutable."""
+
     name: str
     param_type: str  # path, query, header, body
     data_type: str  # string, integer, boolean, etc.
@@ -91,18 +96,19 @@ class APIParameter:
 
     def __post_init__(self):
         """Validate parameter definition."""
-        valid_types = {'path', 'query', 'header', 'body'}
+        valid_types = {"path", "query", "header", "body"}
         if self.param_type not in valid_types:
             raise ValueError(f"Invalid param type: {self.param_type}")
 
         # Path parameters must be required
-        if self.param_type == 'path' and not self.required:
+        if self.param_type == "path" and not self.required:
             raise ValueError("Path parameters must be required")
 
 
 @dataclass(frozen=True)
 class APIResponse:
     """API response definition - immutable."""
+
     status_code: int
     description: str
 
@@ -127,6 +133,7 @@ class APIResponse:
 @dataclass(frozen=True)
 class APIDocumentation:
     """API endpoint documentation - immutable."""
+
     endpoint: APIEndpoint
     method: APIMethod
 
@@ -156,7 +163,9 @@ class APIDocumentation:
         # POST/PUT must have request body or parameters
         if self.method in [APIMethod.POST, APIMethod.PUT]:
             if not self.request_body and not self.parameters:
-                raise ValueError(f"{self.method} endpoints must have request body or parameters")
+                raise ValueError(
+                    f"{self.method} endpoints must have request body or parameters"
+                )
 
         # Must have at least one success response
         success_responses = [r for r in self.responses if 200 <= r.status_code < 300]
@@ -167,6 +176,7 @@ class APIDocumentation:
 @dataclass(frozen=True)
 class OpenAPISpec:
     """OpenAPI specification - immutable."""
+
     openapi_version: str
 
     # Info
@@ -200,6 +210,7 @@ class OpenAPISpec:
 @dataclass(frozen=True)
 class DiagramNode:
     """Node in an architecture diagram - immutable."""
+
     id: str
     label: str
     node_type: str  # component, service, database, etc.
@@ -216,6 +227,7 @@ class DiagramNode:
 @dataclass(frozen=True)
 class DiagramEdge:
     """Edge in an architecture diagram - immutable."""
+
     source: str
     target: str
 
@@ -231,6 +243,7 @@ class DiagramEdge:
 @dataclass(frozen=True)
 class ArchitectureDiagram:
     """Architecture diagram definition - immutable."""
+
     name: str
     diagram_type: DiagramType
 
@@ -268,6 +281,7 @@ class ArchitectureDiagram:
 @dataclass(frozen=True)
 class MigrationStep:
     """Single step in migration guide - immutable."""
+
     step_number: int
     title: str
     description: str
@@ -293,6 +307,7 @@ class MigrationStep:
 @dataclass(frozen=True)
 class MigrationGuide:
     """Migration guide documentation - immutable."""
+
     title: str
 
     # Overview
@@ -323,13 +338,13 @@ class MigrationGuide:
         # Each step must be numbered sequentially
         for i, step in enumerate(self.steps, 1):
             if step.step_number != i:
-                raise ValueError(f"Steps must be numbered sequentially")
+                raise ValueError("Steps must be numbered sequentially")
 
     def to_markdown(self) -> MarkdownDocument:
         """Pure function to generate Markdown."""
         md = f"# {self.title}\n\n"
         md += f"## Summary\n{self.summary}\n\n"
-        md += f"## Prerequisites\n"
+        md += "## Prerequisites\n"
         for prereq in self.prerequisites:
             md += f"- {prereq}\n"
         md += "\n## Migration Steps\n"
@@ -342,6 +357,7 @@ class MigrationGuide:
 @dataclass(frozen=True)
 class README:
     """README documentation - immutable."""
+
     project_name: str
     description: str
 
@@ -400,6 +416,7 @@ class README:
 @dataclass(frozen=True)
 class DocumentationSuite:
     """Complete documentation suite - immutable."""
+
     # API documentation
     api_docs: OpenAPISpec
 
@@ -432,6 +449,7 @@ class DocumentationSuite:
 @dataclass(frozen=True)
 class DocumentationError:
     """Error during documentation generation."""
+
     error_type: str
     message: str
     file_path: Optional[str] = None
@@ -442,7 +460,10 @@ class DocumentationError:
 # PURE DOMAIN OPERATIONS (Functions that operate on the types above)
 # ============================================================================
 
-def extract_api_endpoints(application_model: Any) -> Result[List[APIEndpoint], DocumentationError]:
+
+def extract_api_endpoints(
+    application_model: Any,
+) -> Result[List[APIEndpoint], DocumentationError]:
     """Extract API endpoints from application model.
 
     Pure function that analyzes the application model to find
@@ -454,16 +475,13 @@ def extract_api_endpoints(application_model: Any) -> Result[List[APIEndpoint], D
         # This is simplified for demonstration
         return Success(endpoints)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="extraction_error",
-            message=str(e)
-        ))
+        return Failure(
+            DocumentationError(error_type="extraction_error", message=str(e))
+        )
 
 
 def generate_openapi_spec(
-    api_docs: List[APIDocumentation],
-    title: str,
-    version: str
+    api_docs: List[APIDocumentation], title: str, version: str
 ) -> Result[OpenAPISpec, DocumentationError]:
     """Generate OpenAPI specification from API documentation.
 
@@ -488,20 +506,18 @@ def generate_openapi_spec(
             paths=paths,
             schemas={},
             security_schemes={},
-            tags=tuple()
+            tags=tuple(),
         )
 
         return Success(spec)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="generation_error",
-            message=str(e)
-        ))
+        return Failure(
+            DocumentationError(error_type="generation_error", message=str(e))
+        )
 
 
 def generate_architecture_diagram(
-    components: List[Any],
-    relationships: List[Any]
+    components: List[Any], relationships: List[Any]
 ) -> Result[ArchitectureDiagram, DocumentationError]:
     """Generate architecture diagram from components.
 
@@ -514,12 +530,12 @@ def generate_architecture_diagram(
         for comp in components:
             node = DiagramNode(
                 id=str(id(comp)),
-                label=getattr(comp, 'name', 'Component'),
+                label=getattr(comp, "name", "Component"),
                 node_type="component",
                 shape="box",
                 color=None,
                 icon=None,
-                properties={}
+                properties={},
             )
             nodes.append(node)
 
@@ -532,7 +548,7 @@ def generate_architecture_diagram(
                 label=None,
                 directed=True,
                 style="solid",
-                properties={}
+                properties={},
             )
             edges.append(edge)
 
@@ -543,21 +559,16 @@ def generate_architecture_diagram(
             edges=tuple(edges),
             layout="horizontal",
             description="Component architecture diagram",
-            tags=frozenset(["architecture"])
+            tags=frozenset(["architecture"]),
         )
 
         return Success(diagram)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="diagram_error",
-            message=str(e)
-        ))
+        return Failure(DocumentationError(error_type="diagram_error", message=str(e)))
 
 
 def generate_migration_guide(
-    legacy_model: Any,
-    modern_model: Any,
-    migration_plan: Any
+    legacy_model: Any, modern_model: Any, migration_plan: Any
 ) -> Result[MigrationGuide, DocumentationError]:
     """Generate migration guide from legacy to modern.
 
@@ -570,15 +581,17 @@ def generate_migration_guide(
         step_num = 1
 
         # Add default steps (simplified)
-        steps.append(MigrationStep(
-            step_number=step_num,
-            title="Backup existing system",
-            description="Create full backup of legacy system",
-            commands=tuple(["backup.sh"]),
-            validation="Verify backup integrity",
-            estimated_time="1 hour",
-            risks=tuple(["Data loss if backup fails"])
-        ))
+        steps.append(
+            MigrationStep(
+                step_number=step_num,
+                title="Backup existing system",
+                description="Create full backup of legacy system",
+                commands=tuple(["backup.sh"]),
+                validation="Verify backup integrity",
+                estimated_time="1 hour",
+                risks=tuple(["Data loss if backup fails"]),
+            )
+        )
 
         guide = MigrationGuide(
             title="Legacy System Migration Guide",
@@ -589,21 +602,16 @@ def generate_migration_guide(
             steps=tuple(steps),
             validation_steps=tuple(["Run test suite", "Verify data integrity"]),
             rollback_procedure="Restore from backup",
-            faqs=tuple([("How long?", "2-4 weeks")])
+            faqs=tuple([("How long?", "2-4 weeks")]),
         )
 
         return Success(guide)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="guide_error",
-            message=str(e)
-        ))
+        return Failure(DocumentationError(error_type="guide_error", message=str(e)))
 
 
 def generate_readme(
-    project_name: str,
-    description: str,
-    features: List[str]
+    project_name: str, description: str, features: List[str]
 ) -> Result[README, DocumentationError]:
     """Generate README documentation.
 
@@ -622,20 +630,16 @@ def generate_readme(
             contributing=None,
             license="MIT",
             documentation_url=None,
-            repository_url=None
+            repository_url=None,
         )
 
         return Success(readme)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="readme_error",
-            message=str(e)
-        ))
+        return Failure(DocumentationError(error_type="readme_error", message=str(e)))
 
 
 def build_documentation_suite(
-    application_model: Any,
-    project_info: Dict[str, Any]
+    application_model: Any, project_info: Dict[str, Any]
 ) -> Result[DocumentationSuite, DocumentationError]:
     """Build complete documentation suite for application.
 
@@ -652,7 +656,7 @@ def build_documentation_suite(
         openapi_result = generate_openapi_spec(
             [],  # Would use api_result.value
             project_info.get("name", "Project"),
-            project_info.get("version", "1.0.0")
+            project_info.get("version", "1.0.0"),
         )
         if isinstance(openapi_result, Failure):
             return openapi_result
@@ -661,7 +665,7 @@ def build_documentation_suite(
         readme_result = generate_readme(
             project_info.get("name", "Project"),
             project_info.get("description", ""),
-            project_info.get("features", [])
+            project_info.get("features", []),
         )
         if isinstance(readme_result, Failure):
             return readme_result
@@ -675,19 +679,16 @@ def build_documentation_suite(
             migration_guide=None,
             readme=readme_result.value,
             generated_at=datetime.now(),
-            version=project_info.get("version", "1.0.0")
+            version=project_info.get("version", "1.0.0"),
         )
 
         return Success(suite)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="suite_error",
-            message=str(e)
-        ))
+        return Failure(DocumentationError(error_type="suite_error", message=str(e)))
 
 
 def render_documentation_as_markdown(
-    suite: DocumentationSuite
+    suite: DocumentationSuite,
 ) -> Result[str, DocumentationError]:
     """Render documentation suite as Markdown.
 
@@ -715,7 +716,4 @@ def render_documentation_as_markdown(
 
         return Success(output)
     except Exception as e:
-        return Failure(DocumentationError(
-            error_type="render_error",
-            message=str(e)
-        ))
+        return Failure(DocumentationError(error_type="render_error", message=str(e)))

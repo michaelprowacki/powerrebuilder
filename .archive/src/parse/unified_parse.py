@@ -30,46 +30,29 @@ import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
-from functools import lru_cache
 from pathlib import Path
 from threading import Lock
 from typing import Any, ClassVar, Protocol, TypeVar, Union, runtime_checkable
 
 # External imports
 from lark import Lark, Token, Transformer, Tree
-from lark.exceptions import GrammarError, UnexpectedInput, UnexpectedToken
-from lark.visitors import Transformer as LarkTransformer
+from lark.exceptions import GrammarError, UnexpectedInput
 
 # Internal imports
-from src.contracts.interfaces import (
-    IGrammarManager,
-    IImportResolver,
-    ILibraryManager,
-    IParser,
-    IPreprocessor,
-    ITransformer,
-    ITypeResolver,
-)
 from src.core.constants import FILE_EXTENSIONS, FileType
 from src.core.exceptions import (
     ASTConstructionError,
-    GrammarNotFoundError,
     ParseError,
     ParseRecoveryError,
 )
 from src.extract import extract_pbl_file as extract_pbl
 from src.model.ast import (
-    ArrayAccess,
     ASTAssignment,
     ASTNode,
     BasicType,
-    BinaryExpression,
     Block,
     BooleanLiteral,
-    CaseStatement,
     CustomType,
-    Event,
-    ForLoop,
     FunctionCall,
     FunctionDefinition,
     IfStatement,
@@ -81,59 +64,28 @@ from src.model.ast import (
     StringLiteral,
     Type,
     TypeCategory,
-    UnaryExpression,
     Variable,
     VariableDeclaration,
-    WhileLoop,
 )
-from src.model.ast.functions import FunctionCall as ASTFunctionCall
 from src.model.ast.literals import (
-    IntegerLiteral as ASTIntegerLiteral,
-    NullLiteral,
-    RealLiteral,
     StringLiteral as ASTStringLiteral,
 )
-from src.model.ast.nodes.base import Expression, Identifier
-from src.model.ast.nodes.declarations import CustomType as DeclarationsCustomType
 from src.model.ast.nodes.literals import NumberLiteral
 from src.model.ast.nodes.sql import (
-    CaseExpression as SQLCase,
     ColumnReference as SQLColumn,
-    DeleteStatement as SQLDeleteStatement,
-    FromClause,
-    GroupByClause,
-    HavingClause,
-    InsertStatement as SQLInsertStatement,
-    JoinClause as SQLJoin,
-    LimitClause,
-    OrderByClause,
-    OrderingTerm,
-    ResultColumn,
     SelectStatement as SQLSelectStatement,
-    SubqueryExpression as SQLSubquery,
     TableReference as SQLTable,
-    UpdateStatement as SQLUpdateStatement,
-    WhereClause as SQLWhereClause,
-    WithClause as SQLWith,
-    CaseWhenClause as SQLWhen,
 )
 from src.model.ast.pb_types import (
-    PBArrayType,
-    PBBasicType,
     PBCustomType,
-    PBDataWindowType,
     PBType,
     PBTypeRegistry,
 )
 from src.model.entities import PBConstructorCall, PBFunctionCall, PBMethodCall
-from src.model.entities.library import Import
-from src.model.expressions import Variable as ModelVariable
 from src.model.optimization.sql_optimizer import SQLOptimizer
-from src.model.transaction.savepoint import PBSavepoint
 from src.model.transaction.statement import PBStatementType, PBTransactionStatement
-from src.model.transaction.transaction import PBTransaction, PBTransactionObject
 from src.model.types.base import PBNode, Position, SourceLocation
-from src.model.types.errors import ParseErrorCollector, ParseErrorRecord
+from src.model.types.errors import ParseErrorCollector
 from src.model.constructs.pb_access import PBAccessNode
 
 logger = logging.getLogger(__name__)
@@ -145,6 +97,7 @@ NodeType = TypeVar("NodeType", bound=PBNode)
 # ============================================================================
 # TYPES AND CONSTANTS SECTION
 # ============================================================================
+
 
 # Position handling protocols and classes
 @runtime_checkable
@@ -186,10 +139,13 @@ class EnumeratedType:
         self.name = name
         self.values = values or []
 
+
 class StructureType:
     """Represents a structure type."""
 
-    def __init__(self, name: str, fields: dict[str, Any] | None = None, parent: str | None = None):
+    def __init__(
+        self, name: str, fields: dict[str, Any] | None = None, parent: str | None = None
+    ):
         self.name = name
         self.fields = fields or {}
         self.parent = parent
@@ -409,9 +365,11 @@ class PositionTrackerMixin:
 
         return error
 
+
 # ============================================================================
 # GRAMMAR SECTION
 # ============================================================================
+
 
 class GrammarManager:
     """Manages multiple Lark grammar files and their dependencies."""
@@ -583,16 +541,20 @@ BOOLEAN: "true" | "false"
         self._grammars.clear()
         self._dependencies.clear()
 
+
 # ============================================================================
 # PREPROCESSOR SECTION
 # ============================================================================
 
+
 @dataclass
 class PreprocessorState:
     """State for tracking preprocessor context."""
+
     in_binary_section: bool = False
     in_multiline_comment: bool = False
     characters_ignored: int = 0
+
 
 class PowerBuilderPreprocessor:
     """Preprocessor for PowerBuilder source files."""
@@ -628,7 +590,7 @@ class PowerBuilderPreprocessor:
         if not export_match:
             return source
 
-        release_match = re.search(self.RELEASE_NUMBER, source[export_match.end():])
+        release_match = re.search(self.RELEASE_NUMBER, source[export_match.end() :])
         if release_match:
             header_end = export_match.end() + release_match.end()
         else:
@@ -645,7 +607,7 @@ class PowerBuilderPreprocessor:
         """Remove binary data sections from source."""
         match = self.BINARY_SECTION_START.search(source)
         if match:
-            return source[:match.start()]
+            return source[: match.start()]
         return source
 
     def _join_multiline_strings(self, source: str) -> str:
@@ -657,23 +619,28 @@ class PowerBuilderPreprocessor:
         source = self.SINGLE_LINE_COMMENT.sub("", source)
         return self.MULTI_LINE_COMMENT.sub("", source)
 
+
 @dataclass
 class ImplicitDependency:
     """Represents an implicit dependency in PowerBuilder code."""
+
     name: str
     dependency_type: str
     usage_location: str | None = None
     line_number: int | None = None
     context: str | None = None
 
+
 @dataclass
 class DependencyContext:
     """Context for dependency resolution."""
+
     current_file: Path
     current_class: str | None = None
     dependencies: set[str] = field(default_factory=set)
     implicit_deps: list[ImplicitDependency] = field(default_factory=list)
     unresolved_symbols: set[str] = field(default_factory=set)
+
 
 class ImplicitImportResolver:
     """Resolves implicit imports and dependencies in PowerBuilder code."""
@@ -688,7 +655,9 @@ class ImplicitImportResolver:
         self._visit_node(ast, context)
         return context
 
-    def _visit_node(self, node: Union[ASTNode, Any], context: DependencyContext) -> None:
+    def _visit_node(
+        self, node: Union[ASTNode, Any], context: DependencyContext
+    ) -> None:
         """Visit AST nodes to extract dependencies."""
         if not node:
             return
@@ -724,9 +693,13 @@ class ImplicitImportResolver:
             context.implicit_deps.append(dep)
             context.dependencies.add(func_name)
 
-    def _handle_constructor_call(self, node: PBConstructorCall, context: DependencyContext) -> None:
+    def _handle_constructor_call(
+        self, node: PBConstructorCall, context: DependencyContext
+    ) -> None:
         """Handle constructor calls."""
-        class_name = getattr(node, "class_name", None) or getattr(node, "type_name", None)
+        class_name = getattr(node, "class_name", None) or getattr(
+            node, "type_name", None
+        )
         if class_name and class_name not in self.builtin_types:
             dep = ImplicitDependency(
                 name=class_name,
@@ -737,7 +710,9 @@ class ImplicitImportResolver:
             context.implicit_deps.append(dep)
             context.dependencies.add(class_name)
 
-    def _handle_variable_declaration(self, node: VariableDeclaration, context: DependencyContext) -> None:
+    def _handle_variable_declaration(
+        self, node: VariableDeclaration, context: DependencyContext
+    ) -> None:
         """Handle variable declarations."""
         if hasattr(node, "type") and node.type:
             type_name = str(node.type)
@@ -751,12 +726,14 @@ class ImplicitImportResolver:
                 context.implicit_deps.append(dep)
                 context.dependencies.add(type_name)
 
-    def _handle_class_definition_node(self, node: Any, context: DependencyContext) -> None:
+    def _handle_class_definition_node(
+        self, node: Any, context: DependencyContext
+    ) -> None:
         """Handle class definition nodes."""
         # Extract class name and parent class
         class_name = None
         parent_class = None
-        
+
         if hasattr(node, "children"):
             for child in node.children:
                 if hasattr(child, "type") and child.type == "IDENTIFIER":
@@ -768,7 +745,7 @@ class ImplicitImportResolver:
         if class_name:
             old_class = context.current_class
             context.current_class = class_name
-            
+
             if parent_class and parent_class not in self.builtin_types:
                 dep = ImplicitDependency(
                     name=parent_class,
@@ -796,27 +773,99 @@ class ImplicitImportResolver:
     def _get_builtin_functions(self) -> set[str]:
         """Get set of PowerBuilder builtin functions."""
         return {
-            "len", "trim", "left", "right", "mid", "pos", "replace", "upper", "lower",
-            "asc", "char", "string", "space", "abs", "ceiling", "cos", "exp", "int",
-            "log", "max", "min", "mod", "pi", "rand", "round", "sign", "sin", "sqrt",
-            "tan", "truncate", "day", "month", "year", "hour", "minute", "second",
-            "date", "datetime", "now", "today", "integer", "long", "double", "real",
-            "decimal", "messagebox", "isnull", "setnull", "isvalid", "isnumber",
-            "isdate", "istime", "classname", "typeof", "fileopen", "fileclose",
+            "len",
+            "trim",
+            "left",
+            "right",
+            "mid",
+            "pos",
+            "replace",
+            "upper",
+            "lower",
+            "asc",
+            "char",
+            "string",
+            "space",
+            "abs",
+            "ceiling",
+            "cos",
+            "exp",
+            "int",
+            "log",
+            "max",
+            "min",
+            "mod",
+            "pi",
+            "rand",
+            "round",
+            "sign",
+            "sin",
+            "sqrt",
+            "tan",
+            "truncate",
+            "day",
+            "month",
+            "year",
+            "hour",
+            "minute",
+            "second",
+            "date",
+            "datetime",
+            "now",
+            "today",
+            "integer",
+            "long",
+            "double",
+            "real",
+            "decimal",
+            "messagebox",
+            "isnull",
+            "setnull",
+            "isvalid",
+            "isnumber",
+            "isdate",
+            "istime",
+            "classname",
+            "typeof",
+            "fileopen",
+            "fileclose",
         }
 
     def _get_builtin_types(self) -> set[str]:
         """Get set of PowerBuilder builtin types."""
         return {
-            "integer", "long", "string", "boolean", "real", "double", "decimal",
-            "date", "time", "datetime", "blob", "any", "char", "byte", "window",
-            "datawindow", "datastore", "transaction", "application", "menu",
-            "userobject", "structure", "exception", "throwable", "runtimeerror",
+            "integer",
+            "long",
+            "string",
+            "boolean",
+            "real",
+            "double",
+            "decimal",
+            "date",
+            "time",
+            "datetime",
+            "blob",
+            "any",
+            "char",
+            "byte",
+            "window",
+            "datawindow",
+            "datastore",
+            "transaction",
+            "application",
+            "menu",
+            "userobject",
+            "structure",
+            "exception",
+            "throwable",
+            "runtimeerror",
         }
+
 
 # ============================================================================
 # PARSER SECTION
 # ============================================================================
+
 
 class PowerBuilderBaseParser(ABC):
     """Abstract base class for all PowerBuilder parsers."""
@@ -860,7 +909,9 @@ class PowerBuilderBaseParser(ABC):
         extension = file_path.suffix.lstrip(".")
         return extension.lower() in self.SUPPORTED_EXTENSIONS
 
-    def parse_with_error_recovery(self, source: str, filename: str | None = None) -> Tree:
+    def parse_with_error_recovery(
+        self, source: str, filename: str | None = None
+    ) -> Tree:
         """Parse with automatic error recovery."""
         self._parse_errors.clear()
         self._recovery_attempts = 0
@@ -872,31 +923,39 @@ class PowerBuilderBaseParser(ABC):
             self._record_parse_error(e, filename)
             return self._recover_from_error(source, e, filename)
 
-    def _recover_from_error(self, source: str, error: UnexpectedInput, filename: str | None = None) -> Tree:
+    def _recover_from_error(
+        self, source: str, error: UnexpectedInput, filename: str | None = None
+    ) -> Tree:
         """Attempt to recover from a parse error."""
         self._recovery_attempts += 1
 
         if self._recovery_attempts > self._max_recovery_attempts:
-            raise ParseRecoveryError(self._recovery_attempts, str(error), filename=filename)
+            raise ParseRecoveryError(
+                self._recovery_attempts, str(error), filename=filename
+            )
 
         # Try to skip problematic line
         lines = source.splitlines()
         error_line = error.line - 1
-        
+
         if 0 <= error_line < len(lines):
             lines[error_line] = f"// PARSE ERROR: {lines[error_line]}"
             modified_source = "\n".join(lines)
-            
+
             try:
                 return self.parser.parse(modified_source)
             except UnexpectedInput:
                 pass
 
         # Create error tree as fallback
-        error_token = Token("PARSE_ERROR", str(error), line=error.line, column=error.column)
+        error_token = Token(
+            "PARSE_ERROR", str(error), line=error.line, column=error.column
+        )
         return Tree("error", [error_token])
 
-    def _record_parse_error(self, error: UnexpectedInput, filename: str | None = None) -> None:
+    def _record_parse_error(
+        self, error: UnexpectedInput, filename: str | None = None
+    ) -> None:
         """Record a parse error."""
         error_info = {
             "line": error.line,
@@ -920,6 +979,7 @@ class PowerBuilderBaseParser(ABC):
         self._parse_errors.clear()
         self._recovery_attempts = 0
 
+
 class SQLParser(PowerBuilderBaseParser):
     """Parser for SQL statements in PowerBuilder code."""
 
@@ -927,8 +987,14 @@ class SQLParser(PowerBuilderBaseParser):
     SUPPORTED_EXTENSIONS: ClassVar[set[str]] = {"sql", "srq"}
 
     SQL_PATTERNS = [
-        r"^\s*SELECT\s+", r"^\s*INSERT\s+", r"^\s*UPDATE\s+", r"^\s*DELETE\s+",
-        r"^\s*CREATE\s+", r"^\s*DROP\s+", r"^\s*ALTER\s+", r"^\s*WITH\s+",
+        r"^\s*SELECT\s+",
+        r"^\s*INSERT\s+",
+        r"^\s*UPDATE\s+",
+        r"^\s*DELETE\s+",
+        r"^\s*CREATE\s+",
+        r"^\s*DROP\s+",
+        r"^\s*ALTER\s+",
+        r"^\s*WITH\s+",
     ]
 
     def __init__(self, base_path: Path | None = None, **parser_options: Any) -> None:
@@ -943,13 +1009,17 @@ class SQLParser(PowerBuilderBaseParser):
     def _create_parser(self) -> Lark:
         """Create the SQL parser instance."""
         try:
-            return self._grammar_manager.load_grammar("sql", start="sql_statements", **self.parser_options)
+            return self._grammar_manager.load_grammar(
+                "sql", start="sql_statements", **self.parser_options
+            )
         except Exception as e:
             logger.warning("Failed to create SQL parser: %s, using fallback", e)
             # Return basic SQL parser
             return self._grammar_manager.load_grammar("sql", **self.parser_options)
 
-    def parse(self, source: str | Path, optimize: bool = False) -> Tree | dict[str, Any] | list[Any]:
+    def parse(
+        self, source: str | Path, optimize: bool = False
+    ) -> Tree | dict[str, Any] | list[Any]:
         """Parse SQL statements."""
         source_text, file_path = self._validate_source(source)
         self._current_file = file_path
@@ -957,20 +1027,25 @@ class SQLParser(PowerBuilderBaseParser):
         if not self._is_sql(source_text):
             logger.warning("Source does not appear to contain SQL statements")
 
-        tree = self.parse_with_error_recovery(source_text, str(file_path) if file_path else None)
-        
+        tree = self.parse_with_error_recovery(
+            source_text, str(file_path) if file_path else None
+        )
+
         # Transform to AST
         ast = self.transform_tree(tree, self.transformer)
-        
+
         if optimize and self._optimizer:
             ast = self._optimizer.optimize(ast)
-            
+
         return ast
 
     def _is_sql(self, source: str) -> bool:
         """Check if source contains SQL statements."""
         cleaned = self._remove_comments(source).strip()
-        return any(re.match(pattern, cleaned, re.IGNORECASE | re.MULTILINE) for pattern in self.SQL_PATTERNS)
+        return any(
+            re.match(pattern, cleaned, re.IGNORECASE | re.MULTILINE)
+            for pattern in self.SQL_PATTERNS
+        )
 
     def _remove_comments(self, source: str) -> str:
         """Remove SQL comments from source."""
@@ -981,12 +1056,16 @@ class SQLParser(PowerBuilderBaseParser):
         """Validate and normalize source input."""
         if isinstance(source, Path):
             if not source.exists():
-                raise ParseError(f"Source file not found: {source}", filename=str(source))
+                raise ParseError(
+                    f"Source file not found: {source}", filename=str(source)
+                )
             try:
                 source_text = source.read_text(encoding="utf-8")
                 return source_text, source
             except Exception as e:
-                raise ParseError(f"Failed to read source file: {e}", filename=str(source))
+                raise ParseError(
+                    f"Failed to read source file: {e}", filename=str(source)
+                )
         elif isinstance(source, str):
             return source, None
         else:
@@ -1011,6 +1090,7 @@ class SQLParser(PowerBuilderBaseParser):
             self._transformer = SQLTransformer()
         return self._transformer
 
+
 class UnifiedPowerBuilderParser:
     """Unified parser for all PowerBuilder file types."""
 
@@ -1019,20 +1099,24 @@ class UnifiedPowerBuilderParser:
         "sql": SQLParser,
         "srq": SQLParser,
         "sra": "EnhancedPowerBuilderParser",
-        "srw": "EnhancedPowerBuilderParser", 
+        "srw": "EnhancedPowerBuilderParser",
         "sru": "EnhancedPowerBuilderParser",
         "srf": "EnhancedPowerBuilderParser",
         "srm": "EnhancedPowerBuilderParser",
         "srs": "EnhancedPowerBuilderParser",
     }
 
-    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = True) -> None:
+    def __init__(
+        self, base_path: Path | None = None, enable_error_recovery: bool = True
+    ) -> None:
         """Initialize unified parser."""
         self.base_path = base_path or Path.cwd()
         self.enable_error_recovery = enable_error_recovery
         self._parser_cache: dict[Any, PowerBuilderBaseParser] = {}
 
-    def parse(self, source: str | Path, parser_type: str | None = None) -> Tree | dict[str, Any]:
+    def parse(
+        self, source: str | Path, parser_type: str | None = None
+    ) -> Tree | dict[str, Any]:
         """Parse PowerBuilder source code."""
         if isinstance(source, Path):
             source_path = source
@@ -1055,12 +1139,12 @@ class UnifiedPowerBuilderParser:
 
         # Get parser instance
         parser = self._get_parser_instance(parser_class)
-        
+
         # Parse
         try:
             result = parser.parse(source_text)
             return result
-        except Exception as e:
+        except Exception:
             if self.enable_error_recovery and hasattr(parser, "parse_with_fallback"):
                 return parser.parse_with_fallback(source_text)
             raise
@@ -1081,10 +1165,12 @@ class UnifiedPowerBuilderParser:
         """Get parser class by content analysis."""
         lines = content.strip().split("\n", 5)
         header = " ".join(lines[:5]).upper()
-        
-        if any(pattern in header for pattern in ["SELECT", "INSERT", "UPDATE", "DELETE"]):
+
+        if any(
+            pattern in header for pattern in ["SELECT", "INSERT", "UPDATE", "DELETE"]
+        ):
             return SQLParser
-        
+
         return "EnhancedPowerBuilderParser"
 
     def _get_parser_instance(self, parser_class: Any) -> PowerBuilderBaseParser:
@@ -1092,17 +1178,25 @@ class UnifiedPowerBuilderParser:
         if isinstance(parser_class, str):
             # Return a basic parser for string types
             return BasicPowerBuilderParser(self.base_path)
-            
+
         if parser_class not in self._parser_cache:
             instance = parser_class(self.base_path)
             self._parser_cache[parser_class] = instance
         return self._parser_cache[parser_class]
 
+
 class BasicPowerBuilderParser(PowerBuilderBaseParser):
     """Basic PowerBuilder parser implementation."""
 
     PARSER_TYPE: ClassVar[str] = "powerbuilder"
-    SUPPORTED_EXTENSIONS: ClassVar[set[str]] = {"sra", "srw", "sru", "srf", "srm", "srs"}
+    SUPPORTED_EXTENSIONS: ClassVar[set[str]] = {
+        "sra",
+        "srw",
+        "sru",
+        "srf",
+        "srm",
+        "srs",
+    }
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize basic parser."""
@@ -1117,8 +1211,10 @@ class BasicPowerBuilderParser(PowerBuilderBaseParser):
         """Parse PowerBuilder source code."""
         source_text, file_path = self._validate_source(source)
         self._current_file = file_path
-        
-        return self.parse_with_error_recovery(source_text, str(file_path) if file_path else None)
+
+        return self.parse_with_error_recovery(
+            source_text, str(file_path) if file_path else None
+        )
 
     def _validate_source(self, source: str | Path) -> tuple[str, Path | None]:
         """Validate source input."""
@@ -1128,6 +1224,7 @@ class BasicPowerBuilderParser(PowerBuilderBaseParser):
             source_text = source.read_text(encoding="utf-8")
             return source_text, source
         return str(source), None
+
 
 # Specialized parsers
 class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
@@ -1151,6 +1248,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
             source = source.read_text(encoding="utf-8")
         return self.parse_with_error_recovery(str(source))
 
+
 class PowerBuilderTransactionParser:
     """Parser for PowerBuilder transaction statements."""
 
@@ -1161,7 +1259,7 @@ class PowerBuilderTransactionParser:
     def parse_transaction_statement(self, source: str) -> PBTransactionStatement:
         """Parse a transaction statement."""
         source = source.strip().upper()
-        
+
         if source.startswith("CONNECT"):
             return PBTransactionStatement(
                 statement_type=PBStatementType.CONNECT,
@@ -1177,11 +1275,12 @@ class PowerBuilderTransactionParser:
                 statement_type=PBStatementType.ROLLBACK,
                 transaction_object="sqlca",
             )
-        
+
         return PBTransactionStatement(
             statement_type="UNKNOWN",
             transaction_object="sqlca",
         )
+
 
 class TypeParser:
     """Parser for PowerBuilder custom types and enums."""
@@ -1195,26 +1294,28 @@ class TypeParser:
         name = None
         parent_type = None
         is_global = False
-        
+
         for child in tree.children:
             if isinstance(child, Token):
                 if child.type == "IDENTIFIER" and name is None:
                     name = str(child)
                 elif child.value.lower() == "global":
                     is_global = True
-                    
+
         # Create basic custom type
         if name:
             type_obj = CustomType(name, TypeCategory.CUSTOM, parent_type)
             type_obj.is_global = is_global
             self.types[name] = type_obj
             return type_obj
-            
+
         return None
+
 
 # ============================================================================
 # TRANSFORMER SECTION
 # ============================================================================
+
 
 class PowerBuilderTransformer(Transformer):
     """Transform Lark parse tree to PowerBuilder AST."""
@@ -1226,29 +1327,27 @@ class PowerBuilderTransformer(Transformer):
     def _extract_location(self, node: Any) -> dict[str, Any]:
         """Extract location information from a node."""
         location = {}
-        if hasattr(node, 'meta'):
+        if hasattr(node, "meta"):
             meta = node.meta
-            if hasattr(meta, 'line'):
-                location['line'] = meta.line
-            if hasattr(meta, 'column'):
-                location['column'] = meta.column
+            if hasattr(meta, "line"):
+                location["line"] = meta.line
+            if hasattr(meta, "column"):
+                location["column"] = meta.column
         return location
 
-    def _create_ast_node(self, node_type: str, items: list[Any], meta: Any = None, **kwargs) -> dict[str, Any]:
+    def _create_ast_node(
+        self, node_type: str, items: list[Any], meta: Any = None, **kwargs
+    ) -> dict[str, Any]:
         """Create an AST node with proper type and location."""
-        ast_node = {
-            "type": node_type,
-            "node_type": node_type,
-            **kwargs
-        }
-        
+        ast_node = {"type": node_type, "node_type": node_type, **kwargs}
+
         if meta:
             location = self._extract_location(meta)
             ast_node.update(location)
-        elif items and hasattr(items[0], 'meta'):
+        elif items and hasattr(items[0], "meta"):
             location = self._extract_location(items[0])
             ast_node.update(location)
-            
+
         return ast_node
 
     def powerbuilder_file(self, items: list[Any]) -> dict[str, Any]:
@@ -1258,11 +1357,11 @@ class PowerBuilderTransformer(Transformer):
     def function_definition(self, items: list[Any]) -> FunctionDefinition:
         """Transform function definition."""
         items = [item for item in items if item is not None]
-        
+
         # Parse function components
         idx = 0
         access_modifier = None
-        
+
         # Check for access modifier
         if items and str(items[idx]).lower() in ["public", "private", "protected"]:
             access_modifier = str(items[idx])
@@ -1286,7 +1385,9 @@ class PowerBuilderTransformer(Transformer):
         # Create signature
         sig = Signature(
             name=name,
-            return_type=self._convert_type(return_type) if return_type else Type(name="void"),
+            return_type=self._convert_type(return_type)
+            if return_type
+            else Type(name="void"),
             parameters=parameters if isinstance(parameters, list) else [],
         )
 
@@ -1304,11 +1405,11 @@ class PowerBuilderTransformer(Transformer):
         name = None
         type_name = None
         modifier = None
-        
+
         if len(items) >= 2:
             type_name = str(items[0]) if items[0] else None
             name = str(items[1]) if items[1] else None
-        
+
         return Parameter(
             name=name,
             type=self._convert_type(type_name) if type_name else None,
@@ -1339,7 +1440,7 @@ class PowerBuilderTransformer(Transformer):
         condition = None
         then_statements = []
         else_statements = []
-        
+
         # Simple parsing - extract condition and statements
         for i, item in enumerate(items):
             if str(item).lower() == "if" and i + 1 < len(items):
@@ -1377,9 +1478,9 @@ class PowerBuilderTransformer(Transformer):
         """Transform primary expression."""
         if not items:
             return None
-            
+
         item = items[0]
-        
+
         if isinstance(item, Token):
             if item.type == "IDENTIFIER":
                 return Variable(name=str(item))
@@ -1392,26 +1493,27 @@ class PowerBuilderTransformer(Transformer):
                 return BooleanLiteral(value=True)
             elif item.type == "FALSE":
                 return BooleanLiteral(value=False)
-        
+
         return item
 
     def _convert_type(self, type_name: Any) -> Type:
         """Convert type name to Type object."""
         if type_name is None:
             return Type(name="any", category=TypeCategory.BASIC)
-            
+
         type_str = str(type_name).lower()
-        
+
         basic_types = {
             "integer": TypeCategory.NUMERIC,
             "string": TypeCategory.TEXT,
             "boolean": TypeCategory.LOGICAL,
         }
-        
+
         if type_str in basic_types:
             return BasicType(name=type_str, category=basic_types[type_str])
-            
+
         return CustomType(name=type_str, category=TypeCategory.CUSTOM)
+
 
 class SQLTransformer(Transformer):
     """Transforms SQL parse trees into SQL AST nodes."""
@@ -1431,7 +1533,7 @@ class SQLTransformer(Transformer):
     def select_statement(self, items: list[Any]) -> SQLSelectStatement:
         """Transform SELECT statement."""
         stmt = SQLSelectStatement()
-        
+
         for item in items:
             if isinstance(item, Tree):
                 if item.data == "result_columns":
@@ -1440,7 +1542,7 @@ class SQLTransformer(Transformer):
                     stmt.from_clause = self.transform(item)
                 elif item.data == "where_clause":
                     stmt.where_clause = self.transform(item)
-                    
+
         return stmt
 
     def _process_result_columns(self, tree: Tree) -> list[Any]:
@@ -1487,28 +1589,34 @@ class SQLTransformer(Transformer):
             return ASTStringLiteral(value=value)
         return ASTStringLiteral(value="")
 
+
 # ============================================================================
 # LIBRARY AND RESOLUTION SECTION
 # ============================================================================
 
+
 @dataclass
 class LibraryInfo:
     """Information about a loaded library."""
+
     path: Path
     load_time: float
     objects: dict[str, Any] = field(default_factory=dict)
     dependencies: set[str] = field(default_factory=set)
     is_compiled: bool = False
 
+
 @dataclass
 class SymbolInfo:
     """Information about a symbol."""
+
     name: str
     library_path: Path
     object_type: str
     ast: Any
     dependencies: set[str] = field(default_factory=set)
     dependents: set[str] = field(default_factory=set)
+
 
 class SymbolCache:
     """Thread-safe cache for parsed symbols."""
@@ -1548,15 +1656,22 @@ class SymbolCache:
             self._cache.clear()
             self._access_order.clear()
 
+
 class LibraryManager:
     """Manages PowerBuilder library files."""
 
     OBJECT_PREFIXES = {
-        "n_": "userobject", "u_": "userobject", "w_": "window",
-        "d_": "datawindow", "m_": "menu", "f_": "function",
+        "n_": "userobject",
+        "u_": "userobject",
+        "w_": "window",
+        "d_": "datawindow",
+        "m_": "menu",
+        "f_": "function",
     }
 
-    def __init__(self, library_paths: list[Path] | None = None, cache_size: int = 1000) -> None:
+    def __init__(
+        self, library_paths: list[Path] | None = None, cache_size: int = 1000
+    ) -> None:
         """Initialize library manager."""
         self.library_paths = library_paths or []
         self.libraries: dict[Path, LibraryInfo] = {}
@@ -1575,7 +1690,7 @@ class LibraryManager:
     def load_library(self, library_path: Path) -> LibraryInfo:
         """Load a PowerBuilder library file."""
         library_path = Path(library_path).resolve()
-        
+
         if library_path in self.libraries:
             return self.libraries[library_path]
 
@@ -1586,7 +1701,7 @@ class LibraryManager:
         try:
             # Extract library contents
             extract_pbl(str(library_path), str(temp_dir))
-            
+
             lib_info = LibraryInfo(
                 path=library_path,
                 load_time=time.time() - start_time,
@@ -1595,10 +1710,10 @@ class LibraryManager:
 
             # Parse extracted objects
             self._parse_library_objects(lib_info, temp_dir)
-            
+
             with self._lock:
                 self.libraries[library_path] = lib_info
-                
+
             return lib_info
 
         except Exception as e:
@@ -1607,53 +1722,65 @@ class LibraryManager:
         finally:
             # Clean up
             import shutil
+
             if temp_dir.exists():
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
     def _parse_library_objects(self, lib_info: LibraryInfo, extract_dir: Path) -> None:
         """Parse all objects extracted from a library."""
         parser = self._get_parser()
-        
+
         for obj_file in extract_dir.iterdir():
-            if obj_file.is_file() and obj_file.suffix.lower() in [".sru", ".srw", ".srf", ".srm"]:
+            if obj_file.is_file() and obj_file.suffix.lower() in [
+                ".sru",
+                ".srw",
+                ".srf",
+                ".srm",
+            ]:
                 try:
                     ast = parser.parse(obj_file)
                     obj_name = obj_file.stem.lower()
                     lib_info.objects[obj_name] = ast
-                    
+
                     symbol_info = SymbolInfo(
                         name=obj_name,
                         library_path=lib_info.path,
                         object_type=self._detect_object_type(obj_name, obj_file.suffix),
                         ast=ast,
                     )
-                    
+
                     with self._lock:
                         self.symbol_index[obj_name] = lib_info.path
                         self.symbol_cache.put(obj_name, symbol_info)
-                        
+
                 except Exception as e:
                     logger.error("Failed to parse %s: %s", obj_file, e)
 
     def _detect_object_type(self, obj_name: str, file_ext: str) -> str:
         """Detect object type from name and extension."""
         obj_name_lower = obj_name.lower()
-        
+
         for prefix, obj_type in self.OBJECT_PREFIXES.items():
             if obj_name_lower.startswith(prefix):
                 return obj_type
-                
+
         ext_map = {
-            ".srw": "window", ".sru": "userobject", ".srf": "function",
-            ".srm": "menu", ".srs": "structure", ".sra": "application",
+            ".srw": "window",
+            ".sru": "userobject",
+            ".srf": "function",
+            ".srm": "menu",
+            ".srs": "structure",
+            ".sra": "application",
         }
-        
+
         return ext_map.get(file_ext.lower(), "unknown")
 
-    def get_symbol(self, symbol_name: str, search_order: list[Path] | None = None) -> SymbolInfo | None:
+    def get_symbol(
+        self, symbol_name: str, search_order: list[Path] | None = None
+    ) -> SymbolInfo | None:
         """Get a symbol from the libraries."""
         symbol_name_lower = symbol_name.lower()
-        
+
         # Check cache first
         cached = self.symbol_cache.get(symbol_name_lower)
         if cached:
@@ -1661,7 +1788,7 @@ class LibraryManager:
 
         # Search libraries
         search_paths = search_order or list(self.libraries.keys())
-        
+
         for lib_path in search_paths:
             if lib_path in self.libraries:
                 lib_info = self.libraries[lib_path]
@@ -1674,12 +1801,14 @@ class LibraryManager:
                     )
                     self.symbol_cache.put(symbol_name_lower, symbol_info)
                     return symbol_info
-                    
+
         return None
+
 
 @dataclass
 class ResolutionContext:
     """Context for type resolution."""
+
     file_path: Path
     resolved_types: dict[str, PBType] = field(default_factory=dict)
     unresolved_symbols: set[str] = field(default_factory=set)
@@ -1696,6 +1825,7 @@ class ResolutionContext:
         """Check if a type is resolved."""
         return name in self.resolved_types
 
+
 class TypeResolver:
     """Resolves types in PowerBuilder code."""
 
@@ -1710,16 +1840,21 @@ class TypeResolver:
     def _initialize_system_types(self) -> None:
         """Initialize system types."""
         object_types = [
-            ("window", "window"), ("datawindow", "datawindow"), ("menu", "menu"),
-            ("application", "application"), ("userobject", "userobject"),
+            ("window", "window"),
+            ("datawindow", "datawindow"),
+            ("menu", "menu"),
+            ("application", "application"),
+            ("userobject", "userobject"),
         ]
-        
+
         for type_name, base_class in object_types:
             custom_type = PBCustomType(name=type_name, base_class=base_class)
             custom_type.category = "object"
             self.type_registry.register(custom_type)
 
-    def create_context(self, file_path: Path, namespace: str | None = None) -> ResolutionContext:
+    def create_context(
+        self, file_path: Path, namespace: str | None = None
+    ) -> ResolutionContext:
         """Create a resolution context for a file."""
         context = ResolutionContext(file_path, namespace=namespace)
         self.contexts[file_path] = context
@@ -1732,34 +1867,36 @@ class TypeResolver:
             return self._type_cache[cache_key]
 
         resolved_type = self._resolve_type_internal(type_name, context)
-        
+
         if resolved_type:
             self._type_cache[cache_key] = resolved_type
             context.add_resolved_type(type_name, resolved_type)
         else:
             context.unresolved_symbols.add(type_name)
-            
+
         return resolved_type
 
-    def _resolve_type_internal(self, type_name: str, context: ResolutionContext) -> PBType | None:
+    def _resolve_type_internal(
+        self, type_name: str, context: ResolutionContext
+    ) -> PBType | None:
         """Internal type resolution logic."""
         clean_name = type_name.strip().lower()
-        
+
         # Check if already resolved
         if context.is_resolved(type_name):
             return context.resolved_types[type_name]
-            
+
         # Check type registry
         type_info = self.type_registry.get(clean_name)
         if type_info:
             return type_info
-            
+
         # Check for custom types through library manager
         if self.library_manager:
             symbol_info = self.library_manager.get_symbol(type_name)
             if symbol_info:
                 return self._create_custom_type_from_symbol(symbol_info.ast)
-                
+
         return None
 
     def _create_custom_type_from_symbol(self, symbol: Any) -> PBCustomType:
@@ -1770,9 +1907,11 @@ class TypeResolver:
             return PBCustomType(name=type_name, base_class=base_class)
         return PBCustomType(name="unknown", base_class="object")
 
+
 # ============================================================================
 # RECOVERY AND FACTORY SECTION
 # ============================================================================
+
 
 class EnhancedErrorRecovery:
     """Enhanced error recovery strategy."""
@@ -1791,12 +1930,13 @@ class EnhancedErrorRecovery:
         """Parse text with error recovery."""
         if not self.parser:
             raise ValueError("No parser instance provided")
-            
+
         try:
             return self.parser.parse(text)
         except Exception as e:
             self.recover(e, self.parser)
             return Tree("error", [Token("ERROR", str(e))])
+
 
 class ErrorRecoveryTransformer(Transformer):
     """Transformer that handles error nodes."""
@@ -1809,6 +1949,7 @@ class ErrorRecoveryTransformer(Transformer):
     def error_node(self, children) -> Tree:
         """Handle error nodes."""
         return Tree("error", children)
+
 
 class ParseCoordinatorFactory:
     """Factory for creating parse coordinators."""
@@ -1833,7 +1974,7 @@ class ParseCoordinatorFactory:
         preprocessor = PowerBuilderPreprocessor() if enable_preprocessing else None
         parser = UnifiedPowerBuilderParser()
         transformer = PowerBuilderTransformer()
-        
+
         # Return a mock coordinator for now
         return {
             "grammar_manager": grammar_manager,
@@ -1843,6 +1984,7 @@ class ParseCoordinatorFactory:
             "transformer": transformer,
         }
 
+
 # Convenience function
 def create_parse_coordinator(
     input_dir: str | Path | None = None,
@@ -1851,17 +1993,17 @@ def create_parse_coordinator(
 ) -> Any:
     """Create a parse coordinator with default configuration."""
     return ParseCoordinatorFactory.create_simple(
-        input_dir=input_dir,
-        output_dir=output_dir,
-        **kwargs
+        input_dir=input_dir, output_dir=output_dir, **kwargs
     )
 
+
 # ============================================================================
-# VISITOR PATTERN SECTION  
+# VISITOR PATTERN SECTION
 # ============================================================================
 
 # Stub classes for nodes that don't exist yet but are referenced in the visitor
 # These should be implemented as needed or the visitor methods should be removed
+
 
 @dataclass
 class PBAccessModifierDefinerNode(PBNode):
@@ -2840,423 +2982,428 @@ class PositionTrackingVisitor(PowerBuilderASTVisitor, PositionTrackerMixin):
         """Visit an access node."""
         self._track_node_position(node)
         # Default implementation - visit children
-        if hasattr(node, 'accessed'):
+        if hasattr(node, "accessed"):
             self.visit(node.accessed)
-        if hasattr(node, 'array_position'):
+        if hasattr(node, "array_position"):
             self.visit(node.array_position)
 
     def visit_access_modifier(self, node: Any) -> str:
         """Visit an access modifier node."""
         self._track_node_position(node)
-        return getattr(node, 'access_modifier', "")
+        return getattr(node, "access_modifier", "")
 
     def visit_access_modifier_definer(self, node: Any) -> None:
         """Visit an access modifier definer node."""
         self._track_node_position(node)
-        if hasattr(node, 'access_modifier'):
+        if hasattr(node, "access_modifier"):
             self.visit(node.access_modifier)
 
     def visit_access_or_type(self, node: Any) -> None:
         """Visit an access or type node."""
         self._track_node_position(node)
-        if hasattr(node, 'access_or_type'):
+        if hasattr(node, "access_or_type"):
             self.visit(node.access_or_type)
 
     def visit_argument(self, node: Any) -> None:
         """Visit an argument node."""
         self._track_node_position(node)
-        for attr in ['argument_option', 'type', 'identifier', 'array_with_size']:
+        for attr in ["argument_option", "type", "identifier", "array_with_size"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_argument_option(self, node: Any) -> str:
         """Visit an argument option node."""
         self._track_node_position(node)
-        return getattr(node, 'argument_option', "")
+        return getattr(node, "argument_option", "")
 
     def visit_arguments(self, node: Any) -> None:
         """Visit an arguments node."""
         self._track_node_position(node)
-        if hasattr(node, 'arguments'):
+        if hasattr(node, "arguments"):
             self.visit_all(node.arguments)
 
     def visit_array(self, node: Any) -> None:
         """Visit an array node."""
         self._track_node_position(node)
-        if hasattr(node, 'expressions'):
+        if hasattr(node, "expressions"):
             self.visit_all(node.expressions)
 
     def visit_array_designation(self, node: Any) -> str:
         """Visit an array designation node."""
         self._track_node_position(node)
-        return getattr(node, 'array_designation', "")
+        return getattr(node, "array_designation", "")
 
     def visit_array_position(self, node: Any) -> None:
         """Visit an array position node."""
         self._track_node_position(node)
-        if hasattr(node, 'expressions'):
+        if hasattr(node, "expressions"):
             self.visit_all(node.expressions)
 
     def visit_array_with_size(self, node: Any) -> None:
         """Visit an array with size node."""
         self._track_node_position(node)
-        if hasattr(node, 'expressions'):
+        if hasattr(node, "expressions"):
             self.visit_all(node.expressions)
 
     def visit_assignation(self, node: Any) -> None:
         """Visit an assignation node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_assignation_statement(self, node: Any) -> None:
         """Visit an assignation statement node."""
         self._track_node_position(node)
-        for attr in ['access_or_type', 'expression_action', 'assignation']:
+        for attr in ["access_or_type", "expression_action", "assignation"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_basic_type(self, node: Any) -> str:
         """Visit a basic type node."""
         self._track_node_position(node)
-        return getattr(node, 'name', "")
+        return getattr(node, "name", "")
 
     def visit_behavioral_alias(self, node: Any) -> None:
         """Visit a behavioral alias node."""
         self._track_node_position(node)
-        if hasattr(node, 'alias'):
+        if hasattr(node, "alias"):
             self.visit(node.alias)
 
     def visit_behavioral_library(self, node: Any) -> None:
         """Visit a behavioral library node."""
         self._track_node_position(node)
-        if hasattr(node, 'library_file'):
+        if hasattr(node, "library_file"):
             self.visit(node.library_file)
 
     def visit_behavioral_option(self, node: Any) -> None:
         """Visit a behavioral option node."""
         self._track_node_position(node)
-        if hasattr(node, 'behavioral_option'):
+        if hasattr(node, "behavioral_option"):
             self.visit(node.behavioral_option)
 
     def visit_boolean_value(self, node: Any) -> str:
         """Visit a boolean value node."""
         self._track_node_position(node)
-        return getattr(node, 'boolean_value', "")
+        return getattr(node, "boolean_value", "")
 
     def visit_call_statement(self, node: Any) -> None:
         """Visit a call statement node."""
         self._track_node_position(node)
-        for attr in ['variable', 'identifier', 'event_type']:
+        for attr in ["variable", "identifier", "event_type"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_case(self, node: Any) -> None:
         """Visit a case node."""
         self._track_node_position(node)
-        if hasattr(node, 'case'):
+        if hasattr(node, "case"):
             self.visit(node.case)
 
     def visit_case_else(self, node: Any) -> None:
         """Visit a case else node."""
         self._track_node_position(node)
-        for attr in ['statements', 'statement']:
+        for attr in ["statements", "statement"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_choose_case(self, node: Any) -> None:
         """Visit a choose case node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
-        if hasattr(node, 'cases'):
+        if hasattr(node, "cases"):
             self.visit_all(node.cases)
-        if hasattr(node, 'case_else'):
+        if hasattr(node, "case_else"):
             self.visit(node.case_else)
 
     def visit_close_sql_cursor(self, node: Any) -> None:
         """Visit a close SQL cursor node."""
         self._track_node_position(node)
-        if hasattr(node, 'identifier'):
+        if hasattr(node, "identifier"):
             self.visit(node.identifier)
 
     def visit_column(self, node: Any) -> None:
         """Visit a column node."""
         self._track_node_position(node)
-        if hasattr(node, 'column_definition'):
+        if hasattr(node, "column_definition"):
             self.visit(node.column_definition)
 
     def visit_column_definition(self, node: Any) -> None:
         """Visit a column definition node."""
         self._track_node_position(node)
-        if hasattr(node, 'options'):
+        if hasattr(node, "options"):
             self.visit(node.options)
 
     def visit_column_name_option(self, node: Any) -> None:
         """Visit a column name option node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_column_type_option(self, node: Any) -> None:
         """Visit a column type option node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_common_file(self, node: Any) -> None:
         """Visit a common file node."""
         self._track_node_position(node)
-        if hasattr(node, 'file_statements'):
+        if hasattr(node, "file_statements"):
             self.visit_all(node.file_statements)
 
     def visit_condition(self, node: Any) -> None:
         """Visit a condition node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_constant(self, node: Any) -> str:
         """Visit a constant node."""
         self._track_node_position(node)
-        return getattr(node, 'constant', "")
+        return getattr(node, "constant", "")
 
     def visit_continue_statement(self, node: Any) -> str:
         """Visit a continue statement node."""
         self._track_node_position(node)
-        return getattr(node, 'continue_statement', "")
+        return getattr(node, "continue_statement", "")
 
     def visit_create_instruction(self, node: Any) -> None:
         """Visit a create instruction node."""
         self._track_node_position(node)
-        if hasattr(node, 'variable'):
+        if hasattr(node, "variable"):
             self.visit(node.variable)
 
     def visit_create_using_instruction(self, node: Any) -> None:
         """Visit a create using instruction node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_custom_call_statement(self, node: Any) -> None:
         """Visit a custom call statement node."""
         self._track_node_position(node)
-        if hasattr(node, 'identifier'):
+        if hasattr(node, "identifier"):
             self.visit(node.identifier)
 
     def visit_custom_type(self, node: Any) -> None:
         """Visit a custom type node."""
         self._track_node_position(node)
-        if hasattr(node, 'identifier'):
+        if hasattr(node, "identifier"):
             self.visit(node.identifier)
 
     def visit_data_window(self, node: Any) -> None:
         """Visit a data window node."""
         self._track_node_position(node)
-        if hasattr(node, 'parameters'):
+        if hasattr(node, "parameters"):
             self.visit(node.parameters)
 
     def visit_data_window_file(self, node: Any) -> None:
         """Visit a data window file node."""
         self._track_node_position(node)
-        if hasattr(node, 'file_statements'):
+        if hasattr(node, "file_statements"):
             self.visit_all(node.file_statements)
 
     def visit_declare_cursor(self, node: Any) -> None:
         """Visit a declare cursor node."""
         self._track_node_position(node)
-        for attr in ['identifier', 'target']:
+        for attr in ["identifier", "target"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_declare_procedure(self, node: Any) -> None:
         """Visit a declare procedure node."""
         self._track_node_position(node)
-        if hasattr(node, 'procedure_name'):
+        if hasattr(node, "procedure_name"):
             self.visit(node.procedure_name)
 
     def visit_default_variable(self, node: Any) -> str:
         """Visit a default variable node."""
         self._track_node_position(node)
-        return getattr(node, 'default_variable', "")
+        return getattr(node, "default_variable", "")
 
     def visit_descriptor(self, node: Any) -> None:
         """Visit a descriptor node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_destroy_statement(self, node: Any) -> None:
         """Visit a destroy statement node."""
         self._track_node_position(node)
-        if hasattr(node, 'expression'):
+        if hasattr(node, "expression"):
             self.visit(node.expression)
 
     def visit_do_loop_until(self, node: Any) -> None:
         """Visit a do loop until node."""
         self._track_node_position(node)
-        for attr in ['statements', 'expression']:
+        for attr in ["statements", "expression"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_do_loop_while(self, node: Any) -> None:
         """Visit a do loop while node."""
         self._track_node_position(node)
-        for attr in ['statements', 'expression']:
+        for attr in ["statements", "expression"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_do_until_loop(self, node: Any) -> None:
         """Visit a do until loop node."""
         self._track_node_position(node)
-        for attr in ['expression', 'statements']:
+        for attr in ["expression", "statements"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_do_while_loop(self, node: Any) -> None:
         """Visit a do while loop node."""
         self._track_node_position(node)
-        for attr in ['expression', 'statements']:
+        for attr in ["expression", "statements"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_dynamic_method_invocation(self, node: Any) -> None:
         """Visit a dynamic method invocation node."""
         self._track_node_position(node)
-        for attr in ['unchecked_identifier', 'function_arguments']:
+        for attr in ["unchecked_identifier", "function_arguments"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_else(self, node: Any) -> None:
         """Visit an else node."""
         self._track_node_position(node)
-        if hasattr(node, 'statements'):
+        if hasattr(node, "statements"):
             self.visit(node.statements)
 
     def visit_else_if(self, node: Any) -> None:
         """Visit an else if node."""
         self._track_node_position(node)
-        for attr in ['expression', 'statements']:
+        for attr in ["expression", "statements"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_else_on_line(self, node: Any) -> None:
         """Visit an else on line node."""
         self._track_node_position(node)
-        if hasattr(node, 'statement'):
+        if hasattr(node, "statement"):
             self.visit(node.statement)
 
     def visit_end_forward(self, node: Any) -> str:
         """Visit an end forward node."""
         self._track_node_position(node)
-        return getattr(node, 'end_forward', "")
+        return getattr(node, "end_forward", "")
 
     def visit_event_attribute(self, node: Any) -> None:
         """Visit an event attribute node."""
         self._track_node_position(node)
-        for attr in ['return_type', 'event_name', 'attribute']:
+        for attr in ["return_type", "event_name", "attribute"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_event_declaration(self, node: Any) -> None:
         """Visit an event declaration node."""
         self._track_node_position(node)
-        for attr in ['return_type', 'event_reference_name', 'custom_call_statement', 'statements']:
+        for attr in [
+            "return_type",
+            "event_reference_name",
+            "custom_call_statement",
+            "statements",
+        ]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_event_invocation(self, node: Any) -> None:
         """Visit an event invocation node."""
         self._track_node_position(node)
-        for attr in ['identifier', 'function_arguments']:
+        for attr in ["identifier", "function_arguments"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_event_long(self, node: Any) -> None:
         """Visit an event long node."""
         self._track_node_position(node)
-        if hasattr(node, 'function_argument'):
+        if hasattr(node, "function_argument"):
             self.visit(node.function_argument)
 
     def visit_event_name(self, node: Any) -> None:
         """Visit an event name node."""
         self._track_node_position(node)
-        if hasattr(node, 'event_name'):
+        if hasattr(node, "event_name"):
             self.visit(node.event_name)
 
     def visit_event_reference_name(self, node: Any) -> None:
         """Visit an event reference name node."""
         self._track_node_position(node)
-        for attr in ['object_class', 'event_name', 'arguments']:
+        for attr in ["object_class", "event_name", "arguments"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_event_triggering_or_posting(self, node: Any) -> None:
         """Visit an event triggering or posting node."""
         self._track_node_position(node)
-        if hasattr(node, 'identifiers'):
+        if hasattr(node, "identifiers"):
             self.visit_all(node.identifiers)
-        if hasattr(node, 'array_positions'):
+        if hasattr(node, "array_positions"):
             self.visit_all(node.array_positions)
-        for attr in ['event_name', 'event_word', 'event_long']:
+        for attr in ["event_name", "event_word", "event_long"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_event_type(self, node: Any) -> None:
         """Visit an event type node."""
         self._track_node_position(node)
-        if hasattr(node, 'event_type'):
+        if hasattr(node, "event_type"):
             self.visit(node.event_type)
 
     def visit_event_word(self, node: Any) -> None:
         """Visit an event word node."""
         self._track_node_position(node)
-        if hasattr(node, 'function_argument'):
+        if hasattr(node, "function_argument"):
             self.visit(node.function_argument)
 
     def visit_execute_procedure(self, node: Any) -> None:
         """Visit an execute procedure node."""
         self._track_node_position(node)
-        for attr in ['procedure_name', 'using_clause']:
+        for attr in ["procedure_name", "using_clause"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_exit_statement(self, node: Any) -> str:
         """Visit an exit statement node."""
         self._track_node_position(node)
-        return getattr(node, 'exit_statement', "")
+        return getattr(node, "exit_statement", "")
 
     def visit_export(self, node: Any) -> None:
         """Visit an export node."""
         self._track_node_position(node)
-        for attr in ['format_type', 'parameters']:
+        for attr in ["format_type", "parameters"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_expression(self, node: Any) -> None:
         """Visit an expression node."""
         self._track_node_position(node)
-        for attr in ['expression', 'expression_action']:
+        for attr in ["expression", "expression_action"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_expression_action(self, node: Any) -> None:
         """Visit an expression action node."""
         self._track_node_position(node)
-        for attr in ['action', 'expression_action']:
+        for attr in ["action", "expression_action"]:
             if hasattr(node, attr):
                 self.visit(getattr(node, attr))
 
     def visit_expression_list(self, node: Any) -> None:
         """Visit an expression list node."""
         self._track_node_position(node)
-        if hasattr(node, 'expressions'):
+        if hasattr(node, "expressions"):
             self.visit_all(node.expressions)
 
     def visit_expression_operator(self, node: Any) -> str:
         """Visit an expression operator node."""
         self._track_node_position(node)
-        return getattr(node, 'expression_operator', "")
+        return getattr(node, "expression_operator", "")
 
 
 def track_positions_in_transformer[T](transformer_class: type[T]) -> type[T]:
@@ -3334,6 +3481,7 @@ def track_positions_in_transformer[T](transformer_class: type[T]) -> type[T]:
 
     return PositionTrackingTransformer
 
+
 # ============================================================================
 # PUBLIC API
 # ============================================================================
@@ -3347,17 +3495,14 @@ __all__ = [
     "PositionTrackerMixin",
     "PositionTrackingVisitor",
     "track_positions_in_transformer",
-    
     # Grammar
     "GrammarManager",
-    
     # Preprocessor
     "PowerBuilderPreprocessor",
     "ImplicitImportResolver",
     "PreprocessorState",
     "ImplicitDependency",
     "DependencyContext",
-    
     # Parsers
     "PowerBuilderBaseParser",
     "SQLParser",
@@ -3366,32 +3511,25 @@ __all__ = [
     "PowerBuilderPseudocodeParser",
     "PowerBuilderTransactionParser",
     "TypeParser",
-    
     # Transformers
     "PowerBuilderTransformer",
     "SQLTransformer",
-    
     # Visitor Pattern
     "PowerBuilderASTVisitor",
-    
     # Library Management
     "LibraryManager",
     "LibraryInfo",
     "SymbolInfo",
     "SymbolCache",
-    
     # Type Resolution
     "TypeResolver",
     "ResolutionContext",
-    
     # Error Recovery
     "EnhancedErrorRecovery",
     "ErrorRecoveryTransformer",
-    
     # Factory
     "ParseCoordinatorFactory",
     "create_parse_coordinator",
-    
     # Node stub classes (for backward compatibility)
     "PBAccessModifierDefinerNode",
     "PBAccessModifierNode",

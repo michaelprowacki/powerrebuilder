@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, TypeVar, Union
@@ -20,6 +19,7 @@ T = TypeVar("T")
 @dataclass
 class StageResult:
     """Result from a pipeline stage."""
+
     stage: str
     success: bool
     input_path: str
@@ -34,6 +34,7 @@ class StageResult:
 @dataclass
 class PipelineResult:
     """Result from complete pipeline execution."""
+
     success: bool
     stages_completed: List[str] = field(default_factory=list)
     stages_failed: List[str] = field(default_factory=list)
@@ -68,7 +69,7 @@ class Pipeline:
         self,
         stages: List[PipelineStage],
         stop_on_error: bool = True,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize pipeline.
 
@@ -197,11 +198,7 @@ class StageConnector:
         self.intermediate_dir = Path(intermediate_dir) if intermediate_dir else None
 
     def connect_stages(
-        self,
-        from_stage: str,
-        to_stage: str,
-        output_path: Path,
-        pattern: str = "*"
+        self, from_stage: str, to_stage: str, output_path: Path, pattern: str = "*"
     ) -> Path:
         """Connect output from one stage to input of another.
 
@@ -219,10 +216,7 @@ class StageConnector:
         return output_path
 
     def validate_stage_output(
-        self,
-        stage: str,
-        output_path: Path,
-        required_patterns: List[str]
+        self, stage: str, output_path: Path, required_patterns: List[str]
     ) -> bool:
         """Validate that stage produced expected output.
 

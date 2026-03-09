@@ -60,7 +60,7 @@ uv run mypy src/
 - **Module**: `src/extract/`
 - **Key Class**: `ExtractCoordinator`
 
-### Stage 2: Decompile 
+### Stage 2: Decompile
 - **Input**: P-code files (`.fun`) from Extract
 - **Output**: PowerBuilder source files (`.sru`, `.srw`, `.srm`)
 - **Module**: `src/decompile/`
@@ -104,7 +104,7 @@ uv run mypy src/
 ### PowerBuilder Object Types
 - `.fun` - Functions (compiled P-code)
 - `.srw` - Windows
-- `.sru` - User objects  
+- `.sru` - User objects
 - `.srm` - Menus
 - `.srd` - DataWindows
 - `.srs` - Structures

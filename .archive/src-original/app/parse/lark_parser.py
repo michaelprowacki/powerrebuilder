@@ -5,44 +5,37 @@ Uses Parse Don't Validate pattern with factory functions.
 Coordinates domain functions to transform source code into parse trees and ASTs.
 """
 
-from dataclasses import dataclass
 from typing import List, Optional, Dict, Any, Union
-from datetime import datetime
 from pathlib import Path
 import time
 
-from lark import Lark, Tree, Token, Transformer, Visitor
-from lark.exceptions import LarkError, ParseError as LarkParseError
+from lark import Tree, Token
 
 from src_new.shared.result import Result, Success, Error
 from src_new.adapters.parsing.lark_adapter import (
-    LarkConfig, LarkGrammar, LarkTree, LarkToken,
-    LarkParserAdapter, PowerBuilderTransformer,
-    load_lark_grammar
+    LarkConfig,
+    LarkGrammar,
+    LarkTree,
+    LarkParserAdapter,
+    PowerBuilderTransformer,
+    load_lark_grammar,
 )
-from src_new.adapters.parsing.ast_adapter import (
-    ASTNode, NodeType, NodeMetadata, ASTBuilder,
-    ASTVisitor, ASTTransformer, ParseTreeToAST,
-    ast_to_dict, dict_to_ast
-)
-from src_new.domain.powerbuilder.ast import (
-    ProgramNode, ClassNode, FunctionNode,
-    WindowNode, DataWindowNode, MenuNode
-)
+from src_new.adapters.parsing.ast_adapter import ASTNode
 
 
 # ============================================================================
 # PARSE DON'T VALIDATE - FACTORY FUNCTIONS
 # ============================================================================
 
+
 class _ParseToken:
     """Hidden token for Parse Don't Validate pattern."""
+
     pass
 
 
 def create_parser(
-    grammar_path: Path,
-    config: Optional[LarkConfig] = None
+    grammar_path: Path, config: Optional[LarkConfig] = None
 ) -> Result[LarkParserAdapter, str]:
     """Create a validated Lark parser from grammar file.
 
@@ -71,9 +64,9 @@ def create_parser(
 # PARSING WORKFLOW
 # ============================================================================
 
+
 def parse_powerbuilder_source(
-    source: str,
-    parser: LarkParserAdapter
+    source: str, parser: LarkParserAdapter
 ) -> Result[LarkTree, str]:
     """Parse PowerBuilder source code.
 
@@ -98,8 +91,7 @@ def parse_powerbuilder_source(
 
 
 def convert_to_ast(
-    lark_tree: LarkTree,
-    transformer: Optional[PowerBuilderTransformer] = None
+    lark_tree: LarkTree, transformer: Optional[PowerBuilderTransformer] = None
 ) -> Result[ASTNode, str]:
     """Convert Lark tree to AST using adapter."""
     if transformer is None:
@@ -107,8 +99,7 @@ def convert_to_ast(
 
     # Use adapter to transform
     parser_adapter = LarkParserAdapter(
-        LarkGrammar(grammar_text="", start_symbol="program"),
-        LarkConfig()
+        LarkGrammar(grammar_text="", start_symbol="program"), LarkConfig()
     )
 
     return parser_adapter.transform(lark_tree, transformer)
@@ -118,9 +109,8 @@ def convert_to_ast(
 # AST TRANSFORMATION
 # ============================================================================
 
-def transform_to_powerbuilder_ast(
-    lark_tree: LarkTree
-) -> Result[Dict[str, Any], str]:
+
+def transform_to_powerbuilder_ast(lark_tree: LarkTree) -> Result[Dict[str, Any], str]:
     """Transform Lark tree to PowerBuilder AST.
 
     Uses the adapter's transformer.
@@ -128,7 +118,9 @@ def transform_to_powerbuilder_ast(
     transformer = PowerBuilderTransformer()
 
     # Create a temporary adapter to use its transform method
-    adapter = LarkParserAdapter(lark_tree.metadata.get('grammar', LarkGrammar("", None)))
+    adapter = LarkParserAdapter(
+        lark_tree.metadata.get("grammar", LarkGrammar("", None))
+    )
 
     result = adapter.transform(lark_tree, transformer)
     if isinstance(result, Error):
@@ -144,30 +136,30 @@ def transform_to_powerbuilder_ast(
 def _map_to_powerbuilder_domain(ast_data: Any) -> Dict[str, Any]:
     """Map transformed AST to PowerBuilder domain types."""
     if isinstance(ast_data, dict):
-        ast_type = ast_data.get('type', 'unknown')
+        ast_type = ast_data.get("type", "unknown")
 
         # Map to appropriate PowerBuilder domain type
-        if ast_type == 'window':
+        if ast_type == "window":
             return {
-                'type': 'WindowNode',
-                'name': ast_data.get('name', 'unnamed'),
-                'title': ast_data.get('title', ''),
-                'controls': ast_data.get('controls', [])
+                "type": "WindowNode",
+                "name": ast_data.get("name", "unnamed"),
+                "title": ast_data.get("title", ""),
+                "controls": ast_data.get("controls", []),
             }
-        elif ast_type == 'function':
+        elif ast_type == "function":
             return {
-                'type': 'FunctionNode',
-                'name': ast_data.get('name', 'unnamed'),
-                'parameters': ast_data.get('parameters', []),
-                'return_type': ast_data.get('return_type'),
-                'body': ast_data.get('body', [])
+                "type": "FunctionNode",
+                "name": ast_data.get("name", "unnamed"),
+                "parameters": ast_data.get("parameters", []),
+                "return_type": ast_data.get("return_type"),
+                "body": ast_data.get("body", []),
             }
-        elif ast_type == 'datawindow':
+        elif ast_type == "datawindow":
             return {
-                'type': 'DataWindowNode',
-                'name': ast_data.get('name', 'unnamed'),
-                'sql': ast_data.get('sql'),
-                'columns': ast_data.get('columns', [])
+                "type": "DataWindowNode",
+                "name": ast_data.get("name", "unnamed"),
+                "sql": ast_data.get("sql"),
+                "columns": ast_data.get("columns", []),
             }
         # Add more mappings as needed
 
@@ -178,16 +170,30 @@ def _map_to_powerbuilder_domain(ast_data: Any) -> Dict[str, Any]:
 # GRAMMAR LOADING
 # ============================================================================
 
+
 def load_powerbuilder_grammar_from_path() -> Result[LarkGrammar, str]:
     """Load PowerBuilder grammar from default file locations.
 
     Wrapper around adapter's load_lark_grammar.
     """
-    grammar_path = Path(__file__).parent.parent.parent / "shared" / "grammars" / "powerbuilder.lark"
+    grammar_path = (
+        Path(__file__).parent.parent.parent
+        / "shared"
+        / "grammars"
+        / "powerbuilder.lark"
+    )
 
     if not grammar_path.exists():
         # Try archive location
-        grammar_path = Path(__file__).parent.parent.parent.parent / "archive" / "src" / "parse" / "grammar" / "definitions" / "powerbuilder.lark"
+        grammar_path = (
+            Path(__file__).parent.parent.parent.parent
+            / "archive"
+            / "src"
+            / "parse"
+            / "grammar"
+            / "definitions"
+            / "powerbuilder.lark"
+        )
 
     if not grammar_path.exists():
         return Error("PowerBuilder grammar not found")
@@ -200,10 +206,9 @@ def load_powerbuilder_grammar_from_path() -> Result[LarkGrammar, str]:
 # ERROR RECOVERY
 # ============================================================================
 
+
 def parse_with_error_recovery(
-    source: str,
-    parser: LarkParserAdapter,
-    max_errors: int = 10
+    source: str, parser: LarkParserAdapter, max_errors: int = 10
 ) -> Result[LarkTree, str]:
     """Parse with error recovery.
 
@@ -241,15 +246,15 @@ def _split_into_blocks(source: str) -> List[str]:
     blocks = []
     current_block = []
 
-    for line in source.split('\n'):
-        if line.strip().startswith(('function ', 'class ', 'window ')):
+    for line in source.split("\n"):
+        if line.strip().startswith(("function ", "class ", "window ")):
             if current_block:
-                blocks.append('\n'.join(current_block))
+                blocks.append("\n".join(current_block))
                 current_block = []
         current_block.append(line)
 
     if current_block:
-        blocks.append('\n'.join(current_block))
+        blocks.append("\n".join(current_block))
 
     return blocks
 
@@ -262,18 +267,20 @@ def _combine_partial_trees(trees: List[LarkTree]) -> LarkTree:
 
     # Create combined tree by merging the Lark trees
     from lark import Tree
+
     combined_tree = Tree("program", [t.tree for t in trees])
 
     return LarkTree(
         tree=combined_tree,
         source="",  # Combined source
-        metadata={'combined': True}
+        metadata={"combined": True},
     )
 
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def count_lark_nodes(tree: Union[Tree, Token]) -> int:
     """Count nodes in a Lark tree."""

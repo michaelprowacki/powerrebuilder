@@ -25,7 +25,7 @@ These documents contain specific technical information:
 These documents contained outdated information and have been moved to `archived/`:
 
 - **archived/PIPELINE_DI_USAGE.md** - Referenced removed dependency injection system
-- **archived/DEVELOPMENT.md** - Had Makefile references and outdated commands  
+- **archived/DEVELOPMENT.md** - Had Makefile references and outdated commands
 - **archived/STATUS.md** - Outdated project status (use PROJECT_STATUS.md instead)
 - **archived/DATA_FLOW.md** - Contained incorrect parallel processing claims
 - **archived/PERFORMANCE.md** - Merged into PERFORMANCE_GUIDE.md

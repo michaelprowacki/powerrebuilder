@@ -1,8 +1,8 @@
 """Unified Infrastructure - ALL core infrastructure in ONE place.
 
 This mega-module consolidates all core infrastructure components into a single
-unified interface. It merges caching, circuit breakers, coordination, distributed 
-processing, events, logging, recovery, security, state management, streams, and 
+unified interface. It merges caching, circuit breakers, coordination, distributed
+processing, events, logging, recovery, security, state management, streams, and
 error handling into ONE comprehensive infrastructure layer.
 
 Components consolidated:
@@ -10,7 +10,7 @@ Components consolidated:
 - Circuit Breaker (circuit_breaker.py)
 - Coordination (coordination_base.py, coordination_mixins.py)
 - Distributed Processing (distributed.py)
-- Events (events.py) 
+- Events (events.py)
 - Logging (logging.py)
 - Recovery (recovery.py)
 - Resource Management (resource_limits.py)
@@ -25,9 +25,7 @@ Components consolidated:
 # =============================================================================
 
 import asyncio
-import concurrent.futures
 import contextlib
-import gc
 import hashlib
 import json
 import logging
@@ -45,16 +43,16 @@ import uuid
 import weakref
 from abc import ABC, abstractmethod
 from collections import OrderedDict, defaultdict
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
-from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
-from contextlib import contextmanager, suppress
+from collections.abc import Callable, Iterator
+from concurrent.futures import Future, ProcessPoolExecutor
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum, auto
 from functools import wraps
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, BinaryIO, Dict, Optional, Protocol, TypeVar, Union
+from typing import Any, BinaryIO, Protocol, TypeVar
 
 import aiofiles
 import aiofiles.os
@@ -63,7 +61,7 @@ import psutil
 # Import event types from unified_core (contracts were consolidated)
 from src.core.unified_core import (
     Event,
-    EventType, 
+    EventType,
     IEventHandler,
     IEventBus,
 )
@@ -76,41 +74,44 @@ F = TypeVar("F", bound=Callable[..., Any])
 # MISSING INTERFACES - Previously in src/contracts
 # =============================================================================
 
+
 class StageStatus(Enum):
     """Status of a pipeline stage."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     ROLLED_BACK = "rolled_back"
-    
+
 
 class IPipelineState(Protocol):
     """Interface for pipeline state management."""
-    
+
     def get_stage_status(self, stage: str) -> StageStatus:
         """Get the status of a specific stage."""
         ...
-        
+
     def set_stage_status(self, stage: str, status: StageStatus) -> None:
         """Set the status of a specific stage."""
         ...
-        
+
 
 class IStateManager(Protocol):
     """Interface for state management."""
-    
+
     def create_state(self) -> IPipelineState:
         """Create a new pipeline state."""
         ...
-        
+
     def save_state(self, state: IPipelineState, path: Path) -> None:
         """Save state to a file."""
         ...
-        
+
     def load_state(self, path: Path) -> IPipelineState:
         """Load state from a file."""
         ...
+
 
 # =============================================================================
 # CONSTANTS SECTION - All constants from constants.py
@@ -123,13 +124,13 @@ This section contains all constants previously defined in src/core/constants.py
 Organized into logical categories for maintainability:
 
 1. Core Constants - Buffer sizes, offsets, timeouts, file markers
-2. File Format Constants - Grammar paths, file extensions, file types  
+2. File Format Constants - Grammar paths, file extensions, file types
 3. PowerBuilder Language Constants - Types, keywords, operators, SQL
 4. Magic Numbers - Counts, factors, limits, sizes, and miscellaneous values
 
 These constants are used throughout the PowerRebuilder codebase for:
 - PBD/PBL file format parsing
-- PowerBuilder language processing  
+- PowerBuilder language processing
 - P-code decompilation
 - System integration limits
 - Performance tuning parameters
@@ -174,9 +175,11 @@ POWERBUILDER_CORE_GRAMMAR = GRAMMAR_DIR / "powerbuilder_core.lark"
 POWERBUILDER_JS_GRAMMAR = GRAMMAR_DIR / "powerbuilder_js.lark"
 TRANSACTION_GRAMMAR = GRAMMAR_DIR / "transactions.lark"
 
+
 # File extensions and types
 class FileType(Enum):
     """PowerBuilder file types."""
+
     WINDOW = auto()  # .srw
     USER_OBJECT = auto()  # .sru
     FUNCTION = auto()  # .srf
@@ -188,6 +191,7 @@ class FileType(Enum):
     PROJECT = auto()  # .pbt
     LIBRARY = auto()  # .pbl, .pbd
     UNKNOWN = auto()
+
 
 # File extension mappings
 FILE_EXTENSIONS: dict[str, FileType] = {
@@ -212,88 +216,261 @@ FILE_EXTENSIONS: dict[str, FileType] = {
 
 # PowerBuilder basic types
 PB_BASIC_TYPES: set[str] = {
-    "integer", "int", "long", "uint", "ulong", "string", "char", "character",
-    "boolean", "bool", "date", "datetime", "time", "decimal", "dec", "real", 
-    "double", "blob", "any",
+    "integer",
+    "int",
+    "long",
+    "uint",
+    "ulong",
+    "string",
+    "char",
+    "character",
+    "boolean",
+    "bool",
+    "date",
+    "datetime",
+    "time",
+    "decimal",
+    "dec",
+    "real",
+    "double",
+    "blob",
+    "any",
 }
 
 # PowerBuilder system types
 PB_SYSTEM_TYPES: set[str] = {
-    "powerobject", "window", "transaction", "dynamicdescriptionarea", 
-    "dynamicstagingarea", "error", "menu", "message", "connection", "datastore",
+    "powerobject",
+    "window",
+    "transaction",
+    "dynamicdescriptionarea",
+    "dynamicstagingarea",
+    "error",
+    "menu",
+    "message",
+    "connection",
+    "datastore",
 }
 
 # PowerBuilder control types
 PB_CONTROL_TYPES: set[str] = {
     # Text controls
-    "statictext", "singlelineedit", "multilineedit", "editmask", "statichyperlink",
-    # Button controls  
-    "commandbutton", "picturebutton",
+    "statictext",
+    "singlelineedit",
+    "multilineedit",
+    "editmask",
+    "statichyperlink",
+    # Button controls
+    "commandbutton",
+    "picturebutton",
     # Selection controls
-    "checkbox", "radiobutton",
+    "checkbox",
+    "radiobutton",
     # List controls
-    "dropdownlistbox", "listbox", "combobox", 
+    "dropdownlistbox",
+    "listbox",
+    "combobox",
     # Container controls
-    "groupbox", "tab",
+    "groupbox",
+    "tab",
     # Data controls
     "datawindow",
     # Shape controls
-    "line", "rectangle", "roundrectangle", "oval", "drawobject",
+    "line",
+    "rectangle",
+    "roundrectangle",
+    "oval",
+    "drawobject",
     # Advanced controls
-    "treeview", "listview", "richtextedit", "graph", "ole", "mdiclient",
+    "treeview",
+    "listview",
+    "richtextedit",
+    "graph",
+    "ole",
+    "mdiclient",
     # Progress controls
-    "progressbar", "hprogressbar", "vprogressbar",
+    "progressbar",
+    "hprogressbar",
+    "vprogressbar",
     # Slider/Trackbar controls
-    "htrackbar", "vtrackbar",
+    "htrackbar",
+    "vtrackbar",
     # Scrollbar controls
-    "vscrollbar", "hscrollbar",
+    "vscrollbar",
+    "hscrollbar",
     # Date/Time controls
-    "datepicker", "monthcalendar",
+    "datepicker",
+    "monthcalendar",
     # Ink controls
-    "inkpicture", "inkedit",
+    "inkpicture",
+    "inkedit",
     # Other controls
-    "picture", "animation", "spin", "edit",  # edit is generic
+    "picture",
+    "animation",
+    "spin",
+    "edit",  # edit is generic
 }
 
 # PowerBuilder event types
 PB_EVENT_TYPES: set[str] = {
-    "clicked", "doubleclicked", "itemchanged", "itererror", "itemfocuschanged",
-    "rbuttondown", "rowfocuschanged", "rowfocuschanging", "create", "destroy", 
-    "buttonclicked", "buttonclicking", "getfocus", "losefocus", "modified",
+    "clicked",
+    "doubleclicked",
+    "itemchanged",
+    "itererror",
+    "itemfocuschanged",
+    "rbuttondown",
+    "rowfocuschanged",
+    "rowfocuschanging",
+    "create",
+    "destroy",
+    "buttonclicked",
+    "buttonclicking",
+    "getfocus",
+    "losefocus",
+    "modified",
 }
 
 # PowerBuilder keywords
 PB_KEYWORDS: set[str] = {
-    "if", "then", "else", "elseif", "end", "case", "choose", "do", "loop", 
-    "while", "until", "for", "next", "step", "continue", "exit", "return",
-    "try", "catch", "finally", "throw", "this", "super", "goto", "gosub", 
-    "call", "post", "trigger", "create", "destroy", "open", "close",
-    "function", "subroutine", "event", "private", "public", "protected", 
-    "global", "shared", "on", "type", "constant", "variables", "forward", 
-    "from", "to", "ref", "autoinstantiate", "within", "of", "parent", 
-    "using", "dynamic", "indirect", "not", "and", "or", "xor", "true", "false",
+    "if",
+    "then",
+    "else",
+    "elseif",
+    "end",
+    "case",
+    "choose",
+    "do",
+    "loop",
+    "while",
+    "until",
+    "for",
+    "next",
+    "step",
+    "continue",
+    "exit",
+    "return",
+    "try",
+    "catch",
+    "finally",
+    "throw",
+    "this",
+    "super",
+    "goto",
+    "gosub",
+    "call",
+    "post",
+    "trigger",
+    "create",
+    "destroy",
+    "open",
+    "close",
+    "function",
+    "subroutine",
+    "event",
+    "private",
+    "public",
+    "protected",
+    "global",
+    "shared",
+    "on",
+    "type",
+    "constant",
+    "variables",
+    "forward",
+    "from",
+    "to",
+    "ref",
+    "autoinstantiate",
+    "within",
+    "of",
+    "parent",
+    "using",
+    "dynamic",
+    "indirect",
+    "not",
+    "and",
+    "or",
+    "xor",
+    "true",
+    "false",
 }
 
 # PowerBuilder operators
 PB_OPERATORS: set[str] = {
     # Arithmetic operators
-    "+", "-", "*", "/", "^",
-    # Comparison operators  
-    "=", "<>", "<", ">", "<=", ">=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "^",
+    # Comparison operators
+    "=",
+    "<>",
+    "<",
+    ">",
+    "<=",
+    ">=",
     # Logical operators
-    "and", "or", "not",
+    "and",
+    "or",
+    "not",
     # Assignment operators
-    "+=", "-=", "*=", "/=",
+    "+=",
+    "-=",
+    "*=",
+    "/=",
 }
 
 # SQL keywords
 SQL_KEYWORDS: set[str] = {
-    "select", "insert", "update", "delete", "where", "from", "join", "inner", 
-    "outer", "left", "right", "full", "on", "group", "by", "having", "order", 
-    "asc", "desc", "distinct", "union", "all", "into", "values", "set", "null", 
-    "is", "not", "like", "in", "between", "exists", "create", "alter", "drop", 
-    "table", "view", "index", "procedure", "function", "constraint", "primary", 
-    "key", "foreign", "references", "default", "check", "unique", "identity",
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "where",
+    "from",
+    "join",
+    "inner",
+    "outer",
+    "left",
+    "right",
+    "full",
+    "on",
+    "group",
+    "by",
+    "having",
+    "order",
+    "asc",
+    "desc",
+    "distinct",
+    "union",
+    "all",
+    "into",
+    "values",
+    "set",
+    "null",
+    "is",
+    "not",
+    "like",
+    "in",
+    "between",
+    "exists",
+    "create",
+    "alter",
+    "drop",
+    "table",
+    "view",
+    "index",
+    "procedure",
+    "function",
+    "constraint",
+    "primary",
+    "key",
+    "foreign",
+    "references",
+    "default",
+    "check",
+    "unique",
+    "identity",
 }
 
 # Map of all built-in PowerBuilder types for quick lookup
@@ -325,7 +502,7 @@ COUNTS_97, COUNTS_98, COUNTS_99 = 97, 98, 99
 
 # FACTOR constants - Used for scaling and calculations
 FACTORS_0_0001, FACTORS_0_001, FACTORS_0_005 = 0.0001, 0.001, 0.005
-FACTORS_0_01, FACTORS_0_05, FACTORS_0_07 = 0.01, 0.05, 0.07  
+FACTORS_0_01, FACTORS_0_05, FACTORS_0_07 = 0.01, 0.05, 0.07
 FACTORS_0_08, FACTORS_0_12, FACTORS_0_15 = 0.08, 0.12, 0.15
 FACTORS_0_2, FACTORS_0_3, FACTORS_0_4 = 0.2, 0.3, 0.4
 FACTORS_0_7, FACTORS_0_8, FACTORS_0_95 = 0.7, 0.8, 0.95
@@ -334,26 +511,128 @@ FACTORS_12_5, FACTORS_20_0 = 12.5, 20.0
 FACTORS_37_5, FACTORS_62_5, FACTORS_87_5 = 37.5, 62.5, 87.5
 
 # LIMIT constants - Used for boundary checking and validation
-LIMITS_1025, LIMITS_1026, LIMITS_1027, LIMITS_1028, LIMITS_1029 = 1025, 1026, 1027, 1028, 1029
-LIMITS_1030, LIMITS_1031, LIMITS_1032, LIMITS_1033, LIMITS_1034 = 1030, 1031, 1032, 1033, 1034
-LIMITS_1035, LIMITS_1036, LIMITS_1037, LIMITS_1038, LIMITS_1039 = 1035, 1036, 1037, 1038, 1039
-LIMITS_1040, LIMITS_1041, LIMITS_1042, LIMITS_1043, LIMITS_1044 = 1040, 1041, 1042, 1043, 1044
-LIMITS_1045, LIMITS_1046, LIMITS_1047, LIMITS_1048, LIMITS_1049 = 1045, 1046, 1047, 1048, 1049
-LIMITS_1050, LIMITS_1051, LIMITS_1052, LIMITS_1053, LIMITS_1054 = 1050, 1051, 1052, 1053, 1054
-LIMITS_1055, LIMITS_1056, LIMITS_1057, LIMITS_1058, LIMITS_1059 = 1055, 1056, 1057, 1058, 1059
-LIMITS_1060, LIMITS_1061, LIMITS_1062, LIMITS_1063, LIMITS_1069 = 1060, 1061, 1062, 1063, 1069
-LIMITS_1070, LIMITS_1071, LIMITS_1072, LIMITS_1073, LIMITS_1074 = 1070, 1071, 1072, 1073, 1074
-LIMITS_1075, LIMITS_1076, LIMITS_1077, LIMITS_1078, LIMITS_1080 = 1075, 1076, 1077, 1078, 1080
+LIMITS_1025, LIMITS_1026, LIMITS_1027, LIMITS_1028, LIMITS_1029 = (
+    1025,
+    1026,
+    1027,
+    1028,
+    1029,
+)
+LIMITS_1030, LIMITS_1031, LIMITS_1032, LIMITS_1033, LIMITS_1034 = (
+    1030,
+    1031,
+    1032,
+    1033,
+    1034,
+)
+LIMITS_1035, LIMITS_1036, LIMITS_1037, LIMITS_1038, LIMITS_1039 = (
+    1035,
+    1036,
+    1037,
+    1038,
+    1039,
+)
+LIMITS_1040, LIMITS_1041, LIMITS_1042, LIMITS_1043, LIMITS_1044 = (
+    1040,
+    1041,
+    1042,
+    1043,
+    1044,
+)
+LIMITS_1045, LIMITS_1046, LIMITS_1047, LIMITS_1048, LIMITS_1049 = (
+    1045,
+    1046,
+    1047,
+    1048,
+    1049,
+)
+LIMITS_1050, LIMITS_1051, LIMITS_1052, LIMITS_1053, LIMITS_1054 = (
+    1050,
+    1051,
+    1052,
+    1053,
+    1054,
+)
+LIMITS_1055, LIMITS_1056, LIMITS_1057, LIMITS_1058, LIMITS_1059 = (
+    1055,
+    1056,
+    1057,
+    1058,
+    1059,
+)
+LIMITS_1060, LIMITS_1061, LIMITS_1062, LIMITS_1063, LIMITS_1069 = (
+    1060,
+    1061,
+    1062,
+    1063,
+    1069,
+)
+LIMITS_1070, LIMITS_1071, LIMITS_1072, LIMITS_1073, LIMITS_1074 = (
+    1070,
+    1071,
+    1072,
+    1073,
+    1074,
+)
+LIMITS_1075, LIMITS_1076, LIMITS_1077, LIMITS_1078, LIMITS_1080 = (
+    1075,
+    1076,
+    1077,
+    1078,
+    1080,
+)
 LIMITS_1081, LIMITS_1082, LIMITS_1083 = 1081, 1082, 1083
 LIMITS_1280, LIMITS_1364, LIMITS_1536 = 1280, 1364, 1536
-LIMITS_2048, LIMITS_2049, LIMITS_2052, LIMITS_2055, LIMITS_2057 = 2048, 2049, 2052, 2055, 2057
-LIMITS_2058, LIMITS_2060, LIMITS_2064, LIMITS_2065, LIMITS_2066 = 2058, 2060, 2064, 2065, 2066
-LIMITS_2067, LIMITS_2068, LIMITS_2070, LIMITS_2072, LIMITS_2073 = 2067, 2068, 2070, 2072, 2073
+LIMITS_2048, LIMITS_2049, LIMITS_2052, LIMITS_2055, LIMITS_2057 = (
+    2048,
+    2049,
+    2052,
+    2055,
+    2057,
+)
+LIMITS_2058, LIMITS_2060, LIMITS_2064, LIMITS_2065, LIMITS_2066 = (
+    2058,
+    2060,
+    2064,
+    2065,
+    2066,
+)
+LIMITS_2067, LIMITS_2068, LIMITS_2070, LIMITS_2072, LIMITS_2073 = (
+    2067,
+    2068,
+    2070,
+    2072,
+    2073,
+)
 LIMITS_2074, LIMITS_2880 = 2074, 2880
-LIMITS_3073, LIMITS_3076, LIMITS_3079, LIMITS_3081, LIMITS_3082 = 3073, 3076, 3079, 3081, 3082
-LIMITS_3084, LIMITS_4096, LIMITS_4097, LIMITS_4100, LIMITS_4103 = 3084, 4096, 4097, 4100, 4103
-LIMITS_4105, LIMITS_4108, LIMITS_5121, LIMITS_5127, LIMITS_5129 = 4105, 4108, 5121, 5127, 5129
-LIMITS_5132, LIMITS_6144, LIMITS_6145, LIMITS_7169, LIMITS_7177 = 5132, 6144, 6145, 7169, 7177
+LIMITS_3073, LIMITS_3076, LIMITS_3079, LIMITS_3081, LIMITS_3082 = (
+    3073,
+    3076,
+    3079,
+    3081,
+    3082,
+)
+LIMITS_3084, LIMITS_4096, LIMITS_4097, LIMITS_4100, LIMITS_4103 = (
+    3084,
+    4096,
+    4097,
+    4100,
+    4103,
+)
+LIMITS_4105, LIMITS_4108, LIMITS_5121, LIMITS_5127, LIMITS_5129 = (
+    4105,
+    4108,
+    5121,
+    5127,
+    5129,
+)
+LIMITS_5132, LIMITS_6144, LIMITS_6145, LIMITS_7169, LIMITS_7177 = (
+    5132,
+    6144,
+    6145,
+    7169,
+    7177,
+)
 LIMITS_8192, LIMITS_8193, LIMITS_9217 = 8192, 8193, 9217
 
 # SIZE constants - Used for buffer and structure sizing
@@ -397,7 +676,7 @@ SIZES_284, SIZES_285, SIZES_286, SIZES_287, SIZES_288 = 284, 285, 286, 287, 288
 SIZES_289, SIZES_290, SIZES_291, SIZES_292, SIZES_293 = 289, 290, 291, 292, 293
 SIZES_294, SIZES_295, SIZES_296, SIZES_297, SIZES_298 = 294, 295, 296, 297, 298
 SIZES_299, SIZES_300 = 299, 300
-# Additional key sizes used frequently  
+# Additional key sizes used frequently
 SIZES_333, SIZES_334, SIZES_335, SIZES_336, SIZES_337 = 333, 334, 335, 336, 337
 SIZES_338, SIZES_339, SIZES_340, SIZES_354, SIZES_355 = 338, 339, 340, 354, 355
 SIZES_356, SIZES_357, SIZES_358, SIZES_359, SIZES_360 = 356, 357, 358, 359, 360
@@ -430,45 +709,153 @@ MISC_16384, MISC_16503, MISC_32767, MISC_32768 = 16384, 16503, 32767, 32768
 MISC_49152, MISC_50000, MISC_65534, MISC_65535 = 49152, 50000, 65534, 65535
 MISC_65536, MISC_100000, MISC_999999 = 65536, 100000, 999999
 MISC_16777216, MISC_100000000, MISC_268435456 = 16777216, 100000000, 268435456
-MISC_282444864, MISC_4294967293, MISC_4294967294, MISC_4294967295 = 282444864, 4294967293, 4294967294, 4294967295
+MISC_282444864, MISC_4294967293, MISC_4294967294, MISC_4294967295 = (
+    282444864,
+    4294967293,
+    4294967294,
+    4294967295,
+)
 
-# PowerBuilder-specific magic numbers  
+# PowerBuilder-specific magic numbers
 MISC_1146047862, MISC_1329744452, MISC_5391432 = 1146047862, 1329744452, 5391432
 MISC_1397836832, MISC_1919249509 = 1397836832, 1919249509
 
 # Version and system IDs (16xxx range)
-MISC_16385, MISC_16386, MISC_16387, MISC_16388, MISC_16389 = 16385, 16386, 16387, 16388, 16389
-MISC_16390, MISC_16391, MISC_16392, MISC_16393, MISC_16394 = 16390, 16391, 16392, 16393, 16394
-MISC_16395, MISC_16396, MISC_16397, MISC_16398, MISC_16399 = 16395, 16396, 16397, 16398, 16399
-MISC_16400, MISC_16401, MISC_16402, MISC_16403, MISC_16404 = 16400, 16401, 16402, 16403, 16404
-MISC_16417, MISC_16431, MISC_16458, MISC_16469, MISC_16470 = 16417, 16431, 16458, 16469, 16470
+MISC_16385, MISC_16386, MISC_16387, MISC_16388, MISC_16389 = (
+    16385,
+    16386,
+    16387,
+    16388,
+    16389,
+)
+MISC_16390, MISC_16391, MISC_16392, MISC_16393, MISC_16394 = (
+    16390,
+    16391,
+    16392,
+    16393,
+    16394,
+)
+MISC_16395, MISC_16396, MISC_16397, MISC_16398, MISC_16399 = (
+    16395,
+    16396,
+    16397,
+    16398,
+    16399,
+)
+MISC_16400, MISC_16401, MISC_16402, MISC_16403, MISC_16404 = (
+    16400,
+    16401,
+    16402,
+    16403,
+    16404,
+)
+MISC_16417, MISC_16431, MISC_16458, MISC_16469, MISC_16470 = (
+    16417,
+    16431,
+    16458,
+    16469,
+    16470,
+)
 MISC_16498, MISC_16701 = 16498, 16701
 
-# System function IDs (42xxx-53xxx range)  
-MISC_42844, MISC_45332, MISC_45344, MISC_45356, MISC_45368 = 42844, 45332, 45344, 45356, 45368
-MISC_45380, MISC_45460, MISC_45472, MISC_45484, MISC_45496 = 45380, 45460, 45472, 45484, 45496
-MISC_45508, MISC_46780, MISC_46840, MISC_48976, MISC_49044 = 45508, 46780, 46840, 48976, 49044
-MISC_49148, MISC_49216, MISC_50076, MISC_50212, MISC_50224 = 49148, 49216, 50076, 50212, 50224
-MISC_51996, MISC_52056, MISC_53476, MISC_53548, MISC_53656 = 51996, 52056, 53476, 53548, 53656
+# System function IDs (42xxx-53xxx range)
+MISC_42844, MISC_45332, MISC_45344, MISC_45356, MISC_45368 = (
+    42844,
+    45332,
+    45344,
+    45356,
+    45368,
+)
+MISC_45380, MISC_45460, MISC_45472, MISC_45484, MISC_45496 = (
+    45380,
+    45460,
+    45472,
+    45484,
+    45496,
+)
+MISC_45508, MISC_46780, MISC_46840, MISC_48976, MISC_49044 = (
+    45508,
+    46780,
+    46840,
+    48976,
+    49044,
+)
+MISC_49148, MISC_49216, MISC_50076, MISC_50212, MISC_50224 = (
+    49148,
+    49216,
+    50076,
+    50212,
+    50224,
+)
+MISC_51996, MISC_52056, MISC_53476, MISC_53548, MISC_53656 = (
+    51996,
+    52056,
+    53476,
+    53548,
+    53656,
+)
 
 # Large P-code related constants (282xxx range) - Used in P-code processing
-MISC_282411680, MISC_282412624, MISC_282413632, MISC_282413824 = 282411680, 282412624, 282413632, 282413824
-MISC_282427568, MISC_282427760, MISC_282427840, MISC_282428224 = 282427568, 282427760, 282427840, 282428224
-MISC_282435216, MISC_282438352, MISC_282439136, MISC_282444944 = 282435216, 282438352, 282439136, 282444944
-MISC_282445072, MISC_282445136, MISC_282445200, MISC_282445232 = 282445072, 282445136, 282445200, 282445232
-MISC_282445264, MISC_282445296, MISC_282445328, MISC_282445616 = 282445264, 282445296, 282445328, 282445616
-MISC_282446000, MISC_282446064, MISC_282446160, MISC_282446192 = 282446000, 282446064, 282446160, 282446192
-MISC_282449216, MISC_282449920, MISC_282450048, MISC_282450176 = 282449216, 282449920, 282450048, 282450176
-MISC_282451552, MISC_282451680, MISC_282451840, MISC_282452128 = 282451552, 282451680, 282451840, 282452128
+MISC_282411680, MISC_282412624, MISC_282413632, MISC_282413824 = (
+    282411680,
+    282412624,
+    282413632,
+    282413824,
+)
+MISC_282427568, MISC_282427760, MISC_282427840, MISC_282428224 = (
+    282427568,
+    282427760,
+    282427840,
+    282428224,
+)
+MISC_282435216, MISC_282438352, MISC_282439136, MISC_282444944 = (
+    282435216,
+    282438352,
+    282439136,
+    282444944,
+)
+MISC_282445072, MISC_282445136, MISC_282445200, MISC_282445232 = (
+    282445072,
+    282445136,
+    282445200,
+    282445232,
+)
+MISC_282445264, MISC_282445296, MISC_282445328, MISC_282445616 = (
+    282445264,
+    282445296,
+    282445328,
+    282445616,
+)
+MISC_282446000, MISC_282446064, MISC_282446160, MISC_282446192 = (
+    282446000,
+    282446064,
+    282446160,
+    282446192,
+)
+MISC_282449216, MISC_282449920, MISC_282450048, MISC_282450176 = (
+    282449216,
+    282449920,
+    282450048,
+    282450176,
+)
+MISC_282451552, MISC_282451680, MISC_282451840, MISC_282452128 = (
+    282451552,
+    282451680,
+    282451840,
+    282452128,
+)
 
 # =============================================================================
 # EXCEPTIONS AND ERRORS
 # =============================================================================
 
+
 class InfrastructureError(Exception):
     """Base exception for all infrastructure errors."""
-    
-    def __init__(self, message: str, error_code: str | None = None, **kwargs: Any) -> None:
+
+    def __init__(
+        self, message: str, error_code: str | None = None, **kwargs: Any
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.error_code = error_code
@@ -492,10 +879,14 @@ class PathTraversalError(SecurityError):
 
 class ResourceLimitError(InfrastructureError):
     """Resource limit exceeded."""
-    
-    def __init__(self, resource: str, limit: int, requested: int, **kwargs: Any) -> None:
+
+    def __init__(
+        self, resource: str, limit: int, requested: int, **kwargs: Any
+    ) -> None:
         message = f"Resource limit exceeded for {resource}: requested {requested}, limit {limit}"
-        super().__init__(message, resource=resource, limit=limit, requested=requested, **kwargs)
+        super().__init__(
+            message, resource=resource, limit=limit, requested=requested, **kwargs
+        )
         self.resource = resource
         self.limit = limit
         self.requested = requested
@@ -503,7 +894,7 @@ class ResourceLimitError(InfrastructureError):
 
 class CircuitBreakerError(InfrastructureError):
     """Circuit breaker is open."""
-    
+
     def __init__(self, message: str, last_failure_time: float | None = None) -> None:
         super().__init__(message)
         self.last_failure_time = last_failure_time
@@ -517,8 +908,10 @@ class PipelineError(InfrastructureError):
 # ENUMS AND CONSTANTS
 # =============================================================================
 
+
 class ErrorSeverity(Enum):
     """Error severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -527,6 +920,7 @@ class ErrorSeverity(Enum):
 
 class RecoveryStrategy(Enum):
     """Error recovery strategies."""
+
     RETRY = "retry"
     FALLBACK = "fallback"
     SKIP = "skip"
@@ -536,6 +930,7 @@ class RecoveryStrategy(Enum):
 
 class LogFormat(Enum):
     """Available log output formats."""
+
     TEXT = "text"
     JSON = "json"
     SIMPLE = "simple"
@@ -543,6 +938,7 @@ class LogFormat(Enum):
 
 class CircuitState(Enum):
     """Circuit breaker states."""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -550,6 +946,7 @@ class CircuitState(Enum):
 
 class BackendType(Enum):
     """Available distributed processing backends."""
+
     MULTIPROCESSING = "multiprocessing"
     THREADING = "threading"
     CELERY = "celery"
@@ -559,6 +956,7 @@ class BackendType(Enum):
 
 class JobStatus(Enum):
     """Status of a distributed job."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -578,9 +976,11 @@ CRITICAL = logging.CRITICAL
 # CACHING SECTION
 # =============================================================================
 
+
 @dataclass
 class CacheEntry:
     """Single cache entry with metadata."""
+
     key: str
     value: Any
     size: int
@@ -623,6 +1023,7 @@ class LRUCache:
         if size is None:
             try:
                 import pickle
+
                 size = len(pickle.dumps(value))
             except Exception:
                 size = sys.getsizeof(value)
@@ -708,6 +1109,7 @@ class FileCache:
                 async with aiofiles.open(cache_path, "rb") as f:
                     data = await f.read()
                     import pickle
+
                     return pickle.loads(data)
             except Exception:
                 await self._remove_entry(key)
@@ -718,6 +1120,7 @@ class FileCache:
         async with self._lock:
             try:
                 import pickle
+
                 data = pickle.dumps(value)
                 cache_path = self._get_cache_path(key)
                 cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -762,6 +1165,7 @@ class FileCache:
 @dataclass
 class CacheConfig:
     """Configuration for a cache instance."""
+
     enabled: bool = True
     type: str = "memory"  # "memory", "file", or "hybrid"
     size: int = 1000
@@ -776,10 +1180,9 @@ class CacheManager:
     def __init__(self, base_config: dict[str, Any] | None = None) -> None:
         self.config = base_config or {}
         self.enabled = self._get_bool_env("POWERREBUILDER_CACHE_ENABLED", True)
-        
+
         cache_dir = os.getenv(
-            "POWERREBUILDER_CACHE_DIR", 
-            str(Path.home() / ".powerrebuilder" / "cache")
+            "POWERREBUILDER_CACHE_DIR", str(Path.home() / ".powerrebuilder" / "cache")
         )
         self.base_cache_dir = Path(cache_dir)
         self.base_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -801,9 +1204,11 @@ class CacheManager:
 # CIRCUIT BREAKER SECTION
 # =============================================================================
 
+
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker."""
+
     failure_threshold: int = 5
     success_threshold: int = 2
     timeout: float = 60.0
@@ -815,13 +1220,16 @@ class CircuitBreakerConfig:
 @dataclass
 class CircuitBreakerStats:
     """Statistics for circuit breaker."""
+
     failure_count: int = 0
     success_count: int = 0
     last_failure_time: float | None = None
     last_success_time: float | None = None
     total_calls: int = 0
     rejected_calls: int = 0
-    state_changes: list[tuple[CircuitState, CircuitState, float]] = field(default_factory=list)
+    state_changes: list[tuple[CircuitState, CircuitState, float]] = field(
+        default_factory=list
+    )
 
 
 class CircuitBreaker:
@@ -930,7 +1338,9 @@ class CircuitBreakerManager:
         self.breakers: dict[str, CircuitBreaker] = {}
         self._lock = threading.Lock()
 
-    def get_or_create(self, name: str, config: CircuitBreakerConfig | None = None) -> CircuitBreaker:
+    def get_or_create(
+        self, name: str, config: CircuitBreakerConfig | None = None
+    ) -> CircuitBreaker:
         """Get or create a named circuit breaker."""
         with self._lock:
             if name not in self.breakers:
@@ -940,12 +1350,15 @@ class CircuitBreakerManager:
     def get_stats(self) -> dict[str, Any]:
         """Get statistics for all circuit breakers."""
         with self._lock:
-            return {name: breaker.get_stats() for name, breaker in self.breakers.items()}
+            return {
+                name: breaker.get_stats() for name, breaker in self.breakers.items()
+            }
 
 
 # =============================================================================
 # COORDINATION SECTION
 # =============================================================================
+
 
 class CoordinatorMixin:
     """Unified mixin providing all coordinator functionality."""
@@ -983,11 +1396,15 @@ class CoordinatorMixin:
         self._stats["errors"].append(error_info)
         self._stats["failed"] = self._stats.get("failed", 0) + 1
 
-    def set_progress_callback(self, callback: Callable[[str, float], None] | None) -> None:
+    def set_progress_callback(
+        self, callback: Callable[[str, float], None] | None
+    ) -> None:
         """Set progress callback function."""
         self._progress_callback = callback
 
-    def validate_paths(self, input_path: Path | None = None, output_path: Path | None = None) -> bool:
+    def validate_paths(
+        self, input_path: Path | None = None, output_path: Path | None = None
+    ) -> bool:
         """Validate input and output paths."""
         if not input_path or not input_path.exists():
             return False
@@ -1034,9 +1451,11 @@ class BaseCoordinator(ABC):
 # DISTRIBUTED SECTION
 # =============================================================================
 
+
 @dataclass
 class JobResult[R]:
     """Result of a distributed job execution."""
+
     job_id: str
     status: JobStatus
     result: R | None = None
@@ -1060,6 +1479,7 @@ class JobResult[R]:
 @dataclass
 class WorkerConfig:
     """Configuration for worker processes."""
+
     num_workers: int = mp.cpu_count()
     max_tasks_per_worker: int | None = None
     timeout: float | None = None
@@ -1072,6 +1492,7 @@ class WorkerConfig:
 @dataclass
 class TaskMetrics:
     """Metrics for task execution."""
+
     tasks_submitted: int = 0
     tasks_completed: int = 0
     tasks_failed: int = 0
@@ -1116,7 +1537,11 @@ class MultiprocessingBackend:
 class DistributedCoordinator:
     """Coordinator for distributed task execution."""
 
-    def __init__(self, backend_type: BackendType = BackendType.MULTIPROCESSING, config: WorkerConfig | None = None) -> None:
+    def __init__(
+        self,
+        backend_type: BackendType = BackendType.MULTIPROCESSING,
+        config: WorkerConfig | None = None,
+    ) -> None:
         self.backend_type = backend_type
         self.config = config or WorkerConfig()
         self.backend = self._create_backend()
@@ -1127,7 +1552,9 @@ class DistributedCoordinator:
             return MultiprocessingBackend(self.config)
         raise ValueError(f"Unknown backend type: {self.backend_type}")
 
-    def submit_task(self, func: Callable[[T], R], *args: T, **kwargs: Any) -> tuple[str, Future[R]]:
+    def submit_task(
+        self, func: Callable[[T], R], *args: T, **kwargs: Any
+    ) -> tuple[str, Future[R]]:
         """Submit a task and return job ID and future."""
         job_id = str(uuid.uuid4())
         future = self.backend.submit(func, *args, **kwargs)
@@ -1142,10 +1569,15 @@ class DistributedCoordinator:
 # EVENTS SECTION
 # =============================================================================
 
+
 class EventHandler(IEventHandler):
     """Basic event handler implementation."""
 
-    def __init__(self, handler_func: Callable[[Event], None], event_types: set[EventType] | None = None) -> None:
+    def __init__(
+        self,
+        handler_func: Callable[[Event], None],
+        event_types: set[EventType] | None = None,
+    ) -> None:
         self.handler_func = handler_func
         self.event_types = event_types or set(EventType)
 
@@ -1171,7 +1603,9 @@ class EventBus(IEventBus):
 
         if enable_async:
             self._event_queue: Queue[Event] = Queue()
-            self._processing_thread = threading.Thread(target=self._process_events, daemon=True)
+            self._processing_thread = threading.Thread(
+                target=self._process_events, daemon=True
+            )
             self._processing_thread.start()
 
     def publish(self, event: Event) -> None:
@@ -1191,7 +1625,9 @@ class EventBus(IEventBus):
     def subscribe(self, event_type: EventType, handler: IEventHandler) -> None:
         """Subscribe to an event type."""
         with self._lock:
-            handler_ref = weakref.ref(handler, self._create_cleanup_callback(event_type))
+            handler_ref = weakref.ref(
+                handler, self._create_cleanup_callback(event_type)
+            )
             if handler_ref not in self._handlers[event_type]:
                 self._handlers[event_type].append(handler_ref)
 
@@ -1219,12 +1655,14 @@ class EventBus(IEventBus):
 
     def _create_cleanup_callback(self, event_type: EventType) -> Callable:
         """Create cleanup callback for weak references."""
+
         def cleanup(ref) -> None:
             with self._lock:
                 try:
                     self._handlers[event_type].remove(ref)
                 except ValueError:
                     pass
+
         return cleanup
 
     def _deliver_event(self, event: Event, handlers: list[IEventHandler]) -> None:
@@ -1258,13 +1696,16 @@ class EventBus(IEventBus):
 # LOGGING SECTION
 # =============================================================================
 
+
 class StructuredFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -1275,10 +1716,27 @@ class StructuredFormatter(logging.Formatter):
 
         for key, value in record.__dict__.items():
             if key not in [
-                "name", "msg", "args", "created", "filename", "funcName",
-                "levelname", "levelno", "lineno", "module", "msecs", "pathname",
-                "process", "processName", "relativeCreated", "thread", "threadName",
-                "exc_info", "exc_text", "stack_info", "getMessage",
+                "name",
+                "msg",
+                "args",
+                "created",
+                "filename",
+                "funcName",
+                "levelname",
+                "levelno",
+                "lineno",
+                "module",
+                "msecs",
+                "pathname",
+                "process",
+                "processName",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "getMessage",
             ]:
                 log_data[key] = value
 
@@ -1318,7 +1776,9 @@ class PipelineLogger:
         self._stage: str | None = None
         self._start_times: dict[str, float] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+    def _log_with_context(
+        self, level: int, msg: str, *args: Any, **kwargs: Any
+    ) -> None:
         """Log message with current context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)
@@ -1421,9 +1881,12 @@ def setup_logging(
     # File handler
     if log_file:
         from logging.handlers import RotatingFileHandler
+
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = RotatingFileHandler(str(log_path), maxBytes=10*1024*1024, backupCount=5)
+        file_handler = RotatingFileHandler(
+            str(log_path), maxBytes=10 * 1024 * 1024, backupCount=5
+        )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(level)
         root_logger.addHandler(file_handler)
@@ -1437,6 +1900,7 @@ def get_logger(name: str) -> PipelineLogger:
 # =============================================================================
 # RECOVERY SECTION
 # =============================================================================
+
 
 class RetryConfig:
     """Configuration for retry behavior."""
@@ -1457,9 +1921,12 @@ class RetryConfig:
 
     def get_delay(self, attempt: int) -> float:
         """Calculate delay for given attempt number."""
-        delay = min(self.initial_delay * (self.exponential_base**attempt), self.max_delay)
+        delay = min(
+            self.initial_delay * (self.exponential_base**attempt), self.max_delay
+        )
         if self.jitter:
             import random
+
             delay *= 1 + random.random() * 0.25
         return delay
 
@@ -1514,7 +1981,9 @@ def retry_with_backoff(
             if last_exception:
                 raise last_exception
             raise RuntimeError("Retry logic error")
+
         return wrapper  # type: ignore
+
     return decorator
 
 
@@ -1538,9 +2007,11 @@ class FileCorruptionRecovery:
 # RESOURCE MANAGEMENT SECTION
 # =============================================================================
 
+
 @dataclass
 class ResourceLimits:
     """Configuration for resource limits."""
+
     max_file_size: int = 100 * 1024 * 1024  # 100 MB
     max_total_size: int = 1024 * 1024 * 1024  # 1 GB
     max_memory_percent: float = 80.0
@@ -1570,9 +2041,7 @@ class ResourceMonitor:
     def check_file_size(self, size: int, filename: str = "") -> None:
         """Check if a file size is within limits."""
         if size > self.limits.max_file_size:
-            raise ResourceLimitError(
-                "file_size", self.limits.max_file_size, size
-            )
+            raise ResourceLimitError("file_size", self.limits.max_file_size, size)
 
     def check_memory_usage(self) -> None:
         """Check current memory usage against limits."""
@@ -1604,6 +2073,7 @@ class ResourceMonitor:
 
 def with_timeout(timeout: float):
     """Decorator to add timeout to a function."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1626,13 +2096,16 @@ def with_timeout(timeout: float):
             if exception[0]:
                 raise exception[0]
             return result[0]
+
         return wrapper
+
     return decorator
 
 
 # =============================================================================
 # SECURITY SECTION
 # =============================================================================
+
 
 class PathValidator:
     """Validates file paths to prevent directory traversal attacks."""
@@ -1677,7 +2150,9 @@ class PathValidator:
         try:
             full_path.relative_to(base_dir)
         except ValueError:
-            raise PathTraversalError(f"Path {full_path} is outside base directory {base_dir}")
+            raise PathTraversalError(
+                f"Path {full_path} is outside base directory {base_dir}"
+            )
 
         return full_path
 
@@ -1692,9 +2167,28 @@ class PathValidator:
             raise PathTraversalError(f"Unsafe characters in filename: {filename}")
 
         reserved_names = {
-            "CON", "PRN", "AUX", "NUL",
-            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            "COM1",
+            "COM2",
+            "COM3",
+            "COM4",
+            "COM5",
+            "COM6",
+            "COM7",
+            "COM8",
+            "COM9",
+            "LPT1",
+            "LPT2",
+            "LPT3",
+            "LPT4",
+            "LPT5",
+            "LPT6",
+            "LPT7",
+            "LPT8",
+            "LPT9",
         }
         name_without_ext = filename.split(".")[0].upper()
         if name_without_ext in reserved_names:
@@ -1720,7 +2214,9 @@ def safe_join_path(base_dir: str | Path, *parts: str) -> Path:
     return base_dir
 
 
-def safe_write_file(path: str | Path, content: str | bytes, base_dir: str | Path, mode: str = "w") -> Path:
+def safe_write_file(
+    path: str | Path, content: str | bytes, base_dir: str | Path, mode: str = "w"
+) -> Path:
     """Safely write content to a file after validating the path."""
     safe_path = PathValidator.validate_path(path, base_dir)
     safe_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1738,9 +2234,11 @@ def safe_write_file(path: str | Path, content: str | bytes, base_dir: str | Path
 # STATE MANAGEMENT SECTION
 # =============================================================================
 
+
 @dataclass
 class StageState:
     """State of a single pipeline stage."""
+
     name: str
     status: StageStatus = StageStatus.PENDING
     start_time: datetime | None = None
@@ -1753,13 +2251,16 @@ class StageState:
 @dataclass
 class PipelineState(IPipelineState):
     """Implementation of pipeline state."""
+
     id: str
     stages: dict[str, StageState] = field(default_factory=dict)
     context: dict[str, Any] = field(default_factory=dict)
     start_time: datetime | None = None
     end_time: datetime | None = None
     checkpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
-    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
+    _lock: threading.Lock = field(
+        default_factory=threading.Lock, repr=False, compare=False
+    )
 
     def get_stage_status(self, stage: str) -> StageStatus:
         """Get status of a stage."""
@@ -1785,7 +2286,8 @@ class PipelineState(IPipelineState):
                 stage_state.end_time = datetime.now()
 
             all_complete = all(
-                s.status in [StageStatus.COMPLETED, StageStatus.FAILED, StageStatus.ROLLED_BACK]
+                s.status
+                in [StageStatus.COMPLETED, StageStatus.FAILED, StageStatus.ROLLED_BACK]
                 for s in self.stages.values()
             )
             if all_complete and self.end_time is None:
@@ -1832,8 +2334,12 @@ class PipelineState(IPipelineState):
                     name: {
                         "name": stage.name,
                         "status": stage.status.value,
-                        "start_time": stage.start_time.isoformat() if stage.start_time else None,
-                        "end_time": stage.end_time.isoformat() if stage.end_time else None,
+                        "start_time": stage.start_time.isoformat()
+                        if stage.start_time
+                        else None,
+                        "end_time": stage.end_time.isoformat()
+                        if stage.end_time
+                        else None,
                         "result": stage.result,
                         "error": stage.error,
                         "checkpoint_id": stage.checkpoint_id,
@@ -1855,8 +2361,12 @@ class PipelineState(IPipelineState):
             stage = StageState(
                 name=stage_data["name"],
                 status=StageStatus(stage_data["status"]),
-                start_time=datetime.fromisoformat(stage_data["start_time"]) if stage_data.get("start_time") else None,
-                end_time=datetime.fromisoformat(stage_data["end_time"]) if stage_data.get("end_time") else None,
+                start_time=datetime.fromisoformat(stage_data["start_time"])
+                if stage_data.get("start_time")
+                else None,
+                end_time=datetime.fromisoformat(stage_data["end_time"])
+                if stage_data.get("end_time")
+                else None,
                 result=stage_data.get("result"),
                 error=stage_data.get("error"),
                 checkpoint_id=stage_data.get("checkpoint_id"),
@@ -1864,8 +2374,14 @@ class PipelineState(IPipelineState):
             state.stages[name] = stage
 
         state.context = data.get("context", {})
-        state.start_time = datetime.fromisoformat(data["start_time"]) if data.get("start_time") else None
-        state.end_time = datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None
+        state.start_time = (
+            datetime.fromisoformat(data["start_time"])
+            if data.get("start_time")
+            else None
+        )
+        state.end_time = (
+            datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None
+        )
         state.checkpoints = data.get("checkpoints", {})
         return state
 
@@ -1894,10 +2410,10 @@ class StateManager(IStateManager):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "w") as f:
-                if hasattr(state, 'to_dict'):
+                if hasattr(state, "to_dict"):
                     json.dump(state.to_dict(), f, indent=2)
                 else:
-                    json.dump({"id": getattr(state, 'id', 'unknown')}, f, indent=2)
+                    json.dump({"id": getattr(state, "id", "unknown")}, f, indent=2)
         except Exception as e:
             raise InfrastructureError(f"Failed to save state: {e}")
 
@@ -1920,7 +2436,7 @@ class StateManager(IStateManager):
         """Create a checkpoint for rollback."""
         if not isinstance(state, PipelineState):
             raise TypeError("State must be a PipelineState instance")
-            
+
         with self._lock:
             checkpoint_id = f"{stage}_{datetime.now().timestamp()}"
             checkpoint_data = {
@@ -1937,7 +2453,7 @@ class StateManager(IStateManager):
         """Rollback to a checkpoint."""
         if not isinstance(state, PipelineState):
             raise TypeError("State must be a PipelineState instance")
-            
+
         with self._lock:
             checkpoint = state.checkpoints.get(checkpoint_id)
             if not checkpoint:
@@ -1952,6 +2468,7 @@ class StateManager(IStateManager):
 # =============================================================================
 # STREAMS SECTION
 # =============================================================================
+
 
 class StreamReader:
     """Efficient streaming reader for large binary files."""
@@ -1991,7 +2508,9 @@ class StreamReader:
             self._file.seek(start)
             remaining = size
             while True:
-                chunk_size = min(self.chunk_size, remaining) if remaining else self.chunk_size
+                chunk_size = (
+                    min(self.chunk_size, remaining) if remaining else self.chunk_size
+                )
                 chunk = self._file.read(chunk_size)
                 if not chunk:
                     break
@@ -2068,9 +2587,11 @@ def stream_process_file(
 # ERROR HANDLING SECTION
 # =============================================================================
 
+
 @dataclass
 class ErrorContext:
     """Context information for an error."""
+
     stage: str
     operation: str
     file_path: Path | None = None
@@ -2095,6 +2616,7 @@ class ErrorContext:
 @dataclass
 class ErrorRecord:
     """Record of an error occurrence."""
+
     error_type: str
     message: str
     severity: ErrorSeverity
@@ -2113,7 +2635,9 @@ class ErrorRecord:
             "context": self.context.to_dict(),
             "stack_trace": self.stack_trace,
             "recovery_attempted": self.recovery_attempted,
-            "recovery_strategy": self.recovery_strategy.value if self.recovery_strategy else None,
+            "recovery_strategy": self.recovery_strategy.value
+            if self.recovery_strategy
+            else None,
             "recovery_successful": self.recovery_successful,
         }
 
@@ -2121,7 +2645,9 @@ class ErrorRecord:
 class ErrorCollector:
     """Collects errors during operations without immediately failing."""
 
-    def __init__(self, max_errors: int = 100, fail_fast: bool = False, stage: str = "unknown") -> None:
+    def __init__(
+        self, max_errors: int = 100, fail_fast: bool = False, stage: str = "unknown"
+    ) -> None:
         self.max_errors = max_errors
         self.fail_fast = fail_fast
         self.stage = stage
@@ -2143,7 +2669,9 @@ class ErrorCollector:
             message=str(error),
             severity=severity,
             context=context,
-            stack_trace=traceback.format_exc() if severity != ErrorSeverity.INFO else None,
+            stack_trace=traceback.format_exc()
+            if severity != ErrorSeverity.INFO
+            else None,
         )
 
         self.errors.append(record)
@@ -2164,7 +2692,8 @@ class ErrorCollector:
     def get_error_count(self) -> int:
         """Get count of actual errors (not warnings)."""
         return sum(
-            1 for e in self.errors
+            1
+            for e in self.errors
             if e.severity in [ErrorSeverity.ERROR, ErrorSeverity.CRITICAL]
         )
 
@@ -2193,7 +2722,9 @@ class ErrorManager:
         return self.collectors[stage]
 
     @contextmanager
-    def error_context(self, stage: str, operation: str, file_path: Path | None = None, **kwargs):
+    def error_context(
+        self, stage: str, operation: str, file_path: Path | None = None, **kwargs
+    ):
         """Context manager for error handling."""
         context = ErrorContext(
             stage=stage,
@@ -2211,13 +2742,16 @@ class ErrorManager:
 
 
 @contextmanager
-def error_handler(stage: str, operation: str, file_path: Path | None = None, collector: ErrorCollector | None = None, **kwargs):
+def error_handler(
+    stage: str,
+    operation: str,
+    file_path: Path | None = None,
+    collector: ErrorCollector | None = None,
+    **kwargs,
+):
     """Context manager for standardized error handling."""
     context = ErrorContext(
-        stage=stage, 
-        operation=operation, 
-        file_path=file_path, 
-        additional_info=kwargs
+        stage=stage, operation=operation, file_path=file_path, additional_info=kwargs
     )
 
     try:
@@ -2302,7 +2836,9 @@ def get_event_bus() -> EventBus:
     return _event_bus
 
 
-def create_circuit_breaker(name: str, config: CircuitBreakerConfig | None = None) -> CircuitBreaker:
+def create_circuit_breaker(
+    name: str, config: CircuitBreakerConfig | None = None
+) -> CircuitBreaker:
     """Create or get a named circuit breaker."""
     return get_circuit_breaker_manager().get_or_create(name, config)
 
@@ -2316,40 +2852,43 @@ def create_event_bus() -> EventBus:
 # UNIFIED INFRASTRUCTURE FACADE
 # =============================================================================
 
+
 class UnifiedInfrastructure:
     """Unified facade for all infrastructure components.
-    
+
     This class provides a single entry point to access all infrastructure
-    components including caching, circuit breakers, events, logging, 
+    components including caching, circuit breakers, events, logging,
     recovery, security, state management, streams, and error handling.
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize unified infrastructure with optional configuration."""
         self.config = config or {}
-        
+
         # Initialize core components
         self.error_manager = get_error_manager()
         self.circuit_breaker_manager = get_circuit_breaker_manager()
         self.cache_manager = get_cache_manager(self.config.get("cache"))
         self.event_bus = get_event_bus()
-        
+
         # Initialize state management
         state_dir = None
         if "state" in self.config and "directory" in self.config["state"]:
             state_dir = Path(self.config["state"]["directory"])
         self.state_manager = StateManager(state_dir)
-        
+
         # Initialize resource monitoring
         resource_config = self.config.get("resources", {})
-        limits = ResourceLimits(**resource_config) if resource_config else ResourceLimits()
+        limits = (
+            ResourceLimits(**resource_config) if resource_config else ResourceLimits()
+        )
         self.resource_monitor = ResourceMonitor(limits)
-        
+
         # Initialize logging
         logging_config = self.config.get("logging", {})
         if logging_config:
             setup_logging(**logging_config)
-        
+
         self.logger = get_logger(self.__class__.__name__)
         self.logger.info("Unified infrastructure initialized")
 
@@ -2359,7 +2898,9 @@ class UnifiedInfrastructure:
         return self.cache_manager.get_cache(stage)
 
     # Circuit breaker interface
-    def get_circuit_breaker(self, name: str, config: CircuitBreakerConfig | None = None) -> CircuitBreaker:
+    def get_circuit_breaker(
+        self, name: str, config: CircuitBreakerConfig | None = None
+    ) -> CircuitBreaker:
         """Get or create a circuit breaker."""
         return self.circuit_breaker_manager.get_or_create(name, config)
 
@@ -2368,7 +2909,9 @@ class UnifiedInfrastructure:
         """Publish an event."""
         self.event_bus.publish(event)
 
-    def subscribe_to_events(self, event_type: EventType, handler: IEventHandler) -> None:
+    def subscribe_to_events(
+        self, event_type: EventType, handler: IEventHandler
+    ) -> None:
         """Subscribe to events of a specific type."""
         self.event_bus.subscribe(event_type, handler)
 
@@ -2409,16 +2952,22 @@ class UnifiedInfrastructure:
         """Validate a path for security."""
         return PathValidator.validate_path(path, base_dir)
 
-    def safe_write(self, path: str | Path, content: str | bytes, base_dir: str | Path) -> Path:
+    def safe_write(
+        self, path: str | Path, content: str | bytes, base_dir: str | Path
+    ) -> Path:
         """Safely write content to a file."""
         return safe_write_file(path, content, base_dir)
 
     # Streaming interface
-    def create_stream_reader(self, path: str | Path, chunk_size: int = 8192) -> StreamReader:
+    def create_stream_reader(
+        self, path: str | Path, chunk_size: int = 8192
+    ) -> StreamReader:
         """Create a stream reader for large files."""
         return StreamReader(path, chunk_size)
 
-    def create_stream_writer(self, path: str | Path, buffer_size: int = 65536) -> StreamWriter:
+    def create_stream_writer(
+        self, path: str | Path, buffer_size: int = 65536
+    ) -> StreamWriter:
         """Create a stream writer for efficient output."""
         return StreamWriter(path, buffer_size)
 
@@ -2431,75 +2980,88 @@ class UnifiedInfrastructure:
     # Unified processing context
     @contextmanager
     def processing_context(
-        self, 
-        stage: str, 
-        operation: str, 
+        self,
+        stage: str,
+        operation: str,
         file_path: Path | None = None,
         use_circuit_breaker: bool = True,
         circuit_breaker_config: CircuitBreakerConfig | None = None,
-        **kwargs
+        **kwargs,
     ):
         """Unified context for processing with all infrastructure components."""
-        
+
         # Get circuit breaker if requested
         circuit_breaker = None
         if use_circuit_breaker:
             cb_name = f"{stage}_{operation}"
             circuit_breaker = self.get_circuit_breaker(cb_name, circuit_breaker_config)
-        
+
         # Create error context
         error_collector = self.get_error_collector(stage)
-        
+
         # Monitor resources
         start_stats = self.resource_monitor.get_stats()
-        
+
         try:
-            with self.error_context(stage, operation, file_path=file_path, **kwargs) as error_ctx:
+            with self.error_context(
+                stage, operation, file_path=file_path, **kwargs
+            ) as error_ctx:
                 if circuit_breaker:
                     # Execute with circuit breaker protection
                     def protected_operation():
                         yield error_ctx
-                        
+
                     yield from circuit_breaker.call(lambda: protected_operation())
                 else:
                     yield error_ctx
-                    
+
         except Exception as e:
             # Log the error with full context
             self.logger.error(
-                "Operation failed in %s:%s - %s", 
-                stage, operation, str(e),
-                extra={"stage": stage, "operation": operation, "file_path": str(file_path) if file_path else None}
+                "Operation failed in %s:%s - %s",
+                stage,
+                operation,
+                str(e),
+                extra={
+                    "stage": stage,
+                    "operation": operation,
+                    "file_path": str(file_path) if file_path else None,
+                },
             )
             raise
-            
+
         finally:
             # Log resource usage changes
             end_stats = self.resource_monitor.get_stats()
             memory_delta = end_stats["memory_usage"] - start_stats["memory_usage"]
             if memory_delta > 10 * 1024 * 1024:  # Log if > 10MB change
                 self.logger.info(
-                    "Operation %s:%s used %d MB memory", 
-                    stage, operation, memory_delta // (1024 * 1024)
+                    "Operation %s:%s used %d MB memory",
+                    stage,
+                    operation,
+                    memory_delta // (1024 * 1024),
                 )
 
     # Cleanup and shutdown
     def shutdown(self) -> None:
         """Shutdown all infrastructure components."""
         self.logger.info("Shutting down unified infrastructure")
-        
+
         # Log final statistics
         cache_stats = self.cache_manager.get_cache("extract")
         if cache_stats:
-            self.logger.info("Final cache stats: %s", cache_stats.stats() if hasattr(cache_stats, 'stats') else "N/A")
-        
+            self.logger.info(
+                "Final cache stats: %s",
+                cache_stats.stats() if hasattr(cache_stats, "stats") else "N/A",
+            )
+
         circuit_stats = self.circuit_breaker_manager.get_stats()
         if circuit_stats:
             self.logger.info("Circuit breaker stats: %s", circuit_stats)
-        
+
         event_stats = self.event_bus.get_statistics()
         self.logger.info("Event bus stats: %s", event_stats)
-        
+
         resource_stats = self.resource_monitor.get_stats()
         self.logger.info("Final resource stats: %s", resource_stats)
 
@@ -2508,79 +3070,94 @@ class UnifiedInfrastructure:
 # DIRECTORY UTILITIES - Output directory validation and preparation
 # =============================================================================
 
+
 def check_and_prepare_output_directory(
     output_dir: str | Path,
     allow_overwrite: bool = True,
     force_overwrite: bool = False,
     interactive: bool = False,
-    stage_name: str = "operation"
+    stage_name: str = "operation",
 ) -> tuple[Path, bool]:
     """Check and prepare an output directory for pipeline operations.
-    
+
     This function validates output directory paths, checks for existing content,
     handles overwrite scenarios, and ensures the directory is ready for use.
-    
+
     Args:
         output_dir: Path to the output directory
         allow_overwrite: Whether to allow overwriting existing files
         force_overwrite: Whether to force overwrite without asking
         interactive: Whether to prompt user for confirmation
         stage_name: Name of the pipeline stage for logging
-        
+
     Returns:
         Tuple of (Path object for directory, should_proceed boolean)
-        
+
     Raises:
         SecurityError: If path validation fails
         PermissionError: If directory cannot be created or accessed
     """
     logger = get_logger("directory_utils")
-    
+
     # Convert to Path object and resolve
     try:
         output_path = Path(output_dir).resolve()
     except Exception as e:
         raise SecurityError(f"Invalid output directory path: {e}") from e
-    
+
     # Security validation - ensure path is safe
     try:
         # Basic security checks
-        if ".." in str(output_path) or str(output_path).startswith("/etc") or str(output_path).startswith("/sys"):
+        if (
+            ".." in str(output_path)
+            or str(output_path).startswith("/etc")
+            or str(output_path).startswith("/sys")
+        ):
             raise SecurityError(f"Unsafe output directory path: {output_path}")
-            
+
         # Ensure path is within reasonable bounds (not trying to write to system directories)
-        if str(output_path).startswith("/bin") or str(output_path).startswith("/usr/bin"):
+        if str(output_path).startswith("/bin") or str(output_path).startswith(
+            "/usr/bin"
+        ):
             raise SecurityError(f"Cannot write to system directory: {output_path}")
-            
+
     except SecurityError:
         raise
     except Exception as e:
         logger.warning("Path validation warning: %s", e)
-    
+
     # Check if directory exists and has content
     directory_exists = output_path.exists()
     has_content = False
-    
+
     if directory_exists and output_path.is_dir():
         try:
             # Check if directory has any files
             content = list(output_path.iterdir())
             has_content = len(content) > 0
-            
+
             if has_content:
-                logger.info("Output directory %s contains %d existing items", output_path, len(content))
+                logger.info(
+                    "Output directory %s contains %d existing items",
+                    output_path,
+                    len(content),
+                )
         except PermissionError:
             raise PermissionError(f"Cannot access output directory: {output_path}")
     elif directory_exists and not output_path.is_dir():
-        raise FileExistsError(f"Output path exists but is not a directory: {output_path}")
-    
+        raise FileExistsError(
+            f"Output path exists but is not a directory: {output_path}"
+        )
+
     # Handle overwrite scenarios
     should_proceed = True
-    
+
     if has_content and not allow_overwrite:
-        logger.error("Output directory %s contains files but overwrite is disabled", output_path)
+        logger.error(
+            "Output directory %s contains files but overwrite is disabled", output_path
+        )
         return output_path, False
-    
+
     if has_content and not force_overwrite:
         if interactive:
             # In interactive mode, we would normally prompt the user
@@ -2588,27 +3165,31 @@ def check_and_prepare_output_directory(
             logger.warning(
                 "Output directory %s contains existing files. "
                 "Proceeding with %s as overwrite is enabled.",
-                output_path, stage_name
+                output_path,
+                stage_name,
             )
         else:
             # Non-interactive mode with existing content - proceed with warning
             logger.warning(
                 "Output directory %s contains existing files. "
                 "Files may be overwritten during %s.",
-                output_path, stage_name
+                output_path,
+                stage_name,
             )
-    
+
     # Create directory if it doesn't exist
     if not directory_exists:
         try:
             output_path.mkdir(parents=True, exist_ok=True)
             logger.info("Created output directory: %s", output_path)
         except PermissionError as e:
-            raise PermissionError(f"Cannot create output directory {output_path}: {e}") from e
+            raise PermissionError(
+                f"Cannot create output directory {output_path}: {e}"
+            ) from e
         except Exception as e:
             logger.error("Failed to create output directory %s: %s", output_path, e)
             raise
-    
+
     # Verify directory is writable
     try:
         test_file = output_path / ".write_test"
@@ -2618,12 +3199,15 @@ def check_and_prepare_output_directory(
         raise PermissionError(f"Output directory is not writable: {output_path}")
     except Exception as e:
         logger.warning("Could not verify directory writability: %s", e)
-    
+
     logger.debug(
         "Output directory prepared: %s (exists=%s, has_content=%s, proceed=%s)",
-        output_path, directory_exists, has_content, should_proceed
+        output_path,
+        directory_exists,
+        has_content,
+        should_proceed,
     )
-    
+
     return output_path, should_proceed
 
 
@@ -2634,130 +3218,178 @@ def check_and_prepare_output_directory(
 __all__ = [
     # Core unified interface
     "UnifiedInfrastructure",
-    
     # Constants from constants.py
     # Core constants
-    "HEADER_SIZE", "BUFFER_SIZE", "MAX_PATH_LENGTH", "MAX_NAME_LENGTH",
-    "STRING_TABLE_OFFSET", "METADATA_OFFSET", "DEFAULT_TIMEOUT", "MAX_TIMEOUT",
-    "PBD_HEADER_MARKER", "PBD_SIGNATURE_HDR", "ENTRY_MARKER", "DATA_MARKER",
-    
+    "HEADER_SIZE",
+    "BUFFER_SIZE",
+    "MAX_PATH_LENGTH",
+    "MAX_NAME_LENGTH",
+    "STRING_TABLE_OFFSET",
+    "METADATA_OFFSET",
+    "DEFAULT_TIMEOUT",
+    "MAX_TIMEOUT",
+    "PBD_HEADER_MARKER",
+    "PBD_SIGNATURE_HDR",
+    "ENTRY_MARKER",
+    "DATA_MARKER",
     # File format constants
-    "GRAMMAR_DIR", "POWERBUILDER_GRAMMAR", "COMMON_GRAMMAR", "DATAWINDOW_GRAMMAR",
-    "SQL_GRAMMAR", "PSEUDOCODE_GRAMMAR", "POWERBUILDER_CORE_GRAMMAR", 
-    "POWERBUILDER_JS_GRAMMAR", "TRANSACTION_GRAMMAR", "FileType", "FILE_EXTENSIONS",
-    
+    "GRAMMAR_DIR",
+    "POWERBUILDER_GRAMMAR",
+    "COMMON_GRAMMAR",
+    "DATAWINDOW_GRAMMAR",
+    "SQL_GRAMMAR",
+    "PSEUDOCODE_GRAMMAR",
+    "POWERBUILDER_CORE_GRAMMAR",
+    "POWERBUILDER_JS_GRAMMAR",
+    "TRANSACTION_GRAMMAR",
+    "FileType",
+    "FILE_EXTENSIONS",
     # PowerBuilder language constants
-    "PB_BASIC_TYPES", "PB_SYSTEM_TYPES", "PB_CONTROL_TYPES", "PB_EVENT_TYPES",
-    "PB_KEYWORDS", "PB_OPERATORS", "SQL_KEYWORDS", "PB_TYPE_MAP",
-    
+    "PB_BASIC_TYPES",
+    "PB_SYSTEM_TYPES",
+    "PB_CONTROL_TYPES",
+    "PB_EVENT_TYPES",
+    "PB_KEYWORDS",
+    "PB_OPERATORS",
+    "SQL_KEYWORDS",
+    "PB_TYPE_MAP",
     # Magic numbers - representative constants (full list is too long for __all__)
     # COUNT constants
-    "COUNTS_11", "COUNTS_12", "COUNTS_13", "COUNTS_14", "COUNTS_15", "COUNTS_16", 
-    "COUNTS_17", "COUNTS_18", "COUNTS_19", "COUNTS_20", "COUNTS_30", "COUNTS_40",
-    "COUNTS_50", "COUNTS_80", "COUNTS_99",
-    
+    "COUNTS_11",
+    "COUNTS_12",
+    "COUNTS_13",
+    "COUNTS_14",
+    "COUNTS_15",
+    "COUNTS_16",
+    "COUNTS_17",
+    "COUNTS_18",
+    "COUNTS_19",
+    "COUNTS_20",
+    "COUNTS_30",
+    "COUNTS_40",
+    "COUNTS_50",
+    "COUNTS_80",
+    "COUNTS_99",
     # FACTOR constants
-    "FACTORS_0_0001", "FACTORS_0_001", "FACTORS_0_01", "FACTORS_0_05", "FACTORS_0_1", 
-    "FACTORS_0_2", "FACTORS_0_3", "FACTORS_0_5", "FACTORS_0_8", "FACTORS_1_2", 
-    "FACTORS_1_5", "FACTORS_12_5", "FACTORS_20_0",
-    
-    # LIMIT constants  
-    "LIMITS_1025", "LIMITS_2048", "LIMITS_4096", "LIMITS_8192", "LIMITS_1280",
-    "LIMITS_1364", "LIMITS_1536", "LIMITS_2880",
-    
+    "FACTORS_0_0001",
+    "FACTORS_0_001",
+    "FACTORS_0_01",
+    "FACTORS_0_05",
+    "FACTORS_0_1",
+    "FACTORS_0_2",
+    "FACTORS_0_3",
+    "FACTORS_0_5",
+    "FACTORS_0_8",
+    "FACTORS_1_2",
+    "FACTORS_1_5",
+    "FACTORS_12_5",
+    "FACTORS_20_0",
+    # LIMIT constants
+    "LIMITS_1025",
+    "LIMITS_2048",
+    "LIMITS_4096",
+    "LIMITS_8192",
+    "LIMITS_1280",
+    "LIMITS_1364",
+    "LIMITS_1536",
+    "LIMITS_2880",
     # SIZE constants
-    "SIZES_101", "SIZES_128", "SIZES_255", "SIZES_256", "SIZES_512", "SIZES_600", 
-    "SIZES_800", "SIZES_583",
-    
-    # MISC constants 
-    "MISC_10000", "MISC_16384", "MISC_32767", "MISC_32768", "MISC_65535", "MISC_65536",
-    "MISC_100000", "MISC_999999", "MISC_16777216", "MISC_100000000", "MISC_268435456",
-    "MISC_282444864", "MISC_4294967295", "MISC_1146047862", "MISC_1329744452", 
-    "MISC_16385", "MISC_42844", "MISC_282411680",
-    
+    "SIZES_101",
+    "SIZES_128",
+    "SIZES_255",
+    "SIZES_256",
+    "SIZES_512",
+    "SIZES_600",
+    "SIZES_800",
+    "SIZES_583",
+    # MISC constants
+    "MISC_10000",
+    "MISC_16384",
+    "MISC_32767",
+    "MISC_32768",
+    "MISC_65535",
+    "MISC_65536",
+    "MISC_100000",
+    "MISC_999999",
+    "MISC_16777216",
+    "MISC_100000000",
+    "MISC_268435456",
+    "MISC_282444864",
+    "MISC_4294967295",
+    "MISC_1146047862",
+    "MISC_1329744452",
+    "MISC_16385",
+    "MISC_42844",
+    "MISC_282411680",
     # Exceptions
     "InfrastructureError",
-    "SecurityError", 
+    "SecurityError",
     "PathTraversalError",
     "ResourceLimitError",
     "CircuitBreakerError",
     "PipelineError",
-    
     # Enums
     "ErrorSeverity",
-    "RecoveryStrategy", 
+    "RecoveryStrategy",
     "LogFormat",
     "CircuitState",
     "BackendType",
     "JobStatus",
     "StageStatus",
-    
     # Interfaces (formerly contracts)
     "IPipelineState",
     "IStateManager",
-    
     # Caching
     "CacheEntry",
     "LRUCache",
-    "FileCache", 
+    "FileCache",
     "CacheConfig",
     "CacheManager",
-    
     # Circuit Breakers
     "CircuitBreaker",
     "CircuitBreakerConfig",
     "CircuitBreakerStats",
     "CircuitBreakerManager",
-    
     # Coordination
     "CoordinatorMixin",
     "BaseCoordinator",
-    
     # Distributed Processing
     "JobResult",
-    "WorkerConfig", 
+    "WorkerConfig",
     "TaskMetrics",
     "MultiprocessingBackend",
     "DistributedCoordinator",
-    
     # Events
     "EventHandler",
     "EventBus",
-    
     # Logging
     "StructuredFormatter",
-    "ColoredFormatter", 
+    "ColoredFormatter",
     "PipelineLogger",
     "setup_logging",
     "get_logger",
-    
     # Recovery
     "RetryConfig",
     "RecoveryContext",
     "retry_with_backoff",
     "FileCorruptionRecovery",
-    
     # Resource Management
     "ResourceLimits",
     "ResourceMonitor",
     "with_timeout",
-    
     # Security
     "PathValidator",
     "safe_join_path",
     "safe_write_file",
     "check_and_prepare_output_directory",
-    
     # State Management
     "StageState",
-    "PipelineState", 
+    "PipelineState",
     "StateManager",
-    
     # Streams
     "StreamReader",
     "StreamWriter",
     "stream_process_file",
-    
     # Error Handling
     "ErrorContext",
     "ErrorRecord",
@@ -2765,15 +3397,17 @@ __all__ = [
     "ErrorManager",
     "error_handler",
     "with_retry",
-    
     # Factory Functions
     "get_error_manager",
     "get_circuit_breaker_manager",
-    "get_cache_manager", 
+    "get_cache_manager",
     "get_event_bus",
     "create_circuit_breaker",
     "create_event_bus",
-    
     # Logging constants
-    "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
+    "CRITICAL",
 ]

@@ -5,7 +5,6 @@ Generates Dioxus web/desktop applications from PowerBuilder semantic models.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from src_new._core.models import (
     ApplicationModel,
@@ -33,6 +32,7 @@ class DioxusGenerator(BaseCodeGenerator):
             output_path: Output directory for Dioxus app
         """
         from src_new._core.models import TargetLanguage
+
         super().__init__(TargetLanguage.DIOXUS)
         self.input_path = input_path
         self.output_path = output_path
@@ -51,9 +51,7 @@ class DioxusGenerator(BaseCodeGenerator):
         self.app_name = data.name.lower().replace(" ", "_")
 
         project = GeneratedProject(
-            name=self.app_name,
-            target=TargetLanguage.DIOXUS,
-            files=[]
+            name=self.app_name, target=TargetLanguage.DIOXUS, files=[]
         )
 
         # Generate Cargo.toml
@@ -116,11 +114,7 @@ opt-level = 3
 lto = true
 codegen-units = 1
 '''
-        return GeneratedFile(
-            path=Path("Cargo.toml"),
-            content=content,
-            language="toml"
-        )
+        return GeneratedFile(path=Path("Cargo.toml"), content=content, language="toml")
 
     def _generate_main_rs(self, app: ApplicationModel) -> GeneratedFile:
         """Generate main.rs file."""
@@ -152,18 +146,13 @@ fn main() {{
     dioxus_desktop::launch_cfg(app::App, config);
 }}
 '''
-        return GeneratedFile(
-            path=Path("src/main.rs"),
-            content=content,
-            language="rust"
-        )
+        return GeneratedFile(path=Path("src/main.rs"), content=content, language="rust")
 
     def _generate_app_rs(self, app: ApplicationModel) -> GeneratedFile:
         """Generate app.rs with main application component."""
         # Find main window
         main_window = next(
-            (obj for obj in app.objects if obj.type == ObjectType.WINDOW),
-            None
+            (obj for obj in app.objects if obj.type == ObjectType.WINDOW), None
         )
 
         content = f'''//! Main Application Component
@@ -260,11 +249,7 @@ fn About() -> Element {{
     }}
 }}
 '''
-        return GeneratedFile(
-            path=Path("src/app.rs"),
-            content=content,
-            language="rust"
-        )
+        return GeneratedFile(path=Path("src/app.rs"), content=content, language="rust")
 
     def _generate_component(self, obj: SemanticObject) -> GeneratedFile:
         """Generate a Dioxus component for a window."""
@@ -303,7 +288,7 @@ pub fn {obj.name}() -> Element {{
                     tracing::info!("Form submitted: {{:?}}", form_data.read());
                 }},
 
-                {''.join(fields)}
+                {"".join(fields)}
 
                 div {{
                     class: "form-actions",
@@ -328,13 +313,13 @@ pub fn {obj.name}() -> Element {{
 #[derive(Debug, Clone, Default)]
 struct {obj.name}Data {{
     // Limited to first 5 properties for demo
-    {', '.join(f"pub {prop.name}: String" for prop in obj.properties[:5])}
+    {", ".join(f"pub {prop.name}: String" for prop in obj.properties[:5])}
 }}
 '''
         return GeneratedFile(
             path=Path(f"src/components/{obj.name.lower()}.rs"),
             content=content,
-            language="rust"
+            language="rust",
         )
 
     def _generate_form_field(self, prop: Property) -> str:
@@ -358,12 +343,12 @@ struct {obj.name}Data {{
 
     def _generate_event_handler(self, method: Method) -> str:
         """Generate an event handler for a method."""
-        return f'''
+        return f"""
     // Handler for {method.name}
     let handle_{method.name} = move |_| {{
         tracing::info!("Executing {method.name}");
         // TODO: Implement {method.name} logic
-    }};'''
+    }};"""
 
     def _generate_model(self, obj: SemanticObject) -> GeneratedFile:
         """Generate a Rust model struct."""
@@ -372,7 +357,7 @@ struct {obj.name}Data {{
             rust_type = self._pb_to_rust_type(prop.data_type)
             fields.append(f"    pub {prop.name}: {rust_type},")
 
-        content = f'''//! {obj.name} Model
+        content = f"""//! {obj.name} Model
 //! Generated from PowerBuilder {obj.type.value}
 
 use serde::{{Deserialize, Serialize}};
@@ -381,7 +366,7 @@ use chrono::{{DateTime, Utc}};
 /// {obj.description or obj.name}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct {obj.name} {{
-{'\n'.join(fields)}
+{"\n".join(fields)}
 }}
 
 impl {obj.name} {{
@@ -398,11 +383,11 @@ impl Default for {obj.name} {{
         Self::new()
     }}
 }}
-'''
+"""
         return GeneratedFile(
             path=Path(f"src/models/{obj.name.lower()}.rs"),
             content=content,
-            language="rust"
+            language="rust",
         )
 
     def _generate_state_rs(self, app: ApplicationModel) -> GeneratedFile:
@@ -454,9 +439,7 @@ impl Default for AppState {{
 }}
 '''
         return GeneratedFile(
-            path=Path("src/state.rs"),
-            content=content,
-            language="rust"
+            path=Path("src/state.rs"), content=content, language="rust"
         )
 
     def _generate_dioxus_config(self, app: ApplicationModel) -> GeneratedFile:
@@ -483,11 +466,7 @@ width = 1200
 height = 800
 resizable = true
 '''
-        return GeneratedFile(
-            path=Path("Dioxus.toml"),
-            content=content,
-            language="toml"
-        )
+        return GeneratedFile(path=Path("Dioxus.toml"), content=content, language="toml")
 
     def _pb_to_rust_type(self, pb_type: str) -> str:
         """Convert PowerBuilder type to Rust type."""

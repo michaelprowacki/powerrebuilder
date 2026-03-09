@@ -8,12 +8,11 @@ Provides a simple, unified interface for all operations.
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
-from src_new._core import PipelineStage, TargetLanguage
-from src_new._patterns import Pipeline, PipelineResult
+from src_new._core import TargetLanguage
+from src_new._patterns import Pipeline
 from src_new.decompile import DecompileCoordinator
 from src_new.extract import ExtractCoordinator
 from src_new.generate import GenerateCoordinator
@@ -22,24 +21,15 @@ from src_new.parse import ParseCoordinator
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 @click.group()
 @click.version_option(version="2.0.0", prog_name="PowerRebuilder")
-@click.option(
-    "--verbose", "-v",
-    is_flag=True,
-    help="Enable verbose output"
-)
-@click.option(
-    "--quiet", "-q",
-    is_flag=True,
-    help="Suppress output except errors"
-)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
+@click.option("--quiet", "-q", is_flag=True, help="Suppress output except errors")
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool, quiet: bool):
     """PowerRebuilder - Transform PowerBuilder applications to modern code.
@@ -69,21 +59,14 @@ def cli(ctx: click.Context, verbose: bool, quiet: bool):
     type=click.Path(),
 )
 @click.option(
-    "--target", "-t",
+    "--target",
+    "-t",
     type=click.Choice(["flutter", "python", "typescript", "react", "dioxus"]),
     default="flutter",
-    help="Target language/framework"
+    help="Target language/framework",
 )
-@click.option(
-    "--parallel", "-p",
-    is_flag=True,
-    help="Enable parallel processing"
-)
-@click.option(
-    "--cache",
-    is_flag=True,
-    help="Enable caching"
-)
+@click.option("--parallel", "-p", is_flag=True, help="Enable parallel processing")
+@click.option("--cache", is_flag=True, help="Enable caching")
 def all(
     input_path: str,
     output_path: str,
@@ -112,7 +95,13 @@ def all(
     model_dir = output_dir / "4_model"
     generated_dir = output_dir / "5_generated"
 
-    for dir_path in [extracted_dir, decompiled_dir, parsed_dir, model_dir, generated_dir]:
+    for dir_path in [
+        extracted_dir,
+        decompiled_dir,
+        parsed_dir,
+        model_dir,
+        generated_dir,
+    ]:
         dir_path.mkdir(parents=True, exist_ok=True)
 
     # Create pipeline stages
@@ -120,28 +109,24 @@ def all(
         ExtractCoordinator(
             input_path=Path(input_path),
             output_path=extracted_dir,
-            config={"parallel": parallel, "cache_enabled": cache}
+            config={"parallel": parallel, "cache_enabled": cache},
         ),
         DecompileCoordinator(
             input_path=extracted_dir,
             output_path=decompiled_dir,
-            config={"parallel": parallel}
+            config={"parallel": parallel},
         ),
         ParseCoordinator(
             input_path=decompiled_dir,
             output_path=parsed_dir,
-            config={"parallel": parallel}
+            config={"parallel": parallel},
         ),
-        ModelCoordinator(
-            input_path=parsed_dir,
-            output_path=model_dir,
-            config={}
-        ),
+        ModelCoordinator(input_path=parsed_dir, output_path=model_dir, config={}),
         GenerateCoordinator(
             input_path=model_dir,
             output_path=generated_dir,
             target=TargetLanguage(target),
-            config={}
+            config={},
         ),
     ]
 
@@ -151,11 +136,11 @@ def all(
 
     # Check result
     if result.success:
-        logger.info(f"✓ Pipeline completed successfully!")
+        logger.info("✓ Pipeline completed successfully!")
         logger.info(f"Generated code in: {generated_dir}")
         sys.exit(0)
     else:
-        logger.error(f"✗ Pipeline failed")
+        logger.error("✗ Pipeline failed")
         for error in result.errors[:5]:
             logger.error(f"  - {error}")
         sys.exit(1)
@@ -170,11 +155,7 @@ def all(
     "output_path",
     type=click.Path(),
 )
-@click.option(
-    "--recovery",
-    is_flag=True,
-    help="Enable corruption recovery"
-)
+@click.option("--recovery", is_flag=True, help="Enable corruption recovery")
 def extract(input_path: str, output_path: str, recovery: bool):
     """Extract objects from PBL/PBD files.
 
@@ -186,7 +167,7 @@ def extract(input_path: str, output_path: str, recovery: bool):
     coordinator = ExtractCoordinator(
         input_path=Path(input_path),
         output_path=Path(output_path),
-        config={"recovery_enabled": recovery}
+        config={"recovery_enabled": recovery},
     )
 
     result = coordinator.process()
@@ -301,10 +282,11 @@ def model(input_path: str, output_path: str):
     type=click.Path(),
 )
 @click.option(
-    "--target", "-t",
+    "--target",
+    "-t",
     type=click.Choice(["flutter", "python", "typescript", "react", "dioxus"]),
     default="flutter",
-    help="Target language/framework"
+    help="Target language/framework",
 )
 def generate(input_path: str, output_path: str, target: str):
     """Generate modern code from models.
@@ -348,6 +330,7 @@ def analyze(file_path: str):
         logger.info("File type: PowerBuilder Library")
 
         from src_new.extract import PBLParser
+
         parser = PBLParser(file_path)
 
         try:
@@ -370,6 +353,7 @@ def analyze(file_path: str):
         logger.info("File type: P-code function")
 
         from src_new._patterns import BinaryReader
+
         with BinaryReader(file_path) as reader:
             logger.info(f"Size: {reader.size} bytes")
             logger.info(f"First 16 bytes: {reader.peek(16).hex()}")
@@ -378,6 +362,7 @@ def analyze(file_path: str):
         logger.info("File type: PowerBuilder source")
 
         from src_new._patterns import FileHandler
+
         file_handler = FileHandler()
         content = file_handler.read_text(file_path)
 
@@ -403,16 +388,12 @@ def analyze(file_path: str):
     "input_path",
     type=click.Path(exists=True),
 )
-@click.option(
-    "--iterations", "-i",
-    default=3,
-    help="Number of benchmark iterations"
-)
+@click.option("--iterations", "-i", default=3, help="Number of benchmark iterations")
 @click.option(
     "--stage",
     type=click.Choice(["extract", "decompile", "parse", "model", "generate", "all"]),
     default="all",
-    help="Stage to benchmark"
+    help="Stage to benchmark",
 )
 def benchmark(input_path: str, iterations: int, stage: str):
     """Benchmark pipeline performance.
@@ -430,7 +411,7 @@ def benchmark(input_path: str, iterations: int, stage: str):
 
         # Run the specified stage
         # This is a simplified example - would need actual implementation
-        logger.info(f"Iteration {i+1}/{iterations}...")
+        logger.info(f"Iteration {i + 1}/{iterations}...")
 
         elapsed = time.time() - start
         times.append(elapsed)
@@ -447,16 +428,8 @@ def benchmark(input_path: str, iterations: int, stage: str):
     "input_path",
     type=click.Path(exists=True),
 )
-@click.option(
-    "--check-corruption",
-    is_flag=True,
-    help="Check for file corruption"
-)
-@click.option(
-    "--check-structure",
-    is_flag=True,
-    help="Validate file structure"
-)
+@click.option("--check-corruption", is_flag=True, help="Check for file corruption")
+@click.option("--check-structure", is_flag=True, help="Validate file structure")
 def validate(input_path: str, check_corruption: bool, check_structure: bool):
     """Validate input files before processing.
 
@@ -502,26 +475,10 @@ def validate(input_path: str, check_corruption: bool, check_structure: bool):
 
 
 @cli.command()
-@click.option(
-    "--cache",
-    is_flag=True,
-    help="Clear cache files"
-)
-@click.option(
-    "--temp",
-    is_flag=True,
-    help="Clear temporary files"
-)
-@click.option(
-    "--output",
-    is_flag=True,
-    help="Clear output directories"
-)
-@click.option(
-    "--all",
-    is_flag=True,
-    help="Clear everything"
-)
+@click.option("--cache", is_flag=True, help="Clear cache files")
+@click.option("--temp", is_flag=True, help="Clear temporary files")
+@click.option("--output", is_flag=True, help="Clear output directories")
+@click.option("--all", is_flag=True, help="Clear everything")
 @click.confirmation_option(prompt="Are you sure you want to clean?")
 def clean(cache: bool, temp: bool, output: bool, all: bool):
     """Clean cache and temporary files."""
@@ -564,11 +521,7 @@ def clean(cache: bool, temp: bool, output: bool, all: bool):
 
 
 @cli.command()
-@click.option(
-    "--watch",
-    is_flag=True,
-    help="Watch pipeline status in real-time"
-)
+@click.option("--watch", is_flag=True, help="Watch pipeline status in real-time")
 def status(watch: bool):
     """Show pipeline execution status."""
     import json
@@ -593,6 +546,7 @@ def status(watch: bool):
 
         if watch:
             import time
+
             logger.info("\\nWatching for updates (Ctrl+C to stop)...")
             while True:
                 time.sleep(2)
@@ -607,11 +561,7 @@ def status(watch: bool):
     "file_path",
     type=click.Path(exists=True),
 )
-@click.option(
-    "--detailed",
-    is_flag=True,
-    help="Show detailed information"
-)
+@click.option("--detailed", is_flag=True, help="Show detailed information")
 def inspect(file_path: str, detailed: bool):
     """Inspect PowerBuilder files without extraction.
 
@@ -637,7 +587,10 @@ def inspect(file_path: str, detailed: bool):
         logger.warning(f"Issues: {', '.join(analysis.corruption)}")
 
     # Detailed inspection for PBL/PBD
-    if analysis.format.value in ["PowerBuilder Library", "PowerBuilder Dynamic Library"]:
+    if analysis.format.value in [
+        "PowerBuilder Library",
+        "PowerBuilder Dynamic Library",
+    ]:
         try:
             parser = PBLParser(path)
             pbl_file = parser.parse()
@@ -648,7 +601,9 @@ def inspect(file_path: str, detailed: bool):
             if detailed:
                 logger.info("\\nContents:")
                 for entry in pbl_file.entries:
-                    logger.info(f"  - {entry.name} ({entry.type.value}) - {entry.size} bytes")
+                    logger.info(
+                        f"  - {entry.name} ({entry.type.value}) - {entry.size} bytes"
+                    )
 
         except Exception as e:
             logger.error(f"Failed to parse: {e}")
@@ -662,9 +617,12 @@ def doctor():
 
     # Check Python version
     import sys
+
     py_version = sys.version_info
     if py_version >= (3, 10):
-        logger.info(f"✓ Python {py_version.major}.{py_version.minor}.{py_version.micro}")
+        logger.info(
+            f"✓ Python {py_version.major}.{py_version.minor}.{py_version.micro}"
+        )
     else:
         logger.error(f"✗ Python {py_version.major}.{py_version.minor} (need 3.10+)")
 
@@ -685,7 +643,15 @@ def doctor():
     # Check directory structure
     src_new = Path("src_new")
     if src_new.exists():
-        subdirs = ["_patterns", "_core", "extract", "decompile", "parse", "model", "generate"]
+        subdirs = [
+            "_patterns",
+            "_core",
+            "extract",
+            "decompile",
+            "parse",
+            "model",
+            "generate",
+        ]
         for subdir in subdirs:
             if (src_new / subdir).exists():
                 logger.info(f"✓ {subdir}/ exists")

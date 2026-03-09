@@ -7,7 +7,6 @@ Events are colocated with their aggregates following Scott Wlaschin's FDM princi
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
-from enum import Enum
 from datetime import datetime
 
 
@@ -15,15 +14,17 @@ from datetime import datetime
 # SVELTE COMPONENT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SvelteComponent:
     """A Svelte component."""
+
     name: str
-    props: List['SvelteProp'] = field(default_factory=list)
-    state: List['SvelteState'] = field(default_factory=list)
-    stores: List['SvelteStore'] = field(default_factory=list)
-    slots: List['SvelteSlot'] = field(default_factory=list)
-    events: List['SvelteEvent'] = field(default_factory=list)
+    props: List["SvelteProp"] = field(default_factory=list)
+    state: List["SvelteState"] = field(default_factory=list)
+    stores: List["SvelteStore"] = field(default_factory=list)
+    slots: List["SvelteSlot"] = field(default_factory=list)
+    events: List["SvelteEvent"] = field(default_factory=list)
     script: str = ""
     template: str = ""
     style: Optional[str] = None
@@ -33,6 +34,7 @@ class SvelteComponent:
 @dataclass(frozen=True)
 class SvelteProp:
     """A component prop."""
+
     name: str
     type: Optional[str] = None
     default: Optional[Any] = None
@@ -43,6 +45,7 @@ class SvelteProp:
 @dataclass(frozen=True)
 class SvelteState:
     """Component state variable."""
+
     name: str
     initial_value: Any
     type: Optional[str] = None
@@ -52,6 +55,7 @@ class SvelteState:
 @dataclass(frozen=True)
 class SvelteStore:
     """A Svelte store reference."""
+
     name: str
     store_type: str  # writable, readable, derived, custom
     initial_value: Optional[Any] = None
@@ -61,6 +65,7 @@ class SvelteStore:
 @dataclass(frozen=True)
 class SvelteSlot:
     """A component slot."""
+
     name: Optional[str] = None  # None for default slot
     props: Dict[str, Any] = field(default_factory=dict)
     fallback: Optional[str] = None
@@ -69,9 +74,12 @@ class SvelteSlot:
 @dataclass(frozen=True)
 class SvelteEvent:
     """A component event."""
+
     name: str
     handler: Optional[str] = None
-    modifiers: List[str] = field(default_factory=list)  # preventDefault, stopPropagation
+    modifiers: List[str] = field(
+        default_factory=list
+    )  # preventDefault, stopPropagation
     is_forwarded: bool = False
 
 
@@ -79,9 +87,11 @@ class SvelteEvent:
 # SVELTE REACTIVITY
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ReactiveStatement:
     """A reactive statement ($:)."""
+
     dependencies: List[str]
     expression: str
     is_assignment: bool = False
@@ -90,6 +100,7 @@ class ReactiveStatement:
 @dataclass(frozen=True)
 class ReactiveBlock:
     """A reactive block."""
+
     dependencies: List[str]
     statements: List[str]
 
@@ -98,9 +109,11 @@ class ReactiveBlock:
 # SVELTE DIRECTIVES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SvelteDirective:
     """A Svelte directive."""
+
     type: str  # bind, on, use, transition, animate, class, style
     target: str
     value: Any
@@ -110,6 +123,7 @@ class SvelteDirective:
 @dataclass(frozen=True)
 class SvelteBinding:
     """Two-way binding."""
+
     property: str
     variable: str
     is_group: bool = False  # bind:group for radio/checkbox
@@ -118,6 +132,7 @@ class SvelteBinding:
 @dataclass(frozen=True)
 class SvelteTransition:
     """A transition directive."""
+
     name: str  # fade, fly, slide, scale, draw, crossfade
     direction: str  # in, out, both
     parameters: Dict[str, Any] = field(default_factory=dict)
@@ -127,6 +142,7 @@ class SvelteTransition:
 @dataclass(frozen=True)
 class SvelteAction:
     """A use: action."""
+
     name: str
     parameters: Optional[Any] = None
     update_function: Optional[str] = None
@@ -137,9 +153,11 @@ class SvelteAction:
 # SVELTE STORES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class WritableStore:
     """A writable store."""
+
     name: str
     initial_value: Any
     subscribers: List[str] = field(default_factory=list)
@@ -148,6 +166,7 @@ class WritableStore:
 @dataclass(frozen=True)
 class ReadableStore:
     """A readable store."""
+
     name: str
     initial_value: Any
     start_function: str  # Start/stop notifications
@@ -156,6 +175,7 @@ class ReadableStore:
 @dataclass(frozen=True)
 class DerivedStore:
     """A derived store."""
+
     name: str
     dependencies: List[str]
     derivation_function: str
@@ -164,6 +184,7 @@ class DerivedStore:
 @dataclass(frozen=True)
 class CustomStore:
     """A custom store."""
+
     name: str
     subscribe_method: str
     set_method: Optional[str] = None
@@ -174,21 +195,24 @@ class CustomStore:
 # SVELTEKIT TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class SvelteKitRoute:
     """A SvelteKit route."""
+
     path: str
     page_component: Optional[str] = None
     layout_component: Optional[str] = None
     error_component: Optional[str] = None
-    load_function: Optional['SvelteKitLoad'] = None
-    actions: Dict[str, 'SvelteKitAction'] = field(default_factory=dict)
+    load_function: Optional["SvelteKitLoad"] = None
+    actions: Dict[str, "SvelteKitAction"] = field(default_factory=dict)
     params: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class SvelteKitLoad:
     """A +page.server.js load function."""
+
     is_server: bool = True
     depends: List[str] = field(default_factory=list)
     returns_data: Dict[str, Any] = field(default_factory=dict)
@@ -197,6 +221,7 @@ class SvelteKitLoad:
 @dataclass(frozen=True)
 class SvelteKitAction:
     """A form action."""
+
     name: Optional[str] = None  # None for default action
     is_async: bool = True
     validates_data: bool = True
@@ -206,6 +231,7 @@ class SvelteKitAction:
 @dataclass(frozen=True)
 class SvelteKitLayout:
     """A layout component."""
+
     path: str
     component: SvelteComponent
     load_function: Optional[SvelteKitLoad] = None
@@ -215,6 +241,7 @@ class SvelteKitLayout:
 @dataclass(frozen=True)
 class SvelteKitHook:
     """A SvelteKit hook."""
+
     type: str  # handle, handleError, handleFetch
     file: str  # hooks.server.js or hooks.client.js
     function: str
@@ -224,9 +251,11 @@ class SvelteKitHook:
 # SVELTE BLOCKS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class IfBlock:
     """An {#if} block."""
+
     condition: str
     then_content: str
     else_if_blocks: List[tuple[str, str]] = field(default_factory=list)
@@ -236,6 +265,7 @@ class IfBlock:
 @dataclass(frozen=True)
 class EachBlock:
     """An {#each} block."""
+
     expression: str
     as_pattern: str  # item, index
     key: Optional[str] = None
@@ -246,6 +276,7 @@ class EachBlock:
 @dataclass(frozen=True)
 class AwaitBlock:
     """An {#await} block."""
+
     promise: str
     pending_content: Optional[str] = None
     then_pattern: Optional[str] = None
@@ -257,6 +288,7 @@ class AwaitBlock:
 @dataclass(frozen=True)
 class KeyBlock:
     """A {#key} block."""
+
     expression: str
     content: str
 
@@ -265,9 +297,11 @@ class KeyBlock:
 # DOMAIN EVENTS (Colocated with Svelte aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ComponentMounted:
     """Event: Svelte component mounted."""
+
     component: SvelteComponent
     props: Dict[str, Any]
     timestamp: datetime
@@ -276,6 +310,7 @@ class ComponentMounted:
 @dataclass(frozen=True)
 class ComponentUpdated:
     """Event: Component updated due to prop/state change."""
+
     component: SvelteComponent
     changed_props: List[str]
     changed_state: List[str]
@@ -285,6 +320,7 @@ class ComponentUpdated:
 @dataclass(frozen=True)
 class ComponentDestroyed:
     """Event: Component destroyed."""
+
     component: SvelteComponent
     cleanup_performed: bool
     timestamp: datetime
@@ -293,6 +329,7 @@ class ComponentDestroyed:
 @dataclass(frozen=True)
 class StoreUpdated:
     """Event: Store value updated."""
+
     store_name: str
     old_value: Any
     new_value: Any
@@ -303,6 +340,7 @@ class StoreUpdated:
 @dataclass(frozen=True)
 class RouteNavigated:
     """Event: SvelteKit route navigation."""
+
     from_route: Optional[str]
     to_route: str
     params: Dict[str, str]
@@ -313,6 +351,7 @@ class RouteNavigated:
 @dataclass(frozen=True)
 class FormSubmitted:
     """Event: SvelteKit form action submitted."""
+
     action: SvelteKitAction
     form_data: Dict[str, Any]
     success: bool
@@ -323,6 +362,7 @@ class FormSubmitted:
 @dataclass(frozen=True)
 class TransitionStarted:
     """Event: Transition animation started."""
+
     element: str
     transition: SvelteTransition
     duration_ms: float

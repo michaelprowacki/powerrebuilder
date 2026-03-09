@@ -3,7 +3,7 @@
 Small, specific interfaces for the parse slice.
 """
 
-from typing import Protocol, Optional
+from typing import Protocol
 from src_new.domain.parse.shared import ASTNode
 
 

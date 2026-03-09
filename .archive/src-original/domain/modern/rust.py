@@ -15,8 +15,10 @@ from datetime import datetime
 # RUST LANGUAGE TYPES
 # ============================================================================
 
+
 class RustType(str, Enum):
     """Rust data types."""
+
     # Primitive types
     I8 = "i8"
     I16 = "i16"
@@ -55,6 +57,7 @@ class RustType(str, Enum):
 @dataclass(frozen=True)
 class RustVariable:
     """A Rust variable."""
+
     name: str
     rust_type: str
     is_mutable: bool = False
@@ -68,10 +71,11 @@ class RustVariable:
 @dataclass(frozen=True)
 class RustFunction:
     """A Rust function."""
+
     name: str
-    parameters: List['RustParameter'] = field(default_factory=list)
+    parameters: List["RustParameter"] = field(default_factory=list)
     return_type: Optional[str] = None
-    generics: List['RustGeneric'] = field(default_factory=list)
+    generics: List["RustGeneric"] = field(default_factory=list)
     where_clause: Optional[str] = None
     is_async: bool = False
     is_unsafe: bool = False
@@ -83,6 +87,7 @@ class RustFunction:
 @dataclass(frozen=True)
 class RustParameter:
     """A function parameter."""
+
     name: str
     rust_type: str
     is_mutable: bool = False
@@ -94,6 +99,7 @@ class RustParameter:
 @dataclass(frozen=True)
 class RustGeneric:
     """A generic type parameter."""
+
     name: str
     bounds: List[str] = field(default_factory=list)
     default: Optional[str] = None
@@ -102,8 +108,9 @@ class RustGeneric:
 @dataclass(frozen=True)
 class RustStruct:
     """A Rust struct."""
+
     name: str
-    fields: List['RustField'] = field(default_factory=list)
+    fields: List["RustField"] = field(default_factory=list)
     generics: List[RustGeneric] = field(default_factory=list)
     derives: List[str] = field(default_factory=list)  # Debug, Clone, etc.
     visibility: str = "private"
@@ -113,6 +120,7 @@ class RustStruct:
 @dataclass(frozen=True)
 class RustField:
     """A struct field."""
+
     name: str
     rust_type: str
     visibility: str = "private"
@@ -123,8 +131,9 @@ class RustField:
 @dataclass(frozen=True)
 class RustEnum:
     """A Rust enum."""
+
     name: str
-    variants: List['RustVariant'] = field(default_factory=list)
+    variants: List["RustVariant"] = field(default_factory=list)
     generics: List[RustGeneric] = field(default_factory=list)
     derives: List[str] = field(default_factory=list)
     visibility: str = "private"
@@ -133,6 +142,7 @@ class RustEnum:
 @dataclass(frozen=True)
 class RustVariant:
     """An enum variant."""
+
     name: str
     data: Optional[Any] = None  # Unit, Tuple, or Struct variant
     discriminant: Optional[int] = None
@@ -141,6 +151,7 @@ class RustVariant:
 @dataclass(frozen=True)
 class RustTrait:
     """A Rust trait."""
+
     name: str
     methods: List[RustFunction] = field(default_factory=list)
     associated_types: List[str] = field(default_factory=list)
@@ -152,6 +163,7 @@ class RustTrait:
 @dataclass(frozen=True)
 class RustImpl:
     """A trait implementation."""
+
     struct_name: str
     trait_name: Optional[str] = None  # None for inherent impl
     methods: List[RustFunction] = field(default_factory=list)
@@ -163,12 +175,14 @@ class RustImpl:
 # DIOXUS FRAMEWORK TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class DioxusComponent:
     """A Dioxus component."""
+
     name: str
-    props: Optional['DioxusProps'] = None
-    hooks: List['DioxusHook'] = field(default_factory=list)
+    props: Optional["DioxusProps"] = None
+    hooks: List["DioxusHook"] = field(default_factory=list)
     rsx: str = ""  # The RSX template
     is_async: bool = False
 
@@ -176,6 +190,7 @@ class DioxusComponent:
 @dataclass(frozen=True)
 class DioxusProps:
     """Component props."""
+
     name: str
     fields: List[RustField] = field(default_factory=list)
     derives: List[str] = field(default_factory=lambda: ["Props", "PartialEq", "Clone"])
@@ -184,6 +199,7 @@ class DioxusProps:
 @dataclass(frozen=True)
 class DioxusHook:
     """A Dioxus hook."""
+
     hook_type: str  # use_state, use_ref, use_future, etc.
     name: str
     initial_value: Optional[Any] = None
@@ -193,16 +209,18 @@ class DioxusHook:
 @dataclass(frozen=True)
 class DioxusRouter:
     """Dioxus router configuration."""
-    routes: List['DioxusRoute'] = field(default_factory=list)
+
+    routes: List["DioxusRoute"] = field(default_factory=list)
     not_found: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class DioxusRoute:
     """A route definition."""
+
     path: str
     component: str
-    children: List['DioxusRoute'] = field(default_factory=list)
+    children: List["DioxusRoute"] = field(default_factory=list)
     guards: List[str] = field(default_factory=list)
 
 
@@ -210,20 +228,23 @@ class DioxusRoute:
 # TAURI FRAMEWORK TYPES
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class TauriApp:
     """A Tauri application."""
+
     name: str
     version: str
-    windows: List['TauriWindow'] = field(default_factory=list)
-    commands: List['TauriCommand'] = field(default_factory=list)
-    menu: Optional['TauriMenu'] = None
-    system_tray: Optional['TauriSystemTray'] = None
+    windows: List["TauriWindow"] = field(default_factory=list)
+    commands: List["TauriCommand"] = field(default_factory=list)
+    menu: Optional["TauriMenu"] = None
+    system_tray: Optional["TauriSystemTray"] = None
 
 
 @dataclass(frozen=True)
 class TauriWindow:
     """A Tauri window."""
+
     label: str
     title: str
     width: int = 800
@@ -239,6 +260,7 @@ class TauriWindow:
 @dataclass(frozen=True)
 class TauriCommand:
     """A Tauri command (IPC)."""
+
     name: str
     function: RustFunction
     is_async: bool = False
@@ -247,16 +269,18 @@ class TauriCommand:
 @dataclass(frozen=True)
 class TauriMenu:
     """Application menu."""
-    items: List['TauriMenuItem'] = field(default_factory=list)
+
+    items: List["TauriMenuItem"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class TauriMenuItem:
     """A menu item."""
+
     label: str
     accelerator: Optional[str] = None  # Keyboard shortcut
     command: Optional[str] = None
-    submenu: Optional[List['TauriMenuItem']] = None
+    submenu: Optional[List["TauriMenuItem"]] = None
     is_separator: bool = False
     enabled: bool = True
 
@@ -264,6 +288,7 @@ class TauriMenuItem:
 @dataclass(frozen=True)
 class TauriSystemTray:
     """System tray configuration."""
+
     icon: str
     menu: TauriMenu
     tooltip: Optional[str] = None
@@ -273,9 +298,11 @@ class TauriSystemTray:
 # CARGO/CRATE STRUCTURE
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CrateConfig:
     """Cargo.toml configuration."""
+
     name: str
     version: str = "0.1.0"
     edition: str = "2021"
@@ -289,6 +316,7 @@ class CrateConfig:
 @dataclass(frozen=True)
 class RustModule:
     """A Rust module."""
+
     name: str
     path: str
     structs: List[RustStruct] = field(default_factory=list)
@@ -296,7 +324,7 @@ class RustModule:
     functions: List[RustFunction] = field(default_factory=list)
     traits: List[RustTrait] = field(default_factory=list)
     impls: List[RustImpl] = field(default_factory=list)
-    submodules: List['RustModule'] = field(default_factory=list)
+    submodules: List["RustModule"] = field(default_factory=list)
     uses: List[str] = field(default_factory=list)  # use statements
 
 
@@ -304,9 +332,11 @@ class RustModule:
 # DOMAIN EVENTS (Colocated with Rust aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class RustCompiled:
     """Event: Rust code was compiled."""
+
     crate_name: str
     target: str  # debug, release
     success: bool
@@ -318,6 +348,7 @@ class RustCompiled:
 @dataclass(frozen=True)
 class ComponentRendered:
     """Event: Dioxus component rendered."""
+
     component: DioxusComponent
     props: Optional[Dict[str, Any]]
     render_time_ms: float
@@ -327,6 +358,7 @@ class ComponentRendered:
 @dataclass(frozen=True)
 class TauriCommandInvoked:
     """Event: Tauri command was invoked from frontend."""
+
     command: TauriCommand
     arguments: Dict[str, Any]
     result: Optional[Any]
@@ -337,6 +369,7 @@ class TauriCommandInvoked:
 @dataclass(frozen=True)
 class WindowCreated:
     """Event: Tauri window was created."""
+
     window: TauriWindow
     timestamp: datetime
 
@@ -344,6 +377,7 @@ class WindowCreated:
 @dataclass(frozen=True)
 class CratePublished:
     """Event: Crate was published to registry."""
+
     crate_config: CrateConfig
     registry: str  # crates.io, private, etc.
     timestamp: datetime

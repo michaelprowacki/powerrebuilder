@@ -6,28 +6,27 @@ Converts CLI arguments to value objects and handles results.
 
 import json
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from datetime import datetime
 
 import click
 
 from src_new._core.result import Result, Success, Failure
-from src_new._core.value_objects import FilePath, DirectoryPath, Version
+from src_new._core.value_objects import FilePath, DirectoryPath
 from src_new._core.dependencies import (
-    Dependencies, create_production_dependencies, create_test_dependencies
+    create_production_dependencies,
+    create_test_dependencies,
 )
 from src_new._core.errors import DomainError, error_to_json
 from src_new._core.workflow import PipelineStage
 
-from src_new.app.pipeline_coordinator import (
-    FunctionalPipelineCoordinator, PipelineConfig, create_pipeline_coordinator
-)
+from src_new.app.pipeline_coordinator import PipelineConfig, create_pipeline_coordinator
 
 
 # ============================================================================
 # CLI OUTPUT FORMATTING
 # ============================================================================
+
 
 class CliFormatter:
     """Formats output for CLI display."""
@@ -72,17 +71,17 @@ class CliFormatter:
         click.secho("EXECUTION SUMMARY", fg="cyan", bold=True)
         click.secho("-" * 40, fg="cyan")
 
-        stages = result.get('stages_completed', 0)
-        errors = result.get('total_errors', 0)
-        duration = result.get('duration_ms', 0)
-        events = result.get('events_generated', 0)
+        stages = result.get("stages_completed", 0)
+        errors = result.get("total_errors", 0)
+        duration = result.get("duration_ms", 0)
+        events = result.get("events_generated", 0)
 
         click.echo(f"Stages Completed: {stages}/5")
         click.echo(f"Total Errors:     {errors}")
         click.echo(f"Duration:         {duration:.2f}ms")
         click.echo(f"Events Generated: {events}")
 
-        if 'output_path' in result:
+        if "output_path" in result:
             click.echo(f"Output Path:      {result['output_path']}")
 
     @staticmethod
@@ -96,8 +95,10 @@ class CliFormatter:
         click.secho("-" * 40, fg="cyan")
 
         for event in events[:10]:  # Limit to first 10
-            event_type = event.event_type if hasattr(event, 'event_type') else 'unknown'
-            timestamp = event.timestamp if hasattr(event, 'timestamp') else datetime.now()
+            event_type = event.event_type if hasattr(event, "event_type") else "unknown"
+            timestamp = (
+                event.timestamp if hasattr(event, "timestamp") else datetime.now()
+            )
             click.echo(f"[{timestamp.strftime('%H:%M:%S')}] {event_type}")
 
         if len(events) > 10:
@@ -107,6 +108,7 @@ class CliFormatter:
 # ============================================================================
 # CLI ADAPTER
 # ============================================================================
+
 
 class FunctionalCliAdapter:
     """Adapts CLI commands to functional pipeline."""
@@ -122,9 +124,7 @@ class FunctionalCliAdapter:
         self.coordinator = create_pipeline_coordinator(self.deps)
 
     def validate_paths(
-        self,
-        source: str,
-        output: str
+        self, source: str, output: str
     ) -> Result[tuple[FilePath, DirectoryPath], str]:
         """Validate and create path value objects."""
         # Validate source path
@@ -153,13 +153,13 @@ class FunctionalCliAdapter:
         parallel: bool = True,
         workers: int = 4,
         skip_errors: bool = True,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> int:
         """Execute the complete pipeline.
 
         Returns exit code: 0 for success, 1 for failure.
         """
-        self.formatter.info(f"PowerRebuilder Functional Pipeline v1.0.0")
+        self.formatter.info("PowerRebuilder Functional Pipeline v1.0.0")
         self.formatter.info(f"Source: {source}")
         self.formatter.info(f"Output: {output}")
         self.formatter.info(f"Target: {target}")
@@ -181,7 +181,7 @@ class FunctionalCliAdapter:
             max_workers=workers,
             skip_errors=skip_errors,
             generate_reports=True,
-            log_level="DEBUG" if verbose else "INFO"
+            log_level="DEBUG" if verbose else "INFO",
         )
 
         # Execute pipeline
@@ -216,18 +216,16 @@ class FunctionalCliAdapter:
 
             # Still print partial results
             if result.events:
-                self.formatter.warning(f"Partial execution: {len(result.events)} events generated")
+                self.formatter.warning(
+                    f"Partial execution: {len(result.events)} events generated"
+                )
                 if verbose:
                     self.formatter.print_events(result.events)
 
             return 1
 
     def execute_stage(
-        self,
-        stage: str,
-        source: str,
-        output: str,
-        verbose: bool = False
+        self, stage: str, source: str, output: str, verbose: bool = False
     ) -> int:
         """Execute a single pipeline stage.
 
@@ -235,11 +233,11 @@ class FunctionalCliAdapter:
         """
         # Map stage name to enum
         stage_map = {
-            'extract': PipelineStage.EXTRACT,
-            'decompile': PipelineStage.DECOMPILE,
-            'parse': PipelineStage.PARSE,
-            'model': PipelineStage.MODEL,
-            'generate': PipelineStage.GENERATE
+            "extract": PipelineStage.EXTRACT,
+            "decompile": PipelineStage.DECOMPILE,
+            "parse": PipelineStage.PARSE,
+            "model": PipelineStage.MODEL,
+            "generate": PipelineStage.GENERATE,
         }
 
         pipeline_stage = stage_map.get(stage.lower())
@@ -261,7 +259,7 @@ class FunctionalCliAdapter:
         config = PipelineConfig(
             source_path=source_path,
             output_path=output_path,
-            log_level="DEBUG" if verbose else "INFO"
+            log_level="DEBUG" if verbose else "INFO",
         )
 
         # Execute stage
@@ -275,9 +273,9 @@ class FunctionalCliAdapter:
             self.formatter.success(f"{stage.capitalize()} completed successfully!")
 
             # Print stage-specific output
-            if 'count' in output_data:
+            if "count" in output_data:
                 self.formatter.info(f"Items processed: {output_data['count']}")
-            if 'output_files' in output_data:
+            if "output_files" in output_data:
                 self.formatter.info(f"Files generated: {output_data['output_files']}")
 
             if verbose:
@@ -285,28 +283,29 @@ class FunctionalCliAdapter:
 
             return 0
         else:
-            self.formatter.error(f"{stage.capitalize()} failed: {result.result.error()}")
+            self.formatter.error(
+                f"{stage.capitalize()} failed: {result.result.error()}"
+            )
             return 1
 
     def _save_report(
-        self,
-        output_path: DirectoryPath,
-        result: Dict[str, Any],
-        events: list
+        self, output_path: DirectoryPath, result: Dict[str, Any], events: list
     ) -> None:
         """Save execution report to file."""
         report = {
-            'timestamp': datetime.now().isoformat(),
-            'version': '1.0.0',
-            'result': result,
-            'event_count': len(events),
-            'events': [
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+            "result": result,
+            "event_count": len(events),
+            "events": [
                 {
-                    'type': e.event_type if hasattr(e, 'event_type') else 'unknown',
-                    'timestamp': e.timestamp.isoformat() if hasattr(e, 'timestamp') else None
+                    "type": e.event_type if hasattr(e, "event_type") else "unknown",
+                    "timestamp": e.timestamp.isoformat()
+                    if hasattr(e, "timestamp")
+                    else None,
                 }
                 for e in events[:100]  # Limit events in report
-            ]
+            ],
         }
 
         report_path = output_path.join("pipeline_report.json")
@@ -316,8 +315,7 @@ class FunctionalCliAdapter:
             if report_file.is_success():
                 report_json = json.dumps(report, indent=2)
                 write_result = self.deps.file_system.write_file(
-                    report_file.value(),
-                    report_json.encode('utf-8')
+                    report_file.value(), report_json.encode("utf-8")
                 )
                 if write_result.is_success():
                     self.formatter.info(f"Report saved to: {report_path}")
@@ -329,77 +327,90 @@ class FunctionalCliAdapter:
 # CLI COMMANDS
 # ============================================================================
 
+
 @click.group()
-@click.option('--functional', is_flag=True, help='Use functional pipeline')
-@click.option('--test-mode', is_flag=True, help='Use test dependencies')
+@click.option("--functional", is_flag=True, help="Use functional pipeline")
+@click.option("--test-mode", is_flag=True, help="Use test dependencies")
 @click.pass_context
 def cli(ctx, functional: bool, test_mode: bool):
     """PowerRebuilder Functional Pipeline CLI."""
     ctx.ensure_object(dict)
-    ctx.obj['functional'] = functional
-    ctx.obj['test_mode'] = test_mode
+    ctx.obj["functional"] = functional
+    ctx.obj["test_mode"] = test_mode
 
 
 @cli.command()
-@click.argument('source')
-@click.argument('output')
-@click.option('--target', '-t', default='flutter',
-              type=click.Choice(['flutter', 'python', 'react']),
-              help='Target language/framework')
-@click.option('--parallel/--no-parallel', default=True,
-              help='Enable parallel processing')
-@click.option('--workers', '-w', default=4, type=int,
-              help='Number of parallel workers')
-@click.option('--skip-errors/--fail-fast', default=True,
-              help='Continue on errors')
-@click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+@click.argument("source")
+@click.argument("output")
+@click.option(
+    "--target",
+    "-t",
+    default="flutter",
+    type=click.Choice(["flutter", "python", "react"]),
+    help="Target language/framework",
+)
+@click.option(
+    "--parallel/--no-parallel", default=True, help="Enable parallel processing"
+)
+@click.option("--workers", "-w", default=4, type=int, help="Number of parallel workers")
+@click.option("--skip-errors/--fail-fast", default=True, help="Continue on errors")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
-def all(ctx, source: str, output: str, target: str, parallel: bool,
-        workers: int, skip_errors: bool, verbose: bool):
+def all(
+    ctx,
+    source: str,
+    output: str,
+    target: str,
+    parallel: bool,
+    workers: int,
+    skip_errors: bool,
+    verbose: bool,
+):
     """Execute complete pipeline (all stages)."""
-    if not ctx.obj.get('functional'):
+    if not ctx.obj.get("functional"):
         click.echo("Use --functional flag to use the new functional pipeline")
         return 1
 
-    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get('test_mode', False))
+    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get("test_mode", False))
     return adapter.execute_pipeline(
         source, output, target, parallel, workers, skip_errors, verbose
     )
 
 
 @cli.command()
-@click.argument('source')
-@click.argument('output')
-@click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+@click.argument("source")
+@click.argument("output")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
 def extract(ctx, source: str, output: str, verbose: bool):
     """Execute extraction stage only."""
-    if not ctx.obj.get('functional'):
+    if not ctx.obj.get("functional"):
         click.echo("Use --functional flag to use the new functional pipeline")
         return 1
 
-    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get('test_mode', False))
-    return adapter.execute_stage('extract', source, output, verbose)
+    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get("test_mode", False))
+    return adapter.execute_stage("extract", source, output, verbose)
 
 
 @cli.command()
-@click.argument('source')
-@click.argument('output')
-@click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+@click.argument("source")
+@click.argument("output")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
 def decompile(ctx, source: str, output: str, verbose: bool):
     """Execute decompilation stage only."""
-    if not ctx.obj.get('functional'):
+    if not ctx.obj.get("functional"):
         click.echo("Use --functional flag to use the new functional pipeline")
         return 1
 
-    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get('test_mode', False))
-    return adapter.execute_stage('decompile', source, output, verbose)
+    adapter = FunctionalCliAdapter(test_mode=ctx.obj.get("test_mode", False))
+    return adapter.execute_stage("decompile", source, output, verbose)
 
 
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
+
 
 def main():
     """Main entry point for functional CLI."""
@@ -410,5 +421,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@ Includes P-code decoding, control flow, reconstruction - EVERYTHING.
 
 REPLACES ALL FILES IN:
 - analysis/ - Control flow analysis
-- analyzers/ - Object parsers  
+- analyzers/ - Object parsers
 - core/ - Core decompile functionality
 - extractors/ - DataWindow, logic, schema extractors
 - pcode/ - P-code decoding (except opcodes)
@@ -16,17 +16,13 @@ REPLACES ALL FILES IN:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import os
 import struct
 import time
-from abc import ABC, abstractmethod
-from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set
 
 # Import from our consolidated modules
 from src.core.unified_core import UniversalBinaryReader, DataType
@@ -44,18 +40,22 @@ logger = logging.getLogger(__name__)
 # TYPES AND CONSTANTS SECTION
 # ============================================================================
 
+
 class DecompileType(Enum):
     """PowerBuilder object types for decompilation."""
+
     FUNCTION = "function"
-    WINDOW = "window" 
+    WINDOW = "window"
     USEROBJECT = "userobject"
     MENU = "menu"
     DATAWINDOW = "datawindow"
     APPLICATION = "application"
     STRUCTURE = "structure"
 
+
 class InstructionType(Enum):
     """P-code instruction types."""
+
     PUSH = auto()
     POP = auto()
     LOAD = auto()
@@ -66,113 +66,123 @@ class InstructionType(Enum):
     COMPARISON = auto()
     LOGICAL = auto()
 
+
 @dataclass
 class DecompileResult:
     """Result of decompilation."""
+
     object_type: DecompileType
     source_code: str
     metadata: Dict[str, Any] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
 
+
 # ============================================================================
 # P-CODE INSTRUCTION CLASSES
 # ============================================================================
 
+
 @dataclass
 class PCodeInstruction:
     """P-code instruction."""
+
     opcode: int
     operands: bytes
     offset: int
     name: str = ""
-    
+
     def __post_init__(self):
         self.name = get_opcode_name(self.opcode)
+
 
 @dataclass
 class DecodedObject:
     """Decoded P-code object."""
+
     object_type: str
     instructions: List[PCodeInstruction]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 # ============================================================================
 # P-CODE DECODING SECTION
 # ============================================================================
 
+
 class PCodeDecoder:
     """Unified P-code decoder."""
-    
+
     def __init__(self, version: str = "pb10_5"):
         self.version = version
         self.opcodes = OPCODE_TABLE
-        
+
     def decode_file(self, file_path: Path) -> DecodedObject:
         """Decode P-code from file."""
         with UniversalBinaryReader(file_path) as reader:
             return self.decode_stream(reader)
-    
+
     def decode_stream(self, reader: UniversalBinaryReader) -> DecodedObject:
         """Decode P-code from stream."""
         instructions = []
         metadata = {}
-        
+
         # Read header if present
         if reader.peek(4) == b"PWCC":  # PowerBuilder compiled code
             metadata = self._read_header(reader)
-        
+
         # Decode instructions
         while True:
             try:
                 offset = reader.tell()
                 opcode = reader.read_value(DataType.BYTE)
-                
+
                 if opcode == 0xFF:  # End marker
                     break
-                
+
                 # Read operands based on opcode
                 arg_size = get_opcode_arg_size(opcode)
                 if arg_size > 0:
                     operands = reader.read(arg_size)
                 else:
                     operands = b""
-                
+
                 instruction = PCodeInstruction(
-                    opcode=opcode,
-                    operands=operands,
-                    offset=offset
+                    opcode=opcode, operands=operands, offset=offset
                 )
                 instructions.append(instruction)
-                
+
             except EOFError:
                 break
-        
+
         return DecodedObject(
             object_type="function",  # Default
             instructions=instructions,
-            metadata=metadata
+            metadata=metadata,
         )
-    
+
     def _read_header(self, reader: UniversalBinaryReader) -> Dict[str, Any]:
         """Read P-code header."""
         signature = reader.read(4)
         version = reader.read_value(DataType.UINT32)
         flags = reader.read_value(DataType.UINT32)
-        
+
         return {
             "signature": signature,
             "version": version,
             "flags": flags,
         }
 
+
 # ============================================================================
 # CONTROL FLOW ANALYSIS SECTION
 # ============================================================================
 
+
 @dataclass
 class BasicBlock:
     """Basic block in control flow graph."""
+
     id: int
     start_offset: int
     end_offset: int
@@ -180,103 +190,100 @@ class BasicBlock:
     successors: List[int] = field(default_factory=list)
     predecessors: List[int] = field(default_factory=list)
 
+
 class ControlFlowAnalyzer:
     """Control flow analysis for P-code."""
-    
+
     def __init__(self):
         self.blocks = {}
         self.block_counter = 0
-    
+
     def analyze(self, instructions: List[PCodeInstruction]) -> Dict[int, BasicBlock]:
         """Analyze control flow and create basic blocks."""
         self.blocks = {}
         self.block_counter = 0
-        
+
         # Find block boundaries
         boundaries = self._find_block_boundaries(instructions)
-        
+
         # Create basic blocks
         blocks = self._create_basic_blocks(instructions, boundaries)
-        
+
         # Connect blocks
         self._connect_blocks(blocks)
-        
+
         return blocks
-    
+
     def _find_block_boundaries(self, instructions: List[PCodeInstruction]) -> Set[int]:
         """Find basic block boundaries."""
         boundaries = {0}  # Start is always a boundary
-        
+
         for i, instr in enumerate(instructions):
             # Branch targets are boundaries
             if is_branch_opcode(instr.opcode) and instr.operands:
                 target = struct.unpack("<H", instr.operands[:2])[0]
                 boundaries.add(target)
-                
+
                 # Instruction after branch is also a boundary
                 if i + 1 < len(instructions):
                     boundaries.add(instructions[i + 1].offset)
-            
+
             # Call targets
             if is_call_opcode(instr.opcode):
                 if i + 1 < len(instructions):
                     boundaries.add(instructions[i + 1].offset)
-        
+
         return boundaries
-    
+
     def _create_basic_blocks(
-        self, 
-        instructions: List[PCodeInstruction], 
-        boundaries: Set[int]
+        self, instructions: List[PCodeInstruction], boundaries: Set[int]
     ) -> Dict[int, BasicBlock]:
         """Create basic blocks from boundaries."""
         blocks = {}
         current_block = None
-        
+
         for instr in instructions:
             # Start new block at boundary
             if instr.offset in boundaries:
                 if current_block:
                     blocks[current_block.id] = current_block
-                
+
                 current_block = BasicBlock(
                     id=self.block_counter,
                     start_offset=instr.offset,
-                    end_offset=instr.offset
+                    end_offset=instr.offset,
                 )
                 self.block_counter += 1
-            
+
             if current_block:
                 current_block.instructions.append(instr)
                 current_block.end_offset = instr.offset
-        
+
         # Add final block
         if current_block:
             blocks[current_block.id] = current_block
-        
+
         return blocks
-    
+
     def _connect_blocks(self, blocks: Dict[int, BasicBlock]) -> None:
         """Connect basic blocks with edges."""
         for block in blocks.values():
             if not block.instructions:
                 continue
-            
+
             last_instr = block.instructions[-1]
-            
+
             # Handle branches
             if is_branch_opcode(last_instr.opcode) and last_instr.operands:
                 target = struct.unpack("<H", last_instr.operands[:2])[0]
                 target_block = self._find_block_by_offset(blocks, target)
-                
+
                 if target_block:
                     block.successors.append(target_block.id)
                     target_block.predecessors.append(block.id)
 
     def _find_block_by_offset(
-        self, 
-        blocks: Dict[int, BasicBlock], 
-        offset: int
+        self, blocks: Dict[int, BasicBlock], offset: int
     ) -> Optional[BasicBlock]:
         """Find block containing offset."""
         for block in blocks.values():
@@ -284,38 +291,40 @@ class ControlFlowAnalyzer:
                 return block
         return None
 
+
 # ============================================================================
 # EXPRESSION RECONSTRUCTION SECTION
 # ============================================================================
 
+
 class ExpressionReconstructor:
     """Reconstructs high-level expressions from P-code."""
-    
+
     def __init__(self):
         self.stack = []
         self.variables = {}
-        
+
     def reconstruct(self, instructions: List[PCodeInstruction]) -> str:
         """Reconstruct source code from instructions."""
         self.stack = []
         self.variables = {}
         statements = []
-        
+
         for instr in instructions:
             statement = self._process_instruction(instr)
             if statement:
                 statements.append(statement)
-        
+
         return "\n".join(statements)
-    
+
     def _process_instruction(self, instr: PCodeInstruction) -> Optional[str]:
         """Process single instruction."""
         opcode_name = instr.name.lower()
-        
+
         # Push operations
         if "push" in opcode_name:
             return self._handle_push(instr)
-        # Pop operations  
+        # Pop operations
         elif opcode_name == "pop":
             if self.stack:
                 self.stack.pop()
@@ -328,9 +337,9 @@ class ExpressionReconstructor:
         # Variable access
         elif "load" in opcode_name or "store" in opcode_name:
             return self._handle_variable(instr, opcode_name)
-        
+
         return None
-    
+
     def _handle_push(self, instr: PCodeInstruction) -> None:
         """Handle push instructions."""
         if instr.operands:
@@ -339,7 +348,9 @@ class ExpressionReconstructor:
                 self.stack.append(str(value))
             elif instr.name == "push_string":
                 # Simplified string handling
-                self.stack.append(f'"{instr.operands.decode("utf-8", errors="ignore")}"')
+                self.stack.append(
+                    f'"{instr.operands.decode("utf-8", errors="ignore")}"'
+                )
         else:
             # Push constants
             if "zero" in instr.name:
@@ -350,32 +361,32 @@ class ExpressionReconstructor:
                 self.stack.append("true")
             elif "false" in instr.name:
                 self.stack.append("false")
-    
+
     def _handle_arithmetic(self, op: str) -> Optional[str]:
         """Handle arithmetic operations."""
         if len(self.stack) >= 2:
             right = self.stack.pop()
             left = self.stack.pop()
-            
+
             op_map = {"add": "+", "sub": "-", "mul": "*", "div": "/"}
             operator = op_map.get(op, op)
-            
+
             result = f"({left} {operator} {right})"
             self.stack.append(result)
             return result
         return None
-    
+
     def _handle_call(self, instr: PCodeInstruction) -> str:
         """Handle function calls."""
         # Simplified call handling
-        return f"call_function()"
-    
+        return "call_function()"
+
     def _handle_variable(self, instr: PCodeInstruction, op: str) -> Optional[str]:
         """Handle variable operations."""
         if instr.operands and len(instr.operands) >= 2:
             var_id = struct.unpack("<H", instr.operands[:2])[0]
             var_name = f"var_{var_id}"
-            
+
             if "store" in op:
                 if self.stack:
                     value = self.stack.pop()
@@ -383,16 +394,18 @@ class ExpressionReconstructor:
                     return f"{var_name} = {value}"
             elif "load" in op:
                 self.stack.append(var_name)
-        
+
         return None
+
 
 # ============================================================================
 # DATAWINDOW EXTRACTION SECTION
 # ============================================================================
 
+
 class DataWindowExtractor:
     """Extracts DataWindow definitions."""
-    
+
     def extract(self, instructions: List[PCodeInstruction]) -> Dict[str, Any]:
         """Extract DataWindow metadata."""
         dw_info = {
@@ -401,68 +414,70 @@ class DataWindowExtractor:
             "table": "",
             "where_clause": "",
         }
-        
+
         # Simplified extraction - real implementation would parse DW syntax
         for instr in instructions:
             if "string" in instr.name and instr.operands:
                 text = instr.operands.decode("utf-8", errors="ignore")
                 if "select" in text.lower():
                     dw_info["sql"] = text
-        
+
         return dw_info
+
 
 # ============================================================================
 # UNIFIED DECOMPILER
 # ============================================================================
 
+
 class UnifiedDecompiler:
     """Main decompiler that orchestrates all functionality."""
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        
+
         # Initialize components
         self.decoder = PCodeDecoder()
         self.control_flow = ControlFlowAnalyzer()
         self.reconstructor = ExpressionReconstructor()
         self.dw_extractor = DataWindowExtractor()
-        
+
     def decompile_file(self, file_path: Path) -> DecompileResult:
         """Decompile a single file."""
         try:
             # Decode P-code
             decoded = self.decoder.decode_file(file_path)
-            
+
             # Determine object type
             obj_type = self._detect_object_type(decoded)
-            
+
             # Analyze control flow
             blocks = self.control_flow.analyze(decoded.instructions)
-            
+
             # Reconstruct source code
             if obj_type == DecompileType.DATAWINDOW:
                 dw_info = self.dw_extractor.extract(decoded.instructions)
                 source = self._generate_datawindow_source(dw_info)
             else:
                 source = self.reconstructor.reconstruct(decoded.instructions)
-            
+
             return DecompileResult(
                 object_type=obj_type,
                 source_code=source,
                 metadata={
                     "basic_blocks": len(blocks),
                     "instructions": len(decoded.instructions),
-                    **decoded.metadata
-                }
+                    **decoded.metadata,
+                },
             )
-        
+
         except Exception as e:
             return DecompileResult(
                 object_type=DecompileType.FUNCTION,
                 source_code="// Decompilation failed",
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
+
     def _detect_object_type(self, decoded: DecodedObject) -> DecompileType:
         """Detect PowerBuilder object type."""
         # Simplified detection based on patterns
@@ -473,71 +488,63 @@ class UnifiedDecompiler:
                 return DecompileType.WINDOW
             elif "menu" in instr.name.lower():
                 return DecompileType.MENU
-        
+
         return DecompileType.FUNCTION  # Default
-    
+
     def _generate_datawindow_source(self, dw_info: Dict[str, Any]) -> str:
         """Generate DataWindow source code."""
         lines = [
             f"// DataWindow: {dw_info.get('type', 'unknown')}",
             "",
         ]
-        
+
         if "sql" in dw_info:
             lines.append(f"// SQL: {dw_info['sql']}")
-        
+
         lines.append("// Generated DataWindow definition")
         return "\n".join(lines)
+
 
 # ============================================================================
 # PARALLEL PROCESSING SECTION
 # ============================================================================
 
+
 class ParallelDecompiler:
     """Parallel decompilation support."""
-    
+
     def __init__(self, max_workers: int = 4):
         self.max_workers = max_workers
         self.decompiler = UnifiedDecompiler()
-    
+
     async def decompile_directory(
-        self, 
-        input_dir: Path, 
-        output_dir: Path
+        self, input_dir: Path, output_dir: Path
     ) -> Dict[str, Any]:
         """Decompile all files in directory in parallel."""
         files = list(input_dir.glob("*.fun"))  # P-code files
-        
+
         if not files:
             return {"processed": 0, "failed": 0}
-        
+
         # Ensure output directory
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Process files in parallel
         semaphore = asyncio.Semaphore(self.max_workers)
         tasks = [
-            self._decompile_file_async(file, output_dir, semaphore)
-            for file in files
+            self._decompile_file_async(file, output_dir, semaphore) for file in files
         ]
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # Count results
         processed = sum(1 for r in results if isinstance(r, bool) and r)
         failed = len(results) - processed
-        
-        return {
-            "processed": processed,
-            "failed": failed,
-            "total": len(files)
-        }
-    
+
+        return {"processed": processed, "failed": failed, "total": len(files)}
+
     async def _decompile_file_async(
-        self, 
-        input_file: Path, 
-        output_dir: Path, 
-        semaphore: asyncio.Semaphore
+        self, input_file: Path, output_dir: Path, semaphore: asyncio.Semaphore
     ) -> bool:
         """Decompile single file asynchronously."""
         async with semaphore:
@@ -545,43 +552,43 @@ class ParallelDecompiler:
                 # Run decompilation in thread pool
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(
-                    None, 
-                    self.decompiler.decompile_file,
-                    input_file
+                    None, self.decompiler.decompile_file, input_file
                 )
-                
+
                 # Write output
                 output_file = output_dir / f"{input_file.stem}.sru"
                 output_file.write_text(result.source_code, encoding="utf-8")
-                
+
                 return not result.errors
-                
+
             except Exception as e:
                 logger.error(f"Failed to decompile {input_file}: {e}")
                 return False
+
 
 # ============================================================================
 # BENCHMARKING SECTION
 # ============================================================================
 
+
 class DecompileBenchmark:
     """Benchmarking for decompilation performance."""
-    
+
     def __init__(self):
         self.results = []
-    
+
     def benchmark_file(self, file_path: Path) -> Dict[str, Any]:
         """Benchmark decompilation of single file."""
         start_time = time.time()
-        
+
         decompiler = UnifiedDecompiler()
         result = decompiler.decompile_file(file_path)
-        
+
         end_time = time.time()
         duration = end_time - start_time
-        
+
         file_size = file_path.stat().st_size
-        
+
         benchmark_result = {
             "file": str(file_path),
             "duration": duration,
@@ -590,19 +597,19 @@ class DecompileBenchmark:
             "success": not result.errors,
             "instructions": result.metadata.get("instructions", 0),
         }
-        
+
         self.results.append(benchmark_result)
         return benchmark_result
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get benchmark summary."""
         if not self.results:
             return {}
-        
+
         total_duration = sum(r["duration"] for r in self.results)
         total_size = sum(r["file_size"] for r in self.results)
         successful = sum(1 for r in self.results if r["success"])
-        
+
         return {
             "files_processed": len(self.results),
             "successful": successful,
@@ -613,13 +620,14 @@ class DecompileBenchmark:
             "success_rate": successful / len(self.results) if self.results else 0,
         }
 
+
 # ============================================================================
 # COORDINATOR CLASSES SECTION (from coordinator.py)
 # ============================================================================
 
 import argparse
 import sys
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     pass
@@ -638,15 +646,25 @@ from src.contracts.interfaces import (
 
 # Additional imports needed from coordinator.py
 from src.decompile.core.output import OutputFormatter
-from src.decompile.core.processor import DecompiledOutputFilter, PostProcessor as IPostProcessor
+from src.decompile.core.processor import (
+    DecompiledOutputFilter,
+    PostProcessor as IPostProcessor,
+)
 from src.decompile.core.validator import OutputValidator
 from src.decompile.pcode.decoder import PCodeDecoderV2
-from src.decompile.reconstruction.expression import ExpressionReconstructor as OriginalExpressionReconstructor
+from src.decompile.reconstruction.expression import (
+    ExpressionReconstructor as OriginalExpressionReconstructor,
+)
 from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from src.extract.pbd.structures import extract_nods, extract_pbl_header
 from src.extract.pbd.type_detection import ObjectTypeDetector
-from src.extract.pbd.version_detection import PBVersionDetector as VersionDetector, PowerBuilderVersion
-from src.decompile.analysis.control import ControlFlowAnalyzer as OriginalControlFlowAnalyzer
+from src.extract.pbd.version_detection import (
+    PBVersionDetector as VersionDetector,
+    PowerBuilderVersion,
+)
+from src.decompile.analysis.control import (
+    ControlFlowAnalyzer as OriginalControlFlowAnalyzer,
+)
 from src.decompile.analyzers.parser import ObjectParser
 from src.decompile.analyzers.schema_generator import generate_schema_documentation
 from src.decompile.extractors.datawindow import extraction_manager
@@ -809,7 +827,11 @@ class ExtractedFileDecompiler:
 
     def decompile_extracted_file(self, file_path: Path) -> bool:
         """Decompile an extracted P-code file."""
-        logger.info("Decompiling extracted file: %s (output_dir: %s)", file_path, self.output_dir)
+        logger.info(
+            "Decompiling extracted file: %s (output_dir: %s)",
+            file_path,
+            self.output_dir,
+        )
 
         try:
             # Read the file
@@ -837,8 +859,12 @@ class ExtractedFileDecompiler:
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
-                logger.warning("No P-code found in object %s (offset: %s, data_len: %s)", 
-                              file_path, pb_object.pcode_offset, len(pb_object.pcode_data) if pb_object.pcode_data else 0)
+                logger.warning(
+                    "No P-code found in object %s (offset: %s, data_len: %s)",
+                    file_path,
+                    pb_object.pcode_offset,
+                    len(pb_object.pcode_data) if pb_object.pcode_data else 0,
+                )
                 return self._generate_stub(file_path, "No P-code found in object")
 
             # Ensure pcode_offset is an integer for logging
@@ -900,21 +926,29 @@ class ExtractedFileDecompiler:
                 logger.warning("No instructions decoded from %s", file_path)
                 return self._generate_stub(file_path, "No instructions decoded")
 
-            logger.debug("Decoded %d instructions from %s", len(decoded_obj.instructions), file_path)
+            logger.debug(
+                "Decoded %d instructions from %s",
+                len(decoded_obj.instructions),
+                file_path,
+            )
 
             # Step 5: Analyze control flow
             if self.control_flow_analyzer:
-                if hasattr(self.control_flow_analyzer, 'analyze_legacy'):
+                if hasattr(self.control_flow_analyzer, "analyze_legacy"):
                     # Use legacy method for backward compatibility
                     control_blocks = self.control_flow_analyzer.analyze_legacy(
                         decoded_obj.instructions
                     )
                 else:
                     # Fallback for interface compliance - extract blocks from dict result
-                    result = self.control_flow_analyzer.analyze(decoded_obj.instructions)
+                    result = self.control_flow_analyzer.analyze(
+                        decoded_obj.instructions
+                    )
                     if isinstance(result, dict) and "blocks" in result:
                         # Convert dict blocks back to ControlBlock objects
-                        control_blocks = self._convert_dict_blocks_to_objects(result["blocks"])
+                        control_blocks = self._convert_dict_blocks_to_objects(
+                            result["blocks"]
+                        )
                     else:
                         control_blocks = []
             else:
@@ -962,9 +996,13 @@ class ExtractedFileDecompiler:
             # Validate that we got output
             if not output_lines:
                 logger.warning("OutputFormatter produced no output for %s", file_path)
-                return self._generate_stub(file_path, "Output formatter produced no output")
+                return self._generate_stub(
+                    file_path, "Output formatter produced no output"
+                )
 
-            logger.debug("Generated %d lines of output for %s", len(output_lines), file_path)
+            logger.debug(
+                "Generated %d lines of output for %s", len(output_lines), file_path
+            )
 
             # Step 8: Validate the output format
             validator = None
@@ -1050,26 +1088,41 @@ class ExtractedFileDecompiler:
 
                 # Validate content before writing
                 if content is None:
-                    logger.error("_format_output returned None for %s (format: %s, ext: %s)", 
-                                object_name, self.output_format, file_ext)
+                    logger.error(
+                        "_format_output returned None for %s (format: %s, ext: %s)",
+                        object_name,
+                        self.output_format,
+                        file_ext,
+                    )
                     content = "\n".join(output_lines)  # Fallback to unformatted content
 
                 logger.debug("Writing %d characters to %s", len(content), output_path)
                 with output_path.open("w", encoding="utf-8") as f:
                     f.write(content)
-                
+
                 # Verify file was written successfully
                 if output_path.exists() and output_path.stat().st_size > 0:
-                    logger.info("Wrote decompiled source to %s (%d bytes)", output_path, output_path.stat().st_size)
+                    logger.info(
+                        "Wrote decompiled source to %s (%d bytes)",
+                        output_path,
+                        output_path.stat().st_size,
+                    )
                 else:
-                    logger.error("Failed to write output file %s or file is empty", output_path)
+                    logger.error(
+                        "Failed to write output file %s or file is empty", output_path
+                    )
                     return False
             else:
                 # Output to stdout
                 try:
-                    formatted_output = self._format_output("\n".join(output_lines), object_name, file_ext)
+                    formatted_output = self._format_output(
+                        "\n".join(output_lines), object_name, file_ext
+                    )
                     print(formatted_output)
-                    logger.info("Printed decompiled source to stdout (%d characters)", len(formatted_output))
+                    logger.info(
+                        "Printed decompiled source to stdout (%d characters)",
+                        len(formatted_output),
+                    )
                 except Exception as e:
                     logger.error("Failed to print to stdout: %s", e)
                     return False
@@ -1261,7 +1314,9 @@ end on
             # Output stub to stdout
             try:
                 print(stub_content)
-                logger.info("Printed stub content to stdout (%d characters)", len(stub_content))
+                logger.info(
+                    "Printed stub content to stdout (%d characters)", len(stub_content)
+                )
             except Exception as e:
                 logger.error("Failed to print stub to stdout: %s", e)
                 return False
@@ -1271,14 +1326,14 @@ end on
     def _convert_dict_blocks_to_objects(self, dict_blocks: List[dict]) -> List[Any]:
         """Convert dictionary blocks back to ControlBlock objects."""
         from src.decompile.types import ControlBlock, BlockType
-        
+
         control_blocks = []
-        
+
         for block_dict in dict_blocks:
             try:
                 # Convert type string back to enum
                 block_type = BlockType[block_dict.get("type", "BASIC")]
-                
+
                 # Create ControlBlock object
                 control_block = ControlBlock(
                     type=block_type,
@@ -1288,13 +1343,13 @@ end on
                     statements=block_dict.get("statements", []),
                     metadata=block_dict.get("metadata", {}),
                 )
-                
+
                 control_blocks.append(control_block)
-                
+
             except (KeyError, ValueError) as e:
                 logger.warning("Failed to convert dict block to ControlBlock: %s", e)
                 continue
-                
+
         return control_blocks
 
 
@@ -1462,9 +1517,15 @@ class PowerBuilderDecompiler:
                 try:
                     output_content = "\n".join(output_lines)
                     print(output_content)
-                    logger.debug("Printed object %s to stdout (%d lines)", object_name, len(output_lines))
+                    logger.debug(
+                        "Printed object %s to stdout (%d lines)",
+                        object_name,
+                        len(output_lines),
+                    )
                 except Exception as e:
-                    logger.error("Failed to print object %s to stdout: %s", object_name, e)
+                    logger.error(
+                        "Failed to print object %s to stdout: %s", object_name, e
+                    )
                     return False
 
             return True
@@ -1505,9 +1566,15 @@ class PowerBuilderDecompiler:
                     # Print to stdout
                     try:
                         print(output_text)
-                        logger.debug("Printed DataWindow %s syntax to stdout", entry.objectname)
+                        logger.debug(
+                            "Printed DataWindow %s syntax to stdout", entry.objectname
+                        )
                     except Exception as e:
-                        logger.error("Failed to print DataWindow %s to stdout: %s", entry.objectname, e)
+                        logger.error(
+                            "Failed to print DataWindow %s to stdout: %s",
+                            entry.objectname,
+                            e,
+                        )
                         return False
 
                 return True
@@ -1550,9 +1617,15 @@ class PowerBuilderDecompiler:
                     # Print to stdout
                     try:
                         print(output_text)
-                        logger.debug("Printed DataWindow %s metadata to stdout", entry.objectname)
+                        logger.debug(
+                            "Printed DataWindow %s metadata to stdout", entry.objectname
+                        )
                     except Exception as e:
-                        logger.error("Failed to print DataWindow %s metadata to stdout: %s", entry.objectname, e)
+                        logger.error(
+                            "Failed to print DataWindow %s metadata to stdout: %s",
+                            entry.objectname,
+                            e,
+                        )
                         return False
 
                 return True
@@ -1997,8 +2070,10 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
             # Find the output file
             # The decompiler creates files based on input extension mapping
-            expected_output_path = self._get_expected_output_path(file_path, temp_output_dir)
-            
+            expected_output_path = self._get_expected_output_path(
+                file_path, temp_output_dir
+            )
+
             # Look for the expected output file first
             output_files = []
             if expected_output_path and expected_output_path.exists():
@@ -2010,15 +2085,19 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     output_files = list(temp_output_dir.rglob(f"*{ext}"))
                     if output_files:
                         break
-                
+
                 # Last resort: get any non-empty file
                 if not output_files:
                     all_files = list(temp_output_dir.rglob("*"))
-                    output_files = [f for f in all_files if f.is_file() and f.stat().st_size > 0]
+                    output_files = [
+                        f for f in all_files if f.is_file() and f.stat().st_size > 0
+                    ]
 
             if not output_files:
                 # Check if decompilation actually succeeded
-                logger.error("No output files found in temp directory: %s", temp_output_dir)
+                logger.error(
+                    "No output files found in temp directory: %s", temp_output_dir
+                )
                 logger.error("Directory contents: %s", list(temp_output_dir.rglob("*")))
                 raise RuntimeError(
                     f"No output file found after decompiling {file_path}. "
@@ -2103,7 +2182,9 @@ class DecompileCoordinator(IDecompilerCoordinator):
             logger.warning("Could not determine output path for %s: %s", pcode_file, e)
             return None
 
-    def _get_expected_output_path(self, input_file: Path, output_dir: Path) -> Path | None:
+    def _get_expected_output_path(
+        self, input_file: Path, output_dir: Path
+    ) -> Path | None:
         """Get the expected output file path for a given input file."""
         try:
             # Map input extension to expected output extension
@@ -2118,28 +2199,30 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 ".apf": ".sru",  # application function -> source user object
                 ".udo": ".sru",  # user-defined object -> source user object
             }
-            
+
             input_ext = input_file.suffix.lower()
             output_ext = ext_mapping.get(input_ext, ".sru")  # default to .sru
             output_filename = input_file.stem + output_ext
-            
+
             # Try to find where the file would be placed
             # The decompiler preserves directory structure
             possible_paths = [
                 output_dir / output_filename,  # Direct in output dir
                 output_dir / input_file.stem / output_filename,  # In subdirectory
             ]
-            
+
             # Also search recursively for the filename
             for path in output_dir.rglob(output_filename):
                 if path.is_file():
                     return path
-                    
+
             # Return the most likely path even if it doesn't exist yet
             return possible_paths[0]
-            
+
         except Exception as e:
-            logger.warning("Could not determine expected output path for %s: %s", input_file, e)
+            logger.warning(
+                "Could not determine expected output path for %s: %s", input_file, e
+            )
             return None
 
     def extract_schemas(
@@ -2456,46 +2539,50 @@ def main() -> None:
 # PUBLIC API
 # ============================================================================
 
-def decompile_file(file_path: Path, output_path: Optional[Path] = None) -> DecompileResult:
+
+def decompile_file(
+    file_path: Path, output_path: Optional[Path] = None
+) -> DecompileResult:
     """Decompile a single P-code file."""
     decompiler = UnifiedDecompiler()
     result = decompiler.decompile_file(file_path)
-    
+
     if output_path:
         output_path.write_text(result.source_code, encoding="utf-8")
-    
+
     return result
 
+
 async def decompile_directory_async(
-    input_dir: Path, 
-    output_dir: Path, 
-    max_workers: int = 4
+    input_dir: Path, output_dir: Path, max_workers: int = 4
 ) -> Dict[str, Any]:
     """Decompile all files in directory."""
     parallel_decompiler = ParallelDecompiler(max_workers)
     return await parallel_decompiler.decompile_directory(input_dir, output_dir)
+
 
 def benchmark_decompilation(file_path: Path) -> Dict[str, Any]:
     """Benchmark decompilation performance."""
     benchmark = DecompileBenchmark()
     return benchmark.benchmark_file(file_path)
 
+
 __all__ = [
     # Core classes
-    "UnifiedDecompiler", 
+    "UnifiedDecompiler",
     "PCodeDecoder",
-    "ControlFlowAnalyzer", 
+    "ControlFlowAnalyzer",
     "ExpressionReconstructor",
     "DataWindowExtractor",
     "ParallelDecompiler",
     "DecompileBenchmark",
     # Coordinator classes (from coordinator.py)
     "ExtractedFileDecompiler",
-    "PowerBuilderDecompiler", 
+    "PowerBuilderDecompiler",
     "DecompileCoordinator",
     # Data classes
     "DecompileResult",
-    "PCodeInstruction", 
+    "PCodeInstruction",
     "DecodedObject",
     "BasicBlock",
     # Enums
@@ -2506,7 +2593,7 @@ __all__ = [
     "SUPPORTED_OUTPUT_FORMATS",
     # Functions
     "decompile_file",
-    "decompile_directory", 
+    "decompile_directory",
     "decompile_directory_async",
     "benchmark_decompilation",
     "extract_database_schema",

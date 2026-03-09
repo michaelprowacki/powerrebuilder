@@ -15,20 +15,23 @@ from datetime import datetime
 # FUNDAMENTAL EFFECT CONCEPTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class Effect:
     """An observable effect of computation.
 
     Something that affects the world outside the computation.
     """
-    effect_type: 'EffectType'
+
+    effect_type: "EffectType"
     is_observable: bool = True
     is_reversible: bool = False  # Can be undone
-    dependencies: List['Effect'] = field(default_factory=list)
+    dependencies: List["Effect"] = field(default_factory=list)
 
 
 class EffectType(str, Enum):
     """Types of computational effects."""
+
     STATE = "state"  # State modification
     IO = "io"  # Input/output
     EXCEPTION = "exception"  # Exception/error
@@ -45,21 +48,24 @@ class SideEffect(Effect):
 
     Breaks referential transparency.
     """
-    target: 'EffectTarget'
-    operation: 'EffectOperation'
+
+    target: "EffectTarget"
+    operation: "EffectOperation"
     is_idempotent: bool = False  # Same effect if applied multiple times
 
 
 @dataclass(frozen=True)
 class EffectTarget:
     """What is being affected."""
-    target_type: 'EffectTargetType'
+
+    target_type: "EffectTargetType"
     identifier: Any  # Variable name, file path, etc.
     scope: str = "local"  # local, global, external
 
 
 class EffectTargetType(str, Enum):
     """Types of effect targets."""
+
     VARIABLE = "variable"
     FILE = "file"
     NETWORK = "network"
@@ -72,6 +78,7 @@ class EffectTargetType(str, Enum):
 
 class EffectOperation(str, Enum):
     """Operations that cause effects."""
+
     READ = "read"
     WRITE = "write"
     APPEND = "append"
@@ -85,12 +92,14 @@ class EffectOperation(str, Enum):
 # PURITY AND REFERENTIAL TRANSPARENCY
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class PureComputation:
     """A computation with no side effects.
 
     Always returns same output for same input.
     """
+
     computation: Any  # Would be Computation from computation.py
     is_deterministic: bool = True
     is_total: bool = True  # Defined for all inputs
@@ -103,6 +112,7 @@ class ReferentialTransparency:
 
     Foundation of equational reasoning.
     """
+
     expression: Any
     can_substitute: bool = True
     preserves_meaning: bool = True
@@ -111,12 +121,14 @@ class ReferentialTransparency:
 @dataclass(frozen=True)
 class Impurity:
     """Reason why a computation is not pure."""
-    reason: 'ImpurityReason'
+
+    reason: "ImpurityReason"
     effects: List[Effect]
 
 
 class ImpurityReason(str, Enum):
     """Reasons for impurity."""
+
     MUTATES_STATE = "mutates_state"
     PERFORMS_IO = "performs_io"
     THROWS_EXCEPTION = "throws_exception"
@@ -129,9 +141,11 @@ class ImpurityReason(str, Enum):
 # STATE EFFECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class State:
     """Mutable state."""
+
     variables: Dict[str, Any]
     is_global: bool = False
     version: int = 0  # For tracking changes
@@ -140,15 +154,17 @@ class State:
 @dataclass(frozen=True)
 class StateChange:
     """A change to state."""
+
     variable: str
     old_value: Any
     new_value: Any
-    change_type: 'StateChangeType'
+    change_type: "StateChangeType"
     is_atomic: bool = True
 
 
 class StateChangeType(str, Enum):
     """Types of state changes."""
+
     ASSIGNMENT = "assignment"
     INCREMENT = "increment"
     DECREMENT = "decrement"
@@ -160,6 +176,7 @@ class StateChangeType(str, Enum):
 @dataclass(frozen=True)
 class StateTransaction:
     """Transactional state changes."""
+
     changes: List[StateChange]
     is_atomic: bool = True
     is_isolated: bool = True
@@ -170,17 +187,20 @@ class StateTransaction:
 # I/O EFFECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class IO:
     """Input/output effect."""
-    io_type: 'IOType'
-    channel: 'IOChannel'
+
+    io_type: "IOType"
+    channel: "IOChannel"
     data: Optional[Any] = None
     is_blocking: bool = True
 
 
 class IOType(str, Enum):
     """Types of I/O."""
+
     READ = "read"
     WRITE = "write"
     SEEK = "seek"
@@ -191,7 +211,8 @@ class IOType(str, Enum):
 @dataclass(frozen=True)
 class IOChannel:
     """An I/O channel/stream."""
-    channel_type: 'ChannelType'
+
+    channel_type: "ChannelType"
     identifier: str  # File path, URL, etc.
     is_buffered: bool = True
     encoding: Optional[str] = None
@@ -199,6 +220,7 @@ class IOChannel:
 
 class ChannelType(str, Enum):
     """Types of I/O channels."""
+
     FILE = "file"
     CONSOLE = "console"
     NETWORK = "network"
@@ -209,6 +231,7 @@ class ChannelType(str, Enum):
 @dataclass(frozen=True)
 class FileIO(IO):
     """File I/O operation."""
+
     file_path: str
     mode: str  # read, write, append
     offset: Optional[int] = None
@@ -217,6 +240,7 @@ class FileIO(IO):
 @dataclass(frozen=True)
 class NetworkIO(IO):
     """Network I/O operation."""
+
     protocol: str  # TCP, UDP, HTTP
     address: str
     port: Optional[int] = None
@@ -226,9 +250,11 @@ class NetworkIO(IO):
 # EXCEPTION EFFECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ExceptionEffect(Effect):
     """Effect of raising/throwing an exception."""
+
     exception_type: str
     message: str
     is_checked: bool = False  # Checked vs unchecked
@@ -238,12 +264,14 @@ class ExceptionEffect(Effect):
 @dataclass(frozen=True)
 class ErrorPropagation:
     """How errors propagate through the system."""
-    propagation_type: 'PropagationType'
+
+    propagation_type: "PropagationType"
     error_chain: List[Any]
 
 
 class PropagationType(str, Enum):
     """Types of error propagation."""
+
     THROW = "throw"  # Exception throwing
     RETURN = "return"  # Error return values
     CALLBACK = "callback"  # Error callbacks
@@ -255,16 +283,19 @@ class PropagationType(str, Enum):
 # CONCURRENCY EFFECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class ConcurrencyEffect(Effect):
     """Effects related to concurrent execution."""
-    concurrency_type: 'ConcurrencyType'
+
+    concurrency_type: "ConcurrencyType"
     threads: List[str]  # Thread/process identifiers
     shared_resources: List[str]
 
 
 class ConcurrencyType(str, Enum):
     """Types of concurrency effects."""
+
     RACE_CONDITION = "race_condition"
     DEADLOCK = "deadlock"
     LIVELOCK = "livelock"
@@ -275,12 +306,14 @@ class ConcurrencyType(str, Enum):
 @dataclass(frozen=True)
 class Synchronization:
     """Synchronization to control effects."""
-    mechanism: 'SyncMechanism'
+
+    mechanism: "SyncMechanism"
     protected_resources: List[str]
 
 
 class SyncMechanism(str, Enum):
     """Synchronization mechanisms."""
+
     LOCK = "lock"
     SEMAPHORE = "semaphore"
     MONITOR = "monitor"
@@ -293,16 +326,19 @@ class SyncMechanism(str, Enum):
 # MEMORY EFFECTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class MemoryEffect(Effect):
     """Effects on memory."""
-    operation: 'MemoryOperation'
+
+    operation: "MemoryOperation"
     size: Optional[int] = None
     location: Optional[Any] = None
 
 
 class MemoryOperation(str, Enum):
     """Memory operations."""
+
     ALLOCATE = "allocate"
     DEALLOCATE = "deallocate"
     LEAK = "leak"
@@ -313,6 +349,7 @@ class MemoryOperation(str, Enum):
 @dataclass(frozen=True)
 class AllocationEffect(MemoryEffect):
     """Memory allocation effect."""
+
     allocated_size: int
     is_heap: bool = True  # Heap vs stack
     is_zeroed: bool = False
@@ -321,6 +358,7 @@ class AllocationEffect(MemoryEffect):
 @dataclass(frozen=True)
 class DeallocationEffect(MemoryEffect):
     """Memory deallocation effect."""
+
     freed_size: int
     is_automatic: bool = False  # GC vs manual
 
@@ -329,9 +367,11 @@ class DeallocationEffect(MemoryEffect):
 # EFFECT HANDLING
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class EffectHandler:
     """Handler for effects (algebraic effects)."""
+
     handled_effects: List[EffectType]
     handler_function: Any
     is_resumable: bool = True  # Can resume after handling
@@ -340,6 +380,7 @@ class EffectHandler:
 @dataclass(frozen=True)
 class EffectSystem:
     """Type system for tracking effects."""
+
     tracked_effects: Set[EffectType]
     effect_polymorphism: bool = False
     effect_inference: bool = False
@@ -348,13 +389,15 @@ class EffectSystem:
 @dataclass(frozen=True)
 class Monad:
     """Monadic effect handling."""
-    monad_type: 'MonadType'
+
+    monad_type: "MonadType"
     wrapped_type: Any
     operations: List[str]  # bind, return, etc.
 
 
 class MonadType(str, Enum):
     """Common monads for effects."""
+
     IO = "io"
     STATE = "state"
     MAYBE = "maybe"
@@ -368,9 +411,11 @@ class MonadType(str, Enum):
 # DOMAIN EVENTS (Colocated with Effects aggregate)
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class EffectPerformed:
     """Event: An effect was performed."""
+
     effect: Effect
     context: str
     timestamp: datetime
@@ -379,6 +424,7 @@ class EffectPerformed:
 @dataclass(frozen=True)
 class StateModified:
     """Event: State was modified."""
+
     change: StateChange
     transaction_id: Optional[str]
     timestamp: datetime
@@ -387,6 +433,7 @@ class StateModified:
 @dataclass(frozen=True)
 class IOPerformed:
     """Event: I/O operation performed."""
+
     io_operation: IO
     bytes_transferred: Optional[int]
     success: bool
@@ -396,6 +443,7 @@ class IOPerformed:
 @dataclass(frozen=True)
 class ExceptionOccurred:
     """Event: Exception effect occurred."""
+
     exception: ExceptionEffect
     handled: bool
     timestamp: datetime
@@ -404,6 +452,7 @@ class ExceptionOccurred:
 @dataclass(frozen=True)
 class MemoryAllocated:
     """Event: Memory was allocated."""
+
     allocation: AllocationEffect
     timestamp: datetime
 
@@ -411,5 +460,6 @@ class MemoryAllocated:
 @dataclass(frozen=True)
 class MemoryDeallocated:
     """Event: Memory was freed."""
+
     deallocation: DeallocationEffect
     timestamp: datetime

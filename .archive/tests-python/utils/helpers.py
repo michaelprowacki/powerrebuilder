@@ -15,10 +15,9 @@ import time
 # FILE HELPERS
 # ============================================================================
 
+
 def create_temp_file(
-    content: Union[str, bytes],
-    suffix: str = ".txt",
-    dir: Optional[Path] = None
+    content: Union[str, bytes], suffix: str = ".txt", dir: Optional[Path] = None
 ) -> Path:
     """Create a temporary file with content.
 
@@ -65,7 +64,7 @@ def copy_test_files(
     source_dir: Path,
     dest_dir: Path,
     pattern: str = "*",
-    max_files: Optional[int] = None
+    max_files: Optional[int] = None,
 ) -> List[Path]:
     """Copy test files matching pattern.
 
@@ -112,10 +111,11 @@ def calculate_file_hash(file_path: Path) -> str:
 # COMPARISON HELPERS
 # ============================================================================
 
+
 def compare_ast_nodes(
     node1: Dict[str, Any],
     node2: Dict[str, Any],
-    ignore_fields: Optional[List[str]] = None
+    ignore_fields: Optional[List[str]] = None,
 ) -> bool:
     """Compare two AST nodes for equality.
 
@@ -138,10 +138,12 @@ def compare_ast_nodes(
         return False
 
     # Compare attributes (excluding ignored fields)
-    attrs1 = {k: v for k, v in node1.get("attributes", {}).items()
-              if k not in ignore_fields}
-    attrs2 = {k: v for k, v in node2.get("attributes", {}).items()
-              if k not in ignore_fields}
+    attrs1 = {
+        k: v for k, v in node1.get("attributes", {}).items() if k not in ignore_fields
+    }
+    attrs2 = {
+        k: v for k, v in node2.get("attributes", {}).items() if k not in ignore_fields
+    }
 
     if attrs1 != attrs2:
         return False
@@ -161,9 +163,7 @@ def compare_ast_nodes(
 
 
 def compare_generated_code(
-    actual: str,
-    expected: str,
-    language: str = "python"
+    actual: str, expected: str, language: str = "python"
 ) -> Dict[str, Any]:
     """Compare generated code with expected output.
 
@@ -175,11 +175,7 @@ def compare_generated_code(
     Returns:
         Comparison result dictionary
     """
-    result = {
-        "match": False,
-        "differences": [],
-        "similarity": 0.0
-    }
+    result = {"match": False, "differences": [], "similarity": 0.0}
 
     # Normalize whitespace
     actual_lines = [line.strip() for line in actual.splitlines() if line.strip()]
@@ -199,11 +195,7 @@ def compare_generated_code(
     # Find differences
     for i, (a, e) in enumerate(zip(actual_lines, expected_lines)):
         if a != e:
-            result["differences"].append({
-                "line": i + 1,
-                "actual": a,
-                "expected": e
-            })
+            result["differences"].append({"line": i + 1, "actual": a, "expected": e})
 
     return result
 
@@ -211,6 +203,7 @@ def compare_generated_code(
 # ============================================================================
 # VALIDATION HELPERS
 # ============================================================================
+
 
 def validate_pbd_file(file_path: Path) -> Dict[str, Any]:
     """Validate a PBD file structure.
@@ -221,12 +214,7 @@ def validate_pbd_file(file_path: Path) -> Dict[str, Any]:
     Returns:
         Validation result
     """
-    result = {
-        "valid": False,
-        "errors": [],
-        "warnings": [],
-        "info": {}
-    }
+    result = {"valid": False, "errors": [], "warnings": [], "info": {}}
 
     if not file_path.exists():
         result["errors"].append(f"File not found: {file_path}")
@@ -271,12 +259,7 @@ def validate_ast_structure(ast: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Validation result
     """
-    result = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-        "stats": {}
-    }
+    result = {"valid": True, "errors": [], "warnings": [], "stats": {}}
 
     def validate_node(node: Dict[str, Any], path: str = ""):
         """Recursively validate AST node."""
@@ -317,6 +300,7 @@ def calculate_ast_depth(ast: Dict[str, Any]) -> int:
     Returns:
         Maximum depth
     """
+
     def get_depth(node: Dict[str, Any]) -> int:
         if not node.get("children"):
             return 1
@@ -328,6 +312,7 @@ def calculate_ast_depth(ast: Dict[str, Any]) -> int:
 # ============================================================================
 # PERFORMANCE HELPERS
 # ============================================================================
+
 
 class Timer:
     """Simple timer for performance measurements."""
@@ -372,7 +357,7 @@ class Timer:
             "total": sum(times),
             "average": sum(times) / len(times),
             "min": min(times),
-            "max": max(times)
+            "max": max(times),
         }
 
 
@@ -383,19 +368,21 @@ def measure_memory_usage() -> Dict[str, float]:
         Memory usage statistics in MB
     """
     import psutil
+
     process = psutil.Process()
     mem_info = process.memory_info()
 
     return {
         "rss_mb": mem_info.rss / 1024 / 1024,
         "vms_mb": mem_info.vms / 1024 / 1024,
-        "percent": process.memory_percent()
+        "percent": process.memory_percent(),
     }
 
 
 # ============================================================================
 # ASSERTION HELPERS
 # ============================================================================
+
 
 def assert_files_equal(file1: Path, file2: Path, encoding: str = "utf-8"):
     """Assert two files are equal.
@@ -423,7 +410,7 @@ def assert_files_equal(file1: Path, file2: Path, encoding: str = "utf-8"):
 def assert_json_equal(
     actual: Union[str, Dict],
     expected: Union[str, Dict],
-    ignore_keys: Optional[List[str]] = None
+    ignore_keys: Optional[List[str]] = None,
 ):
     """Assert two JSON objects are equal.
 
@@ -443,8 +430,9 @@ def assert_json_equal(
     def remove_keys(obj, keys):
         """Recursively remove keys from object."""
         if isinstance(obj, dict):
-            return {k: remove_keys(v, keys) for k, v in obj.items()
-                   if k not in (keys or [])}
+            return {
+                k: remove_keys(v, keys) for k, v in obj.items() if k not in (keys or [])
+            }
         elif isinstance(obj, list):
             return [remove_keys(item, keys) for item in obj]
         return obj
@@ -453,14 +441,12 @@ def assert_json_equal(
         actual = remove_keys(actual, ignore_keys)
         expected = remove_keys(expected, ignore_keys)
 
-    assert actual == expected, f"JSON objects differ:\nActual: {actual}\nExpected: {expected}"
+    assert actual == expected, (
+        f"JSON objects differ:\nActual: {actual}\nExpected: {expected}"
+    )
 
 
-def assert_accuracy(
-    actual: float,
-    minimum: float,
-    name: str = "accuracy"
-):
+def assert_accuracy(actual: float, minimum: float, name: str = "accuracy"):
     """Assert accuracy meets minimum threshold.
 
     Args:
@@ -478,6 +464,7 @@ def assert_accuracy(
 # MOCK HELPERS
 # ============================================================================
 
+
 class MockCoordinator:
     """Mock coordinator for testing."""
 
@@ -493,6 +480,7 @@ class MockCoordinator:
         self.process_called = True
 
         from _patterns import CoordinatorResult
+
         return CoordinatorResult(
             success=self.success,
             stage=self.stage,
@@ -501,7 +489,7 @@ class MockCoordinator:
             files_processed=10 if self.success else 0,
             files_failed=0 if self.success else 5,
             errors=[] if self.success else ["Mock error"],
-            duration=1.5
+            duration=1.5,
         )
 
 
@@ -510,24 +498,21 @@ def create_mock_ast() -> Dict[str, Any]:
     return {
         "node_type": "window",
         "value": "w_test",
-        "attributes": {
-            "width": 2000,
-            "height": 1500
-        },
+        "attributes": {"width": 2000, "height": 1500},
         "children": [
             {
                 "node_type": "control",
                 "value": "cb_save",
                 "attributes": {"type": "commandbutton"},
-                "children": []
+                "children": [],
             },
             {
                 "node_type": "event",
                 "value": "clicked",
                 "attributes": {},
-                "children": []
-            }
-        ]
+                "children": [],
+            },
+        ],
     }
 
 
@@ -542,21 +527,11 @@ def create_mock_model() -> Dict[str, Any]:
                 "name": "save",
                 "return_type": "void",
                 "parameters": [],
-                "implementation": "// Save implementation"
+                "implementation": "// Save implementation",
             }
         ],
         "properties": [
-            {
-                "name": "title",
-                "type": "string",
-                "initial_value": "Test Window"
-            }
+            {"name": "title", "type": "string", "initial_value": "Test Window"}
         ],
-        "events": [
-            {
-                "name": "open",
-                "parameters": [],
-                "handler": "// Open event"
-            }
-        ]
+        "events": [{"name": "open", "parameters": [], "handler": "// Open event"}],
     }

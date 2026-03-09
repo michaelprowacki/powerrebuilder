@@ -10,7 +10,7 @@ Common pattern for transforming data between formats, used extensively in:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 # Type variables for input and output types
 TInput = TypeVar("TInput")
@@ -127,11 +127,7 @@ class ConditionalTransformer(BaseTransformer[TInput, TOutput]):
         self.default_transformer = default_transformer
         self.conditions = []
 
-    def add_condition(
-        self,
-        condition: callable,
-        transformer: BaseTransformer
-    ) -> None:
+    def add_condition(self, condition: callable, transformer: BaseTransformer) -> None:
         """Add a conditional transformer.
 
         Args:

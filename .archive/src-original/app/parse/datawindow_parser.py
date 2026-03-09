@@ -10,9 +10,12 @@ from typing import List, Dict, Tuple, Optional, Union
 from enum import Enum
 
 from .shared import (
-    ASTNode, NodeType,
-    ParseResult, ParseSuccess, ParseFailed,
-    SyntaxError
+    ASTNode,
+    NodeType,
+    ParseResult,
+    ParseSuccess,
+    ParseFailed,
+    SyntaxError,
 )
 
 
@@ -20,8 +23,10 @@ from .shared import (
 # DATAWINDOW TYPES
 # ============================================================================
 
+
 class DataWindowType(str, Enum):
     """Types of DataWindow objects."""
+
     GRID = "grid"
     TABULAR = "tabular"
     FREEFORM = "freeform"
@@ -35,6 +40,7 @@ class DataWindowType(str, Enum):
 
 class DataWindowBand(str, Enum):
     """DataWindow band types."""
+
     HEADER = "header"
     DETAIL = "detail"
     FOOTER = "footer"
@@ -47,6 +53,7 @@ class DataWindowBand(str, Enum):
 @dataclass(frozen=True)
 class DataWindowColumn:
     """A column definition in a DataWindow."""
+
     name: str
     datatype: str
     width: int
@@ -58,6 +65,7 @@ class DataWindowColumn:
 @dataclass(frozen=True)
 class DataWindowControl:
     """A control in the DataWindow layout."""
+
     name: str
     control_type: str  # text, column, computed field, etc.
     band: DataWindowBand
@@ -71,6 +79,7 @@ class DataWindowControl:
 @dataclass(frozen=True)
 class DataWindowDefinition:
     """Complete DataWindow definition."""
+
     name: str
     type: DataWindowType
     sql: Optional[str]
@@ -84,9 +93,11 @@ class DataWindowDefinition:
 # DATAWINDOW PARSING EVENTS
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class DataWindowParsed:
     """Event emitted when a DataWindow is successfully parsed."""
+
     name: str
     type: DataWindowType
     column_count: int
@@ -97,6 +108,7 @@ class DataWindowParsed:
 @dataclass(frozen=True)
 class ColumnParsed:
     """Event emitted when a column is parsed."""
+
     column_name: str
     datatype: str
     has_validation: bool
@@ -105,6 +117,7 @@ class ColumnParsed:
 @dataclass(frozen=True)
 class ControlParsed:
     """Event emitted when a control is parsed."""
+
     control_name: str
     control_type: str
     band: DataWindowBand
@@ -113,6 +126,7 @@ class ControlParsed:
 @dataclass(frozen=True)
 class SQLExtracted:
     """Event emitted when SQL is extracted from DataWindow."""
+
     table_count: int
     has_joins: bool
     has_where_clause: bool
@@ -122,6 +136,7 @@ class SQLExtracted:
 @dataclass(frozen=True)
 class DataWindowWarning:
     """Event emitted when a parsing issue is detected."""
+
     component: str
     issue: str
     line: int
@@ -129,14 +144,14 @@ class DataWindowWarning:
 
 # Union type for all DataWindow events
 DataWindowEvent = Union[
-    DataWindowParsed, ColumnParsed, ControlParsed,
-    SQLExtracted, DataWindowWarning
+    DataWindowParsed, ColumnParsed, ControlParsed, SQLExtracted, DataWindowWarning
 ]
 
 
 # ============================================================================
 # DATAWINDOW PARSING FUNCTIONS
 # ============================================================================
+
 
 def parse_datawindow(source: str) -> Tuple[ParseResult, List[DataWindowEvent]]:
     """Parse DataWindow source to AST.
@@ -147,16 +162,12 @@ def parse_datawindow(source: str) -> Tuple[ParseResult, List[DataWindowEvent]]:
     events = []
 
     if not source or not source.strip():
-        events.append(DataWindowWarning(
-            component="source",
-            issue="Empty DataWindow source",
-            line=1
-        ))
-        return ParseFailed(
-            error="Empty DataWindow source",
-            line=1,
-            column=1
-        ), events
+        events.append(
+            DataWindowWarning(
+                component="source", issue="Empty DataWindow source", line=1
+            )
+        )
+        return ParseFailed(error="Empty DataWindow source", line=1, column=1), events
 
     try:
         # Parse DataWindow sections
@@ -164,37 +175,45 @@ def parse_datawindow(source: str) -> Tuple[ParseResult, List[DataWindowEvent]]:
 
         # Emit parsing events
         for column in dw_def.columns:
-            events.append(ColumnParsed(
-                column_name=column.name,
-                datatype=column.datatype,
-                has_validation=column.validation is not None
-            ))
+            events.append(
+                ColumnParsed(
+                    column_name=column.name,
+                    datatype=column.datatype,
+                    has_validation=column.validation is not None,
+                )
+            )
 
         for control in dw_def.controls:
-            events.append(ControlParsed(
-                control_name=control.name,
-                control_type=control.control_type,
-                band=control.band
-            ))
+            events.append(
+                ControlParsed(
+                    control_name=control.name,
+                    control_type=control.control_type,
+                    band=control.band,
+                )
+            )
 
         # Extract SQL if present
         if dw_def.sql:
             sql_info = analyze_sql(dw_def.sql)
-            events.append(SQLExtracted(
-                table_count=sql_info['table_count'],
-                has_joins=sql_info['has_joins'],
-                has_where_clause=sql_info['has_where_clause'],
-                line_count=dw_def.sql.count('\n') + 1
-            ))
+            events.append(
+                SQLExtracted(
+                    table_count=sql_info["table_count"],
+                    has_joins=sql_info["has_joins"],
+                    has_where_clause=sql_info["has_where_clause"],
+                    line_count=dw_def.sql.count("\n") + 1,
+                )
+            )
 
         # Emit main parsing event
-        events.append(DataWindowParsed(
-            name=dw_def.name,
-            type=dw_def.type,
-            column_count=len(dw_def.columns),
-            control_count=len(dw_def.controls),
-            has_sql=dw_def.sql is not None
-        ))
+        events.append(
+            DataWindowParsed(
+                name=dw_def.name,
+                type=dw_def.type,
+                column_count=len(dw_def.columns),
+                control_count=len(dw_def.controls),
+                has_sql=dw_def.sql is not None,
+            )
+        )
 
         # Convert to AST
         ast = datawindow_to_ast(dw_def)
@@ -202,29 +221,19 @@ def parse_datawindow(source: str) -> Tuple[ParseResult, List[DataWindowEvent]]:
         # Validate and collect warnings
         warnings = validate_datawindow(dw_def)
         for warning in warnings:
-            events.append(DataWindowWarning(
-                component="validation",
-                issue=warning,
-                line=0
-            ))
+            events.append(
+                DataWindowWarning(component="validation", issue=warning, line=0)
+            )
 
         return ParseSuccess(
             ast=ast,
             warnings=warnings,
-            tokens_processed=len(source.split())  # Approximate
+            tokens_processed=len(source.split()),  # Approximate
         ), events
 
     except SyntaxError as e:
-        events.append(DataWindowWarning(
-            component="parser",
-            issue=str(e),
-            line=e.line
-        ))
-        return ParseFailed(
-            error=e.message,
-            line=e.line,
-            column=e.column
-        ), events
+        events.append(DataWindowWarning(component="parser", issue=str(e), line=e.line))
+        return ParseFailed(error=e.message, line=e.line, column=e.column), events
 
 
 def parse_datawindow_definition(source: str) -> DataWindowDefinition:
@@ -232,7 +241,7 @@ def parse_datawindow_definition(source: str) -> DataWindowDefinition:
 
     Pure function extracting DataWindow structure.
     """
-    lines = source.split('\n')
+    lines = source.split("\n")
 
     # Parse header section
     name, dw_type = parse_header(lines)
@@ -259,7 +268,7 @@ def parse_datawindow_definition(source: str) -> DataWindowDefinition:
         columns=columns,
         controls=controls,
         bands=bands,
-        properties=properties
+        properties=properties,
     )
 
 
@@ -314,7 +323,7 @@ def extract_sql_section(lines: List[str]) -> Optional[str]:
             in_sql = True
             # Extract SQL from retrieve= property
             if "retrieve=" in line:
-                sql_start = line.find('"', line.find('retrieve=')) + 1
+                sql_start = line.find('"', line.find("retrieve=")) + 1
                 if sql_start > 0:
                     sql_lines.append(line[sql_start:])
             continue
@@ -331,8 +340,8 @@ def extract_sql_section(lines: List[str]) -> Optional[str]:
 
     if sql_lines:
         # Join and clean SQL
-        sql = ' '.join(sql_lines)
-        sql = sql.replace('~n', '\n').replace('~t', '\t').replace('~~', '~')
+        sql = " ".join(sql_lines)
+        sql = sql.replace("~n", "\n").replace("~t", "\t").replace("~~", "~")
         return sql.strip()
 
     return None
@@ -357,7 +366,7 @@ def parse_columns_section(lines: List[str]) -> List[DataWindowColumn]:
                 width=int(props.get("width", "100")),
                 label=props.get("label"),
                 format=props.get("format"),
-                validation=props.get("validation")
+                validation=props.get("validation"),
             )
             columns.append(column)
         elif in_columns and ")" in line and "column" not in line.lower():
@@ -382,7 +391,14 @@ def parse_controls_section(lines: List[str]) -> List[DataWindowControl]:
             current_band = map_band_type(band_type)
 
         # Parse controls
-        control_types = ["text(", "column(", "compute(", "button(", "line(", "rectangle("]
+        control_types = [
+            "text(",
+            "column(",
+            "compute(",
+            "button(",
+            "line(",
+            "rectangle(",
+        ]
         for ctrl_type in control_types:
             if ctrl_type in line.lower():
                 props = extract_properties(line)
@@ -396,7 +412,7 @@ def parse_controls_section(lines: List[str]) -> List[DataWindowControl]:
                     y=int(props.get("y", "0")),
                     width=int(props.get("width", "100")),
                     height=int(props.get("height", "20")),
-                    properties=props
+                    properties=props,
                 )
                 controls.append(control)
                 break
@@ -453,14 +469,14 @@ def extract_properties(line: str) -> Dict[str, str]:
     i = 0
     while i < len(line):
         # Find property name
-        eq_pos = line.find('=', i)
+        eq_pos = line.find("=", i)
         if eq_pos == -1:
             break
 
         # Extract property name
         prop_start = i
         for j in range(eq_pos - 1, -1, -1):
-            if line[j] in ' \t(':
+            if line[j] in " \t(":
                 prop_start = j + 1
                 break
         prop_name = line[prop_start:eq_pos].strip()
@@ -471,17 +487,17 @@ def extract_properties(line: str) -> Dict[str, str]:
             # Quoted value
             j = i + 1
             while j < len(line):
-                if line[j] == '"' and (j == len(line) - 1 or line[j+1] != '"'):
+                if line[j] == '"' and (j == len(line) - 1 or line[j + 1] != '"'):
                     break
-                if line[j] == '"' and j < len(line) - 1 and line[j+1] == '"':
+                if line[j] == '"' and j < len(line) - 1 and line[j + 1] == '"':
                     j += 1  # Skip escaped quote
                 j += 1
-            value = line[i+1:j].replace('""', '"')
+            value = line[i + 1 : j].replace('""', '"')
             i = j + 1
         else:
             # Unquoted value
             j = i
-            while j < len(line) and line[j] not in ' \t)':
+            while j < len(line) and line[j] not in " \t)":
                 j += 1
             value = line[i:j]
             i = j
@@ -517,11 +533,11 @@ def analyze_sql(sql: str) -> Dict[str, any]:
     sql_upper = sql.upper()
 
     return {
-        'table_count': sql_upper.count('FROM') + sql_upper.count('JOIN'),
-        'has_joins': 'JOIN' in sql_upper,
-        'has_where_clause': 'WHERE' in sql_upper,
-        'has_order_by': 'ORDER BY' in sql_upper,
-        'has_group_by': 'GROUP BY' in sql_upper,
+        "table_count": sql_upper.count("FROM") + sql_upper.count("JOIN"),
+        "has_joins": "JOIN" in sql_upper,
+        "has_where_clause": "WHERE" in sql_upper,
+        "has_order_by": "ORDER BY" in sql_upper,
+        "has_group_by": "GROUP BY" in sql_upper,
     }
 
 
@@ -535,9 +551,7 @@ def datawindow_to_ast(dw_def: DataWindowDefinition) -> ASTNode:
     # Add SQL node if present
     if dw_def.sql:
         sql_node = ASTNode(
-            type=NodeType.SQL_STATEMENT,
-            value=dw_def.sql,
-            metadata={'type': 'select'}
+            type=NodeType.SQL_STATEMENT, value=dw_def.sql, metadata={"type": "select"}
         )
         children.append(sql_node)
 
@@ -547,11 +561,11 @@ def datawindow_to_ast(dw_def: DataWindowDefinition) -> ASTNode:
             type=NodeType.COLUMN_DEF,
             value=column.name,
             metadata={
-                'datatype': column.datatype,
-                'width': column.width,
-                'format': column.format,
-                'validation': column.validation
-            }
+                "datatype": column.datatype,
+                "width": column.width,
+                "format": column.format,
+                "validation": column.validation,
+            },
         )
         children.append(col_node)
 
@@ -561,14 +575,14 @@ def datawindow_to_ast(dw_def: DataWindowDefinition) -> ASTNode:
             type=NodeType.CONTROL_DEF,
             value=control.name,
             metadata={
-                'control_type': control.control_type,
-                'band': control.band.value,
-                'x': control.x,
-                'y': control.y,
-                'width': control.width,
-                'height': control.height,
-                **control.properties
-            }
+                "control_type": control.control_type,
+                "band": control.band.value,
+                "x": control.x,
+                "y": control.y,
+                "width": control.width,
+                "height": control.height,
+                **control.properties,
+            },
         )
         children.append(ctrl_node)
 
@@ -577,10 +591,7 @@ def datawindow_to_ast(dw_def: DataWindowDefinition) -> ASTNode:
         type=NodeType.DATAWINDOW,
         value=dw_def.name,
         children=tuple(children),
-        metadata={
-            'type': dw_def.type.value,
-            **dw_def.properties
-        }
+        metadata={"type": dw_def.type.value, **dw_def.properties},
     )
 
 
@@ -592,7 +603,10 @@ def validate_datawindow(dw_def: DataWindowDefinition) -> List[str]:
     warnings = []
 
     # Check for missing SQL in non-external DataWindows
-    if not dw_def.sql and dw_def.type not in [DataWindowType.COMPOSITE, DataWindowType.NESTED]:
+    if not dw_def.sql and dw_def.type not in [
+        DataWindowType.COMPOSITE,
+        DataWindowType.NESTED,
+    ]:
         warnings.append("DataWindow has no SQL statement")
 
     # Check for columns without labels
@@ -602,17 +616,24 @@ def validate_datawindow(dw_def: DataWindowDefinition) -> List[str]:
 
     # Check for overlapping controls
     for i, ctrl1 in enumerate(dw_def.controls):
-        for ctrl2 in dw_def.controls[i+1:]:
+        for ctrl2 in dw_def.controls[i + 1 :]:
             if ctrl1.band == ctrl2.band:
                 # Check for overlap
-                if (ctrl1.x < ctrl2.x + ctrl2.width and
-                    ctrl1.x + ctrl1.width > ctrl2.x and
-                    ctrl1.y < ctrl2.y + ctrl2.height and
-                    ctrl1.y + ctrl1.height > ctrl2.y):
-                    warnings.append(f"Controls {ctrl1.name} and {ctrl2.name} overlap in {ctrl1.band.value} band")
+                if (
+                    ctrl1.x < ctrl2.x + ctrl2.width
+                    and ctrl1.x + ctrl1.width > ctrl2.x
+                    and ctrl1.y < ctrl2.y + ctrl2.height
+                    and ctrl1.y + ctrl1.height > ctrl2.y
+                ):
+                    warnings.append(
+                        f"Controls {ctrl1.name} and {ctrl2.name} overlap in {ctrl1.band.value} band"
+                    )
 
     # Check for missing detail band
-    if DataWindowBand.DETAIL not in dw_def.bands and dw_def.type != DataWindowType.COMPOSITE:
+    if (
+        DataWindowBand.DETAIL not in dw_def.bands
+        and dw_def.type != DataWindowType.COMPOSITE
+    ):
         warnings.append("DataWindow missing detail band")
 
     return warnings

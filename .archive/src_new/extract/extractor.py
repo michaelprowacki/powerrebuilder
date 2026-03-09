@@ -5,12 +5,10 @@ Consolidates the extraction logic into a clean, maintainable implementation.
 """
 
 import logging
-import struct
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from src_new._core import (
-    ExtractedObject,
     ObjectType,
     PBLEntry,
     PBLFile,
@@ -18,7 +16,6 @@ from src_new._core import (
 from src_new._patterns import (
     BaseCoordinator,
     BinaryReader,
-    CoordinatorResult,
     FileHandler,
 )
 
@@ -130,7 +127,7 @@ class PBLParser:
                     name_bytes.extend([b1, b2])
 
                 if name_bytes:
-                    name = bytes(name_bytes).decode('utf-16le', errors='ignore')
+                    name = bytes(name_bytes).decode("utf-16le", errors="ignore")
 
                     # Determine type from name
                     obj_type = self._determine_type(name)
@@ -146,7 +143,9 @@ class PBLParser:
                     )
 
                 # Skip rest of block
-                remaining = block_size - (self.reader.position - self.reader.position + 8)
+                remaining = block_size - (
+                    self.reader.position - self.reader.position + 8
+                )
                 if remaining > 0:
                     self.reader.read(remaining)
 
@@ -229,9 +228,7 @@ class PBLParser:
 
         # Skip comment if present
         if header["comment_size"] > 0:
-            header["comment"] = self.reader.read_string(
-                header["comment_size"]
-            )
+            header["comment"] = self.reader.read_string(header["comment_size"])
 
         # Read directory info
         header["first_node_offset"] = self.reader.read_uint32()
@@ -537,8 +534,7 @@ class ExtractCoordinator(BaseCoordinator):
             sample.decode("utf-8")
             # Check for reasonable text characters
             text_chars = sum(
-                1 for b in sample
-                if b in range(32, 127) or b in [9, 10, 13]
+                1 for b in sample if b in range(32, 127) or b in [9, 10, 13]
             )
             return text_chars > len(sample) * 0.7
         except:
